@@ -11,8 +11,8 @@ using System.Collections;
 using System.Linq;
 using UnityEngine.UI;
 using TNHTweaker.ObjectTemplates;
-using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Converters;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Converters;
 using Deli.VFS;
 using UnityEngine.Networking;
 using System.Text;
@@ -422,19 +422,8 @@ namespace TNHTweaker.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
-                        {
-                            if (!LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
-                            {
-                                TNHTweakerLogger.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + group.IDOverride[i]);
-                                group.IDOverride.RemoveAt(i);
-                                i -= 1;
-                            }
-                        }
-
                         //If this was not a vaulted gun, remove it
-                        else
+                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
@@ -539,6 +528,22 @@ namespace TNHTweaker.Utilities
         /// <param name=""></param>
         /// <param name="pixelsPerUnit"></param>
         /// <returns></returns>
+        public static Sprite LoadSprite(FileInfo file)
+        {
+            Texture2D spriteTexture = LoadTexture(file);
+            if (spriteTexture == null) return null;
+            Sprite sprite = Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), 100f);
+            sprite.name = file.Name;
+            return sprite;
+        }
+
+
+        /// <summary>
+        /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
+        /// </summary>
+        /// <param name=""></param>
+        /// <param name="pixelsPerUnit"></param>
+        /// <returns></returns>
         public static Sprite LoadSprite(IFileHandle file)
         {
             Texture2D spriteTexture = LoadTexture(file);
@@ -553,6 +558,31 @@ namespace TNHTweaker.Utilities
         public static Sprite LoadSprite(Texture2D spriteTexture, float pixelsPerUnit = 100f)
         {
             return Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
+        }
+
+
+
+        /// <summary>
+        /// Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        public static Texture2D LoadTexture(FileInfo file)
+        {
+            // Load a PNG or JPG file from disk to a Texture2D
+            // Returns null if load fails
+
+            Stream fileStream = file.OpenRead();
+            MemoryStream mem = new MemoryStream();
+
+            CopyStream(fileStream, mem);
+
+            byte[] fileData = mem.ToArray();
+
+            Texture2D tex2D = new Texture2D(2, 2);
+            if (tex2D.LoadImage(fileData)) return tex2D;
+
+            return null;
         }
 
 

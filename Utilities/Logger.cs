@@ -9,7 +9,7 @@ namespace TNHTweaker.Utilities
 {
     static class TNHTweakerLogger
     {
-        public static ManualLogSource BepLog;
+        public static ManualLogSource BepLog = null;
 
         public static bool AllowLogging = false;
         public static bool LogCharacter = false;

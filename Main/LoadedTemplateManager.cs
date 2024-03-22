@@ -1,7 +1,5 @@
-﻿using Deli.Setup;
-using Deli.VFS;
-using FistVR;
-using MagazinePatcher;
+﻿using FistVR;
+// using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +16,8 @@ namespace TNHTweaker
         public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = new Dictionary<TNH_CharacterDef, CustomCharacter>();
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = new Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool>();
-        public static Dictionary<string, SavedGunSerializable> LoadedVaultFiles = new Dictionary<string, SavedGunSerializable>();
+        public static Dictionary<string, VaultFile> LoadedVaultFiles = new Dictionary<string, VaultFile>();
+        public static Dictionary<string, SavedGunSerializable> LoadedLegacyVaultFiles = new Dictionary<string, SavedGunSerializable>();
         public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
         public static List<CustomCharacter> DefaultCharacters = new List<CustomCharacter>();
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
@@ -118,11 +117,40 @@ namespace TNHTweaker
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
-        public static void AddVaultFile(SavedGunSerializable template)
+        public static void AddVaultFile(VaultFile template)
         {
             if (!LoadedVaultFiles.ContainsKey(template.FileName))
             {
-                LoadedVaultFiles.Add(template.FileName, template);
+                bool isFileBorked = false;
+                string culprit = "";
+                foreach (VaultObject vaultObject in template.Objects)
+                {
+                    foreach (VaultElement vaultElement in vaultObject.Elements)
+                    {
+                        if (!IM.OD.ContainsKey(vaultElement.ObjectID))
+                        {
+                            isFileBorked = true;
+                            culprit = vaultElement.ObjectID;
+                        }
+                    }
+                }
+
+                if (!isFileBorked)
+                {
+                    LoadedVaultFiles.Add(template.FileName, template);
+                }
+                else
+                {
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
+                }
+            }
+        }
+
+        public static void AddVaultFile(SavedGunSerializable template)
+        {
+            if (!LoadedLegacyVaultFiles.ContainsKey(template.FileName))
+            {
+                LoadedLegacyVaultFiles.Add(template.FileName, template);
             }
         }
 

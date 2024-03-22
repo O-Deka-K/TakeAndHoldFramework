@@ -1,5 +1,5 @@
 ﻿using BepInEx.Logging;
-using Deli.Newtonsoft.Json;
+using Valve.Newtonsoft.Json;
 using FistVR;
 using System;
 using System.Collections.Generic;

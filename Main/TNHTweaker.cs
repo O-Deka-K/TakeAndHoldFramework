@@ -19,10 +19,16 @@ using UnityEngine.UI;
 using Deli.Runtime.Yielding;
 using Anvil;
 using TNHTweaker.Patches;
+using Stratum;
+using BepInEx.Bootstrap;
+using BepInEx;
+using Stratum.Extensions;
 
 namespace TNHTweaker
 {
-    public class TNHTweaker : DeliBehaviour
+    [BepInPlugin("h3vr.tnhtweaker", "TNH Tweaker", "1.8.0")]
+    [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
+    public class TNHTweaker : StratumPlugin
     {
         private static ConfigEntry<bool> printCharacters;
         private static ConfigEntry<bool> logTNH;
@@ -55,10 +61,17 @@ namespace TNHTweaker
         /// </summary>
         private void Awake()
         {
-            TNHTweakerLogger.Init();
+            if (TNHTweakerLogger.BepLog == null)
+            {
+                TNHTweakerLogger.Init();
+            }
+
             TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
+            SetupOutputDirectory();
+
             LoadConfigFile();
+            LoadPanelSprites();
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
@@ -68,22 +81,34 @@ namespace TNHTweaker
 
             if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
-            Stages.Setup += OnSetup;
+            /*
+            if (Chainloader.PluginInfos.ContainsKey("Deli"))
+            {
+                DeliAwake();
+            }
+            else
+            {
+                foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
+                {
+                    TNHTweakerLogger.Log($"Plugin loaded: {item.Key}", TNHTweakerLogger.LogType.General);
+                }
+            }
+            */
         }
 
-
-        /// <summary>
-        /// Performs initial setup for TNH Tweaker
-        /// </summary>
-        /// <param name="stage"></param>
-        private void OnSetup(SetupStage stage)
+        public override void OnSetup(IStageContext<Empty> ctx)
         {
-            SetupOutputDirectory();
-            LoadPanelSprites(stage);
+            TNHLoaders TNHLoader = new TNHLoaders();
 
-            stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoader().LoadAsset;
-            stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoader().LoadAsset;
-            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
+            ctx.Loaders.Add("tnhchar", TNHLoader.LoadChar);
+            ctx.Loaders.Add("tnhsosig", TNHLoader.LoadSosig);
+            ctx.Loaders.Add("tnhvaultgun", TNHLoader.LoadVaultFile);
+        }
+
+        public override IEnumerator OnRuntime(IStageContext<IEnumerator> ctx)
+        {
+            // Do we... Need anything here?
+            yield break;
         }
 
 
@@ -91,29 +116,31 @@ namespace TNHTweaker
         /// <summary>
         /// Loads the sprites used in secondary panels in TNH
         /// </summary>
-        private void LoadPanelSprites(SetupStage stage)
+        private void LoadPanelSprites()
         {
-            IFileHandle file = Source.Resources.GetFile("mag_dupe_background.png");
+            DirectoryInfo pluginDirectory = new DirectoryInfo(Path.GetDirectoryName(Info.Location));
+
+            FileInfo file = ExtDirectoryInfo.GetFile(pluginDirectory, "mag_dupe_background.png");
             Sprite result = TNHTweakerUtils.LoadSprite(file);
             MagazinePanel.background = result;
 
-            file = Source.Resources.GetFile("ammo_purchase_background.png");
+            file = ExtDirectoryInfo.GetFile(pluginDirectory, "ammo_purchase_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
             AmmoPurchasePanel.background = result;
 
-            file = Source.Resources.GetFile("full_auto_background.png");
+            file = ExtDirectoryInfo.GetFile(pluginDirectory, "full_auto_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
             FullAutoPanel.background = result;
 
-            file = Source.Resources.GetFile("fire_rate_background.png");
+            file = ExtDirectoryInfo.GetFile(pluginDirectory, "fire_rate_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
             FireRatePanel.background = result;
 
-            file = Source.Resources.GetFile("minus_icon.png");
+            file = ExtDirectoryInfo.GetFile(pluginDirectory, "minus_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
             FireRatePanel.minusSprite = result;
 
-            file = Source.Resources.GetFile("plus_icon.png");
+            file = ExtDirectoryInfo.GetFile(pluginDirectory, "plus_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
             FireRatePanel.plusSprite = result;
         }
@@ -128,42 +155,42 @@ namespace TNHTweaker
         {
             TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
 
-            BuildCharacterFiles = Source.Config.Bind("General",
+            BuildCharacterFiles = Config.Bind("General",
                                     "BuildCharacterFiles",
                                     false,
                                     "If true, files useful for character creation will be generated in TNHTweaker folder");
 
-            EnableScoring = Source.Config.Bind("General",
+            EnableScoring = Config.Bind("General",
                                     "EnableScoring",
                                     true,
                                     "If true, TNH scores will be uploaded to the TNH Dashboard (https://devyndamonster.github.io/TNHDashboard/index.html)");
 
-            allowLog = Source.Config.Bind("Debug",
+            allowLog = Config.Bind("Debug",
                                     "EnableLogging",
                                     true,
                                     "Set to true to enable logging");
 
-            printCharacters = Source.Config.Bind("Debug",
+            printCharacters = Config.Bind("Debug",
                                          "LogCharacterInfo",
                                          false,
                                          "Decide if should print all character info");
 
-            logTNH = Source.Config.Bind("Debug",
+            logTNH = Config.Bind("Debug",
                                     "LogTNH",
                                     false,
                                     "If true, general TNH information will be logged");
 
-            logFileReads = Source.Config.Bind("Debug",
+            logFileReads = Config.Bind("Debug",
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
 
-            UnlimitedTokens = Source.Config.Bind("Debug",
+            UnlimitedTokens = Config.Bind("Debug",
                                     "EnableUnlimitedTokens",
                                     false,
                                     "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)");
 
-            EnableDebugText = Source.Config.Bind("Debug",
+            EnableDebugText = Config.Bind("Debug",
                                     "EnableDebugText",
                                     false,
                                     "If true, some text will appear in TNH maps showing additional info");
@@ -182,7 +209,7 @@ namespace TNHTweaker
         /// </summary>
         private void SetupOutputDirectory()
         {
-            OutputFilePath = Application.dataPath.Replace("/h3vr_Data", "/TNH_Tweaker");
+            OutputFilePath = Path.GetDirectoryName(Info.Location) + "CharFiles";
 
             if (!Directory.Exists(OutputFilePath))
             {
@@ -215,6 +242,29 @@ namespace TNHTweaker
 
             return false;
         }
+    }
 
+    public class TNHTweakerDeli : DeliBehaviour
+    {
+        public void Awake()
+        {
+            if (TNHTweakerLogger.BepLog == null)
+            {
+                TNHTweakerLogger.Init();
+            }
+
+            Stages.Setup += DeliOnSetup;
+        }
+
+        /// <summary>
+        /// Performs initial setup for TNH Tweaker
+        /// </summary>
+        /// <param name="stage"></param>
+        private void DeliOnSetup(SetupStage stage)
+        {
+            stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoaderDeli().LoadAsset;
+            stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoaderDeli().LoadAsset;
+            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoaderDeli().LoadAsset;
+        }
     }
 }

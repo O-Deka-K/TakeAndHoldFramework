@@ -1,5 +1,5 @@
 ﻿using FistVR;
-using MagazinePatcher;
+// using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +54,13 @@ namespace TNHTweaker
 
                     if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
                     {
-                        AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[selectedItem],
+                        Transform newTransform = transform;
+                        newTransform.position = transform.position + (Vector3.up * 0.1f * spawnedItems);
+                        VaultSystem.SpawnVaultFile(LoadedTemplateManager.LoadedVaultFiles[selectedItem], newTransform, true, false, false, out _, Vector3.zero);
+                    }
+                    else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem))
+                    {
+                        AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
                             transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation));
                     }
                     else

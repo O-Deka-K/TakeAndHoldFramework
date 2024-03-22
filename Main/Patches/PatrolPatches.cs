@@ -109,10 +109,17 @@ namespace TNHTweaker.Patches
         }
 
 
+        static bool jankyWorkaround = false;
         [HarmonyPatch(typeof(TNH_Manager), "GenerateInitialTakeSentryPatrols")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static bool GenerateInitialTakeSentryPatrolPatch()
+        public static bool GenerateInitialTakeSentryPatrolPatch(TNH_PatrolChallenge P)
         {
+            if (P.Patrols.Count >= 1)
+            {
+                jankyWorkaround = true;
+                TNHTweakerLogger.Log("TNHTWEAKER -- Letting GenerateInitial run, pls patch kthxbye", TNHTweakerLogger.LogType.TNH);
+                return true;
+            }
             return false;
         }
 
@@ -130,6 +137,12 @@ namespace TNHTweaker.Patches
             ref TNH_Manager.SosigPatrolSquad __result
             )
         {
+            if (jankyWorkaround == true)
+            {
+                TNHTweakerLogger.Log("Letting stuff do stuff", TNHTweakerLogger.LogType.TNH);
+                jankyWorkaround = false;
+                return true;
+            }
             TNHTweakerLogger.Log("TNHTWEAKER -- Generating a sentry patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];

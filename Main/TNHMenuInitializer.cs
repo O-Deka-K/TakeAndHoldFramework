@@ -1,5 +1,5 @@
-﻿using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Converters;
+﻿using BepInEx;
+using BepInEx.Bootstrap;
 using FistVR;
 using HarmonyLib;
 using MagazinePatcher;
@@ -28,7 +28,9 @@ namespace TNHTweaker
             hotdog.gameObject.SetActive(false);
 
             bool isOtherLoaderLoaded;
-            try{
+            bool isMagPatcherLoaded;
+            try
+            {
                 PokeOtherloader();
                 isOtherLoaderLoaded = true;
             }
@@ -36,6 +38,17 @@ namespace TNHTweaker
             {
                 isOtherLoaderLoaded = false;
                 TNHTweakerLogger.LogWarning("TNHTweaker -- OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
+            }
+
+            try
+            {
+                PokeMagPatcher();
+                isMagPatcherLoaded = true;
+            }
+            catch
+            {
+                isMagPatcherLoaded = false;
+                TNHTweakerLogger.Log("TNHTweaker -- Mag Patcher not found.", TNHTweakerLogger.LogType.General);
             }
 
 
@@ -56,22 +69,30 @@ namespace TNHTweaker
             }
             while (itemLoadProgress < 1);
 
-
             //Now we wait for magazine caching to be done
-            float cachingProgress = 0;
+            float cachingProgress;
             do
             {
                 yield return null;
 
-                cachingProgress = PatcherStatus.PatcherProgress;
-                itemsText.text = PatcherStatus.CacheLog;
-                progressText.text = "CACHING ITEMS : " + (int)(cachingProgress * 100) + "%";
-
-                if (PatcherStatus.CachingFailed)
+                if (isMagPatcherLoaded)
                 {
-                    MagazineCacheFailed = true;
-                    progressText.text = "CACHING FAILED! SEE ABOVE";
-                    throw new Exception("Magazine Caching Failed!");
+                    cachingProgress = PokeMagPatcher();// PatcherStatus.PatcherProgress;
+                    itemsText.text = GetMagPatcherCacheLog();// PatcherStatus.CacheLog;
+                    progressText.text = "CACHING ITEMS : " + (int)(cachingProgress * 100) + "%";
+
+                    /*
+                    if (PatcherStatus.CachingFailed)
+                    {
+                        MagazineCacheFailed = true;
+                        progressText.text = "CACHING FAILED! SEE ABOVE";
+                        throw new Exception("Magazine Caching Failed!");
+                    }
+                    */
+                }
+                else
+                {
+                    cachingProgress = 1;
                 }
             }
             while (cachingProgress < 1);
@@ -88,7 +109,7 @@ namespace TNHTweaker
             RefreshTNHUI(instance, Categories, CharDatabase);
 
             itemsText.text = "";
-            progressText.text = "CACHING COMPLETE";
+            progressText.text = "";
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
         }
@@ -100,6 +121,16 @@ namespace TNHTweaker
         {
             OtherLoader.LoaderStatus.GetLoaderProgress();
             List<string> items = OtherLoader.LoaderStatus.LoadingItems;
+        }
+
+        public static float PokeMagPatcher()
+        {
+            return PatcherStatus.PatcherProgress;
+        }
+
+        public static string GetMagPatcherCacheLog()
+        {
+            return PatcherStatus.CacheLog;
         }
 
         public static float GetOtherLoaderProgress()

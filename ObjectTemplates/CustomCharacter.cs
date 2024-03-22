@@ -1,10 +1,7 @@
 ﻿using ADepIn;
-using Deli.Immediate;
-using Deli.Newtonsoft.Json;
-using Deli.Setup;
-using Deli.VFS;
+using Valve.Newtonsoft.Json;
 using FistVR;
-using MagazinePatcher;
+// using MagazinePatcher;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
@@ -366,6 +363,92 @@ namespace TNHTweaker.ObjectTemplates
 
     }
 
+
+    public class MagazineBlacklistEntry
+    {
+        public string FirearmID;
+
+        public List<string> MagazineBlacklist = new List<string>();
+
+        public List<string> MagazineWhitelist = new List<string>();
+
+        public List<string> ClipBlacklist = new List<string>();
+
+        public List<string> ClipWhitelist = new List<string>();
+
+        public List<string> SpeedLoaderBlacklist = new List<string>();
+
+        public List<string> SpeedLoaderWhitelist = new List<string>();
+
+        public List<string> RoundBlacklist = new List<string>();
+
+        public List<string> RoundWhitelist = new List<string>();
+
+        public bool IsItemBlacklisted(string itemID)
+        {
+            return MagazineBlacklist.Contains(itemID) || ClipBlacklist.Contains(itemID) || RoundBlacklist.Contains(itemID) || SpeedLoaderBlacklist.Contains(itemID);
+        }
+
+        public bool IsMagazineAllowed(string itemID)
+        {
+            if (MagazineWhitelist.Count > 0 && !MagazineWhitelist.Contains(itemID))
+            {
+                return false;
+            }
+
+            if (MagazineBlacklist.Contains(itemID))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsClipAllowed(string itemID)
+        {
+            if (ClipWhitelist.Count > 0 && !ClipWhitelist.Contains(itemID))
+            {
+                return false;
+            }
+
+            if (ClipBlacklist.Contains(itemID))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsSpeedloaderAllowed(string itemID)
+        {
+            if (SpeedLoaderWhitelist.Count > 0 && !SpeedLoaderWhitelist.Contains(itemID))
+            {
+                return false;
+            }
+
+            if (SpeedLoaderBlacklist.Contains(itemID))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsRoundAllowed(string itemID)
+        {
+            if (RoundWhitelist.Count > 0 && !RoundWhitelist.Contains(itemID))
+            {
+                return false;
+            }
+
+            if (RoundBlacklist.Contains(itemID))
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
 
     /// <summary>
     /// An equipment pool is an entry that can spawn at a constructor panel

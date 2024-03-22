@@ -1,10 +1,13 @@
-﻿using Deli.Newtonsoft.Json;
-using FistVR;
+﻿using FistVR;
 using HarmonyLib;
-using MagazinePatcher;
+using Stratum;
+
+// using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,11 +16,29 @@ using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
+using static FistVR.VaultSystem;
+using static RenderHeads.Media.AVProVideo.MediaPlayer.OptionsApple;
+using static RootMotion.FinalIK.IKSolver;
 
 namespace TNHTweaker.Patches
 {
     public class TNHPatches
     {
+        static List<string> BaseCharStrings = new List<string>
+        {
+            "DD_C00",
+            "DD_C01",
+            "DD_C02",
+            "DD_C03",
+            "COMP_C01",
+            "WTT_C01",
+            "WTT_C02",
+            "WTT_C03",
+            "WTT_C04",
+            "MM_C01",
+            "MM_C02",
+            "MM_C03",
+        };
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
@@ -200,6 +221,10 @@ namespace TNHTweaker.Patches
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
                     FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
+                    {
+                        IM.CompatMags.Add(selectedItem.MagazineType, selectedItem.CompatibleMagazines);
+                    }
                     GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     __instance.m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
@@ -215,6 +240,11 @@ namespace TNHTweaker.Patches
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
                     FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
+                    {
+                        IM.CompatMags.Add(selectedItem.MagazineType, selectedItem.CompatibleMagazines);
+                        TNHTweakerLogger.Log($"{selectedItem.CompatibleMagazines}", TNHTweakerLogger.LogType.TNH);
+                    }
                     GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall.position, __instance.SpawnPoint_CaseSmall.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     __instance.m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
@@ -327,6 +357,8 @@ namespace TNHTweaker.Patches
             }
             __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Hold);
             __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Supply);
+            // J: Don't know if this is necessary, but I'm still getting to grips with things. This is what the base code does and I'm gonna steal it for now.
+            int curHoldIndex2 = __instance.m_curHoldIndex;
 
 
             //Get the next hold point and configure it
@@ -348,6 +380,17 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("TNHTWEAKER -- Panel types for this hold:", TNHTweakerLogger.LogType.TNH);
             level.PossiblePanelTypes.ForEach(o => TNHTweakerLogger.Log(o.ToString(), TNHTweakerLogger.LogType.TNH));
 
+            bool isCustomCharacter = true;
+
+            foreach (string Item in BaseCharStrings)
+            {
+                if (__instance.C.TableID == Item)
+                {
+                    isCustomCharacter = false;
+                    break;
+                }
+            }
+
 
             //Ensure ammo reloaders spawn first if this is limited ammo
             if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
@@ -361,15 +404,65 @@ namespace TNHTweaker.Patches
             //TODO this is one of the main code blocks for this method that requires it to be a full copy of the original method. This would be better fit as a transpiler patch
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning " + numSupplyPoints + " supply points", TNHTweakerLogger.LogType.TNH);
             int panelIndex = 0;
-            for (int i = 0; i < numSupplyPoints; i++)
+            if (__instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level < 5)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + i, TNHTweakerLogger.LogType.TNH);
-
-                TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
+                int num3 = __instance.m_curPointSequence.SupplyPoints[__instance.m_level];
+                TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[num3];
+                // tnh_SupplyPoint.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
                 ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
-                __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
+                __instance.m_activeSupplyPointIndicies.Add(num3);
+
+                // Adds extra supply points if it's a custom character, with one in the standard location, and any extra located elsewhere.
+                if (isCustomCharacter == true)
+                {
+                    // 
+                    for (int i = 1; i < numSupplyPoints; i++)
+                    {
+                        TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + i, TNHTweakerLogger.LogType.TNH);
+
+                        TNH_SupplyPoint supplyPoint2 = __instance.SupplyPoints[supplyPointsIndexes[i]];
+                        ConfigureSupplyPoint(supplyPoint2, level, ref panelIndex);
+                        TAH_ReticleContact contact2 = __instance.TAHReticle.RegisterTrackedObject(supplyPoint2.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
+                        supplyPoint.SetContact(contact2);
+                        __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
+                    }
+                }
+                
+            }
+            else if (__instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level >= 5)
+            {
+                List<int> list2 = new List<int>();
+                int num4 = -1;
+                for (int i = 0; i < __instance.SafePosMatrix.Entries_HoldPoints[__instance.m_curHoldIndex].SafePositions_SupplyPoints.Count; i++)
+                {
+                    if (i != num4 && __instance.SafePosMatrix.Entries_HoldPoints[__instance.m_curHoldIndex].SafePositions_SupplyPoints[i])
+                    {
+                        list2.Add(i);
+                    }
+                }
+                list2.Shuffle<int>();
+                int num5 = list2[0];
+                TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[num5];
+                // tnh_SupplyPoint2.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
+                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
+                TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
+                supplyPoint.SetContact(contact);
+                __instance.m_activeSupplyPointIndicies.Add(num5);
+            }
+            else
+            {
+                for (int i = 0; i < numSupplyPoints; i++)
+                {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + i, TNHTweakerLogger.LogType.TNH);
+
+                    TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
+                    ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
+                    TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
+                    supplyPoint.SetContact(contact);
+                    __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
+                }
             }
 
 
@@ -387,14 +480,30 @@ namespace TNHTweaker.Patches
             }
             else if (__instance.m_level == 0)
             {
+                // __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, __instance.m_curPointSequence.StartSupplyPointIndex, -1, __instance.m_curHoldIndex, true);
                 __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, __instance.m_curPointSequence.StartSupplyPointIndex, -1, __instance.m_curHoldIndex, true);
             }
             else
             {
+                // __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, -1, __instance.m_curHoldIndex, __instance.m_curHoldIndex, false);
                 __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, -1, __instance.m_curHoldIndex, __instance.m_curHoldIndex, false);
             }
 
-
+            for (int i = 0; i < __instance.ConstructSpawners.Count; i++)
+            {
+                if (curHoldIndex2 >= 0)
+                {
+                    TNH_HoldPoint tnh_HoldPoint = __instance.HoldPoints[curHoldIndex2];
+                    if (!tnh_HoldPoint.ExcludeConstructVolumes.Contains(__instance.ConstructSpawners[i]))
+                    {
+                        __instance.ConstructSpawners[i].SpawnConstructs(__instance.m_level);
+                    }
+                }
+                else
+                {
+                    __instance.ConstructSpawners[i].SpawnConstructs(__instance.m_level);
+                }
+            }
 
             if (__instance.BGAudioMode == TNH_BGAudioMode.Default)
             {
@@ -444,6 +553,20 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning secondary panels", TNHTweakerLogger.LogType.TNH);
 
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
+
+            // Suboptimal, but the simplest way to implement.
+            // Check if the map is Institution. Then check if the character is a base-game character.
+            if (point.M.LevelName == "Institution") 
+            {
+                foreach (string Item in BaseCharStrings)
+                {
+                    if (point.M.C.TableID == Item)
+                    {
+                        numPanels = 3;
+                        break;
+                    }
+                }
+            }
 
             for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && level.PossiblePanelTypes.Count > 0; i++)
             {
@@ -562,27 +685,74 @@ namespace TNHTweaker.Patches
 
             int tokensSpawned = 0;
 
-            foreach (GameObject boxObj in point.m_spawnBoxes)
+            // J: If you're asking "why is this an if/elseif check if it's a boolean value?", I... I don't know. I don't know why Anton does this. It's not a big deal but I don't know why.
+            if (!point.M.UsesUberShatterableCrates)
             {
-                if (tokensSpawned < level.MinTokensPerSupply)
+                foreach (GameObject boxObj in point.m_spawnBoxes)
                 {
-                    boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
-                    tokensSpawned += 1;
-                }
 
-                else if (tokensSpawned < level.MaxTokensPerSupply && UnityEngine.Random.value < level.BoxTokenChance)
-                {
-                    boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
-                    tokensSpawned += 1;
-                }
+                    if (tokensSpawned < level.MinTokensPerSupply)
+                    {
+                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                        tokensSpawned += 1;
+                    }
 
-                else if (UnityEngine.Random.value < level.BoxHealthChance)
+                    else if (tokensSpawned < level.MaxTokensPerSupply && UnityEngine.Random.value < level.BoxTokenChance)
+                    {
+                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                        tokensSpawned += 1;
+                    }
+
+                    else if (UnityEngine.Random.value < level.BoxHealthChance)
+                    {
+                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(point.M);
+                    }
+                }
+            }
+
+            else if (point.M.UsesUberShatterableCrates)
+            {
+                for (int k = 0; k < point.m_spawnBoxes.Count; k++)
                 {
-                    boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(point.M);
+                    UberShatterable component = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
+                    if (tokensSpawned < level.MinTokensPerSupply)
+                    {
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+                        tokensSpawned += 1;
+                    }
+                    else if (tokensSpawned < level.MaxTokensPerSupply && UnityEngine.Random.value < level.BoxTokenChance)
+                    {
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+                        tokensSpawned += 1;
+                    }
+                    else if (UnityEngine.Random.value < level.BoxHealthChance)
+                    {
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_HealthMinor);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+                    }
+                    else
+                    {
+                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Empty);
+                        component.SpawnOnShatterPoints.Add(component.transform);
+                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+                    }
                 }
             }
         }
-
 
         public static int GetNextHoldPointIndex(TNH_Manager M, TNH_PointSequence pointSequence, int currLevel, int currHoldIndex)
         {
@@ -1161,7 +1331,8 @@ namespace TNHTweaker.Patches
                     for (int itemIndex = 0; itemIndex < group.ItemsToSpawn; itemIndex++)
                     {
                         FVRObject mainObject;
-                        SavedGunSerializable vaultFile = null;
+                        VaultFile vaultFile = null;
+                        SavedGunSerializable vaultFileLegacy = null;
 
                         Transform primarySpawn = constructor.SpawnPoint_Object;
                         Transform requiredSpawn = constructor.SpawnPoint_Object;
@@ -1188,7 +1359,14 @@ namespace TNHTweaker.Patches
                             {
                                 TNHTweakerLogger.Log("TNHTWEAKER -- Item is a vaulted gun", TNHTweakerLogger.LogType.TNH);
                                 vaultFile = LoadedTemplateManager.LoadedVaultFiles[item];
-                                mainObject = vaultFile.GetGunObject();
+                                mainObject = IM.OD[vaultFile.Objects[0].Elements[0].ObjectID];
+                            }
+
+                            else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(item))
+                            {
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Item is a legacy vaulted gun", TNHTweakerLogger.LogType.TNH);
+                                vaultFileLegacy = LoadedTemplateManager.LoadedLegacyVaultFiles[item];
+                                mainObject = vaultFileLegacy.GetGunObject();
                             }
 
                             else
@@ -1223,13 +1401,18 @@ namespace TNHTweaker.Patches
                         TNHTweakerLogger.Log("Level: " + constructor.M.m_level, TNHTweakerLogger.LogType.TNH);
                         TNHTweakerLogger.Log("Hold Actions Length: " + TNHTweaker.HoldActions.Count, TNHTweakerLogger.LogType.TNH);
                         TNHTweaker.HoldActions[constructor.M.m_level].Add($"Purchased {mainObject.DisplayName}");
-                        
 
-                        //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
+                        // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
                         if (vaultFile != null)
                         {
-                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn.position, primarySpawn.rotation));
+                            SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
+                        }
+                        //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
+                        else if (vaultFileLegacy != null)
+                        {
+                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation));
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Legacy vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
                         }
                         else
                         {

@@ -1,5 +1,4 @@
 ﻿using FistVR;
-using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -464,7 +463,7 @@ namespace TNHTweaker.Utilities
 			return detectedObjects;
 		}
 
-
+		/*
 		public static List<FVRObject> GetLoadedFVRObjectsFromTemplateList(List<AmmoObjectDataTemplate> items)
         {
 			List<FVRObject> loadedItems = new List<FVRObject>();
@@ -476,6 +475,7 @@ namespace TNHTweaker.Utilities
 
 			return loadedItems;
         }
+		*/
 
 		public static FVRFireArmMagazine SpawnDuplicateMagazine(FVRFireArmMagazine magazine, Vector3 position, Quaternion rotation)
         {

@@ -1,4 +1,4 @@
-﻿using Deli.Newtonsoft.Json;
+﻿using Valve.Newtonsoft.Json;
 using FistVR;
 using HarmonyLib;
 using System;
@@ -177,9 +177,9 @@ namespace TNHTweaker.Patches
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
             TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.TNH);
-            if (__instance.m_detectedFirearms.Count > 0 && __instance.m_detectedFirearms[0] != null)
+            if (__instance.m_selectedObject != null)
             {
-                TNHTweaker.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_detectedFirearms[0].ObjectWrapper.DisplayName}");
+                TNHTweaker.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
                 TNHTweaker.GunsRecycled += 1;
             }
 
