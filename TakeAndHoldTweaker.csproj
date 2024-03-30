@@ -17,8 +17,8 @@
     </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Label="UserPaths">
-    <H3VRDir>E:\Steam\steamapps\common\H3VR</H3VRDir>
-    <TnhTweakerModDir>E:\Steam\steamapps\common\H3VR\Deli\mods\TakeAndHoldTweakerTest</TnhTweakerModDir>
+    <BepInString>$(AppData)\r2modmanPlus-local\H3VR\profiles\Dev\BepInEx</BepInString>
+    <ProfileString>$(BepInString)\Plugins</ProfileString>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,7 +47,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.10.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\HarmonyX.2.10.2\lib\net35\0Harmony.dll</HintPath>
+      <HintPath>$(BepInString)\core\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="ADepIn, Version=21.1.16.2315, Culture=neutral, PublicKeyToken=null">
       <HintPath>packages\ADepIn.21.1.16.2315\lib\net35\ADepIn.dll</HintPath>
@@ -60,50 +60,40 @@
       <HintPath>packages\H3VR.GameLibs.0.111.8\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\BepInEx.BaseLib.5.4.21\lib\net35\BepInEx.dll</HintPath>
+      <HintPath>$(BepInString)\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>Libs\BepInEx.Harmony.dll</HintPath>
+      <HintPath>$(BepInString)\core\BepInEx.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Deli.Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Deli.Newtonsoft.Json.12.0.3\lib\net35\Deli.Newtonsoft.Json.dll</HintPath>
+      <HintPath>$(BepInString)\patchers\DeliCollective-Deli\Deli.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Deli.Patcher, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Deli.Patcher.0.3.0\lib\net35\Deli.Patcher.dll</HintPath>
+      <HintPath>$(BepInString)\patchers\DeliCollective-Deli\Deli.Patcher.dll</HintPath>
     </Reference>
     <Reference Include="Deli.Setup, Version=0.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Deli.0.3.0\lib\net35\Deli.Setup.dll</HintPath>
+      <HintPath>$(ProfileString)\DeliCollective-Deli\Deli.Setup.dll</HintPath>
     </Reference>
     <Reference Include="DotNetZip, Version=1.12.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
-      <HintPath>packages\DotNetZip.1.12.0\lib\net20\DotNetZip.dll</HintPath>
-    </Reference>
-    <Reference Include="ES2">
-      <HintPath>lib\ES2.dll</HintPath>
+      <HintPath>$(BepInString)\patchers\DeliCollective-Deli\DotNetZip.dll</HintPath>
     </Reference>
     <Reference Include="MagazinePatcher">
-      <HintPath>lib\MagazinePatcher.dll</HintPath>
+      <HintPath>$(ProfileString)\devyndamonster-MagazinePatcher\MagazinePatcher.dll</HintPath>
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
-    </Reference>
-    <Reference Include="MagazinePatcher">
-      <HintPath>Libs\MagazinePatcher.dll</HintPath>
+      <HintPath>..\..\h3vr_Data\Managed\ES2.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour, Version=22.7.31.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MonoMod.RuntimeDetour.22.7.31.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>$(BepInString)\core\MonoMod.RuntimeDetour.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod.Utils, Version=22.7.31.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\MonoMod.Utils.22.7.31.1\lib\net35\MonoMod.Utils.dll</HintPath>
+      <HintPath>$(BepInString)\core\MonoMod.Utils.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="OtherLoader">
-      <HintPath>lib\OtherLoader.dll</HintPath>
-    </Reference>
-    <Reference Include="OtherLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\OtherLoader\bin\Debug\OtherLoader.dll</HintPath>
+      <HintPath>$(ProfileString)\devyndamonster-OtherLoader\OtherLoader.dll</HintPath>
     </Reference>
     <Reference Include="SemanticVersioning, Version=2.0.2.0, Culture=neutral, PublicKeyToken=a89bb7dc6f7a145c, processorArchitecture=MSIL">
       <HintPath>packages\SemanticVersioning.2.0.2\lib\net35\SemanticVersioning.dll</HintPath>
@@ -129,16 +119,16 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Stratum">
-      <HintPath>lib\Stratum.dll</HintPath>
+      <HintPath>$(ProfileString)\Stratum-Stratum\Stratum.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\UnityEngine.Core.5.6.0\lib\net35\UnityEngine.dll</HintPath>
+      <HintPath>..\..\h3vr_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.111.8\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\h3vr_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.111.8\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\h3vr_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -178,15 +168,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- This target copies dll to the folder, for quicker debbugging -->
-  <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(TnhTweakerModDir)' != '' ">
-    <Message Text="TnhTweakerModDir present, copying dll to $(TnhTweakerModDir)" />
-    <Copy SourceFiles="$(OutDir)TakeAndHoldTweaker.dll" DestinationFolder="$(TnhTweakerModDir)" OverwriteReadOnlyFiles="true" />
-  </Target>
-  <Import Project="packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets" Condition="Exists('packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets'))" />
+  <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(ProfileString)' != '' ">
+    <Message Text="ProfileString present, copying dll to $(ProfileString)" />
+    <Copy SourceFiles="$(OutDir)TakeAndHoldTweaker.dll" DestinationFolder="$(ProfileString)" OverwriteReadOnlyFiles="true" />
   </Target>
 </Project>

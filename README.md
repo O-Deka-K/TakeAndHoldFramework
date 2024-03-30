@@ -1,3 +1,5 @@
+Note: Holy cow I need to update this.
+
 [![Exampled Video](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/devyn_myers)
 
 
@@ -31,4 +33,6 @@ Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) 
 
 ## Building
 
-Before building, please make sure to add all dependencies to `/lib` listed in `/lib/_README.txt`.
+Create a new folder inside of your main H3VR install, then place this repository's folder inside of that. Your file structure should look something like, say... `(Steam path)/common/H3VR/(Repos)/TakeAndHoldTweaker/TakeAndHoldTweaker.sln`.
+Next, create a mod manager profile called 'Dev' and install the prerequisite mods.
+(to-do: create a mod profile file that allows people to import all necessary mods)
