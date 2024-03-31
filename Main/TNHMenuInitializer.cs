@@ -28,7 +28,7 @@ namespace TNHTweaker
             hotdog.gameObject.SetActive(false);
 
             bool isOtherLoaderLoaded;
-            bool isMagPatcherLoaded;
+            bool isMagPatcherLoaded = false;
             try
             {
                 PokeOtherloader();
@@ -40,15 +40,11 @@ namespace TNHTweaker
                 TNHTweakerLogger.LogWarning("TNHTweaker -- OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
             }
 
-            try
+            if (Chainloader.PluginInfos.ContainsKey("MagazinePatcher"))
             {
                 PokeMagPatcher();
                 isMagPatcherLoaded = true;
-            }
-            catch
-            {
-                isMagPatcherLoaded = false;
-                TNHTweakerLogger.Log("TNHTweaker -- Mag Patcher not found.", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Mag patcher is detected.");
             }
 
 
@@ -70,13 +66,13 @@ namespace TNHTweaker
             while (itemLoadProgress < 1);
 
             //Now we wait for magazine caching to be done
-            float cachingProgress;
-            do
+            if (isMagPatcherLoaded)
             {
-                yield return null;
-
-                if (isMagPatcherLoaded)
+                float cachingProgress;
+                do
                 {
+                    yield return null;
+
                     cachingProgress = PokeMagPatcher();// PatcherStatus.PatcherProgress;
                     itemsText.text = GetMagPatcherCacheLog();// PatcherStatus.CacheLog;
                     progressText.text = "CACHING ITEMS : " + (int)(cachingProgress * 100) + "%";
@@ -90,12 +86,8 @@ namespace TNHTweaker
                     }
                     */
                 }
-                else
-                {
-                    cachingProgress = 1;
-                }
+                while (cachingProgress < 1);
             }
-            while (cachingProgress < 1);
 
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
