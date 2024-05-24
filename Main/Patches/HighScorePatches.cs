@@ -90,7 +90,7 @@ namespace TNHTweaker.Patches
         public static bool TrackNextLevel(TNH_Manager __instance)
         {
             TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.TNH);
-            TNHTweaker.HoldActions.Add(new List<string>());
+            TNHTweaker.HoldActions.Add([]);
 
             return true;
         }
@@ -225,7 +225,7 @@ namespace TNHTweaker.Patches
             {
                 TNHTweakerLogger.Log("Requesting Top Scores", TNHTweakerLogger.LogType.TNH);
                 __instance.m_doRequestScoresTop = false;
-                __instance.m_scoresTop = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+                __instance.m_scoresTop = [];
 
                 AnvilManager.Instance.StartCoroutine(GetHighScores(6, __instance));
             }
@@ -235,12 +235,12 @@ namespace TNHTweaker.Patches
             {
                 TNHTweakerLogger.Log("Requesting Player Scores", TNHTweakerLogger.LogType.TNH);
                 __instance.m_doRequestScoresPlayer = false;
-                __instance.m_scoresPlayer = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+                __instance.m_scoresPlayer = [];
 
                 //If the players score is also in the selection of top scores, we just display the top
                 if (__instance.m_scoresTop.Any(o => o.name == SteamFriends.GetPersonaName()))
                 {
-                    __instance.m_scoresPlayer = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+                    __instance.m_scoresPlayer = [];
                     __instance.m_hasScoresPlayer = true;
 
                     __instance.SetGlobalHighScoreDisplay(__instance.m_scoresTop);
@@ -363,7 +363,7 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("Getting player scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
 
             string url = "https://tnh-dashboard.azure-api.net/v1/api/scores/search";
-            List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+            List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = [];
 
             if (GM.TNH_Manager != null)
             {

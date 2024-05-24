@@ -29,7 +29,7 @@ namespace TNHTweaker.Utilities
 			if (maxCapacity <= 0) maxCapacity = 9999;
 
 			//Create a list containing all compatible ammo containers
-			List<FVRObject> compatibleContainers = new List<FVRObject>();
+			List<FVRObject> compatibleContainers = [];
 			if (firearm.CompatibleSpeedLoaders is not null) compatibleContainers.AddRange(firearm.CompatibleSpeedLoaders);
 
 
@@ -89,7 +89,7 @@ namespace TNHTweaker.Utilities
 			if (maxCapacity <= 0) maxCapacity = 9999;
 
 			//Create a list containing all compatible ammo containers
-			List<FVRObject> compatibleMagazines = new List<FVRObject>();
+			List<FVRObject> compatibleMagazines = [];
 			if (firearm.CompatibleMagazines is not null) compatibleMagazines.AddRange(firearm.CompatibleMagazines);
 
 			//Go through these containers and remove any that don't fit given criteria
@@ -126,7 +126,7 @@ namespace TNHTweaker.Utilities
 			if (maxCapacity <= 0) maxCapacity = 9999;
 
 			//Create a list containing all compatible ammo containers
-			List<FVRObject> compatibleClips = new List<FVRObject>();
+			List<FVRObject> compatibleClips = [];
 			if (firearm.CompatibleClips is not null) compatibleClips.AddRange(firearm.CompatibleClips);
 
 			//Go through these containers and remove any that don't fit given criteria
@@ -159,7 +159,7 @@ namespace TNHTweaker.Utilities
 			firearm = IM.OD[firearm.ItemID];
 
 			//Create a list containing all compatible ammo containers
-			List<FVRObject> compatibleRounds = new List<FVRObject>();
+			List<FVRObject> compatibleRounds = [];
 			if (firearm.CompatibleSingleRounds is not null) compatibleRounds.AddRange(firearm.CompatibleSingleRounds);
 
 			//Go through these containers and remove any that don't fit given criteria
@@ -196,7 +196,7 @@ namespace TNHTweaker.Utilities
 			if (magazines is null || magazines.Count == 0) return null;
 
 			//This was done with a list because whenever there are multiple smallest magazines of the same size, we want to return a random one from those options
-			List<FVRObject> smallestMagazines = new List<FVRObject>();
+			List<FVRObject> smallestMagazines = [];
 
 			foreach (FVRObject magazine in magazines)
 			{
@@ -295,7 +295,7 @@ namespace TNHTweaker.Utilities
 			}
 
 			//We make this a list so that when several next largest mags have the same capacity, we can return a random magazine from that selection
-			List<FVRObject> nextLargestMagazines = new List<FVRObject>();
+			List<FVRObject> nextLargestMagazines = [];
 			
             foreach (FVRObject magazine in IM.CompatMags[currentMagazine.MagazineType])
             {
@@ -334,7 +334,7 @@ namespace TNHTweaker.Utilities
 		/// <returns>A list of FVRPhysicalObjects equipped on the player</returns>
 		public static List<FVRPhysicalObject> GetEquippedItems()
 		{
-			List<FVRPhysicalObject> heldItems = new List<FVRPhysicalObject>();
+			List<FVRPhysicalObject> heldItems = [];
 
 			FVRInteractiveObject rightHandObject = GM.CurrentMovementManager.Hands[0].CurrentInteractable;
 			FVRInteractiveObject leftHandObject = GM.CurrentMovementManager.Hands[1].CurrentInteractable;
@@ -382,7 +382,7 @@ namespace TNHTweaker.Utilities
 		/// <returns>A list of FVRObjects equipped on the player</returns>
 		public static List<FVRObject> GetEquippedFVRObjects()
 		{
-			List<FVRObject> equippedFVRObjects = new List<FVRObject>();
+			List<FVRObject> equippedFVRObjects = [];
 
 			foreach (FVRPhysicalObject item in GetEquippedItems())
 			{
@@ -446,7 +446,7 @@ namespace TNHTweaker.Utilities
 		/// <returns>A list containing every attached item on the given firearm</returns>
 		public static List<FVRPhysicalObject> GetAllAttachedObjects(FVRFireArm fireArm, bool includeSelf = false)
 		{
-			List<FVRPhysicalObject> detectedObjects = new List<FVRPhysicalObject>();
+			List<FVRPhysicalObject> detectedObjects = [];
 
 			if (includeSelf) detectedObjects.Add(fireArm);
 

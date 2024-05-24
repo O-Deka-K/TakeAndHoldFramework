@@ -37,7 +37,7 @@ namespace TNHTweaker.ObjectTemplates
             LoadedRoundsInChambers = gun.LoadedRoundsInChambers;
             SavedFlags = gun.SavedFlags;
 
-            FireSelectorModes = new List<FireSelectorMode>();
+            FireSelectorModes = [];
             LoadFirearmProperties();
 
             this.gun = gun;
@@ -142,7 +142,7 @@ namespace TNHTweaker.ObjectTemplates
 
                 if (OverrideFireSelectors)
                 {
-                    List<Handgun.FireSelectorMode> modeList = new List<Handgun.FireSelectorMode>();
+                    List<Handgun.FireSelectorMode> modeList = [];
                     foreach (FireSelectorMode mode in FireSelectorModes)
                     {
                         modeList.Add(mode.GetHandgunMode());
@@ -165,7 +165,7 @@ namespace TNHTweaker.ObjectTemplates
             {
                 if (OverrideFireSelectors)
                 {
-                    List<ClosedBoltWeapon.FireSelectorMode> modeList = new List<ClosedBoltWeapon.FireSelectorMode>();
+                    List<ClosedBoltWeapon.FireSelectorMode> modeList = [];
                     foreach (FireSelectorMode mode in FireSelectorModes)
                     {
                         modeList.Add(mode.GetClosedBoltMode());
@@ -188,7 +188,7 @@ namespace TNHTweaker.ObjectTemplates
             {
                 if (OverrideFireSelectors)
                 {
-                    List<OpenBoltReceiver.FireSelectorMode> modeList = new List<OpenBoltReceiver.FireSelectorMode>();
+                    List<OpenBoltReceiver.FireSelectorMode> modeList = [];
                     foreach (FireSelectorMode mode in FireSelectorModes)
                     {
                         modeList.Add(mode.GetOpenBoltMode());

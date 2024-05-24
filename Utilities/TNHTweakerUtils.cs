@@ -156,7 +156,7 @@ namespace TNHTweaker.Utilities
 
         public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
         {
-            Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
+            Dictionary<string, Sprite> icons = [];
 
             foreach(CustomCharacter character in characters)
             {
@@ -291,7 +291,7 @@ namespace TNHTweaker.Utilities
                 }
 
                 string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
-                List<SavedGunSerializable> savedGuns = new List<SavedGunSerializable>();
+                List<SavedGunSerializable> savedGuns = [];
                 foreach(string name in vaultFiles)
                 {
                     try
@@ -629,14 +629,14 @@ namespace TNHTweaker.Utilities
 
         public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation)
         {
-            List<GameObject> toDealWith = new List<GameObject>();
-            List<GameObject> toMoveToTrays = new List<GameObject>();
+            List<GameObject> toDealWith = [];
+            List<GameObject> toMoveToTrays = [];
             FVRFireArm myGun = null;
             FVRFireArmMagazine myMagazine = null;
-            List<int> validIndexes = new List<int>();
-            Dictionary<GameObject, SavedGunComponent> dicGO = new Dictionary<GameObject, SavedGunComponent>();
-            Dictionary<int, GameObject> dicByIndex = new Dictionary<int, GameObject>();
-            List<GameObject> gameObjects = new List<GameObject>();
+            List<int> validIndexes = [];
+            Dictionary<GameObject, SavedGunComponent> dicGO = [];
+            Dictionary<int, GameObject> dicByIndex = [];
+            List<GameObject> gameObjects = [];
             SavedGun gun = savedGun.GetSavedGun();
 
             for (int i = 0; i < gun.Components.Count; i++)

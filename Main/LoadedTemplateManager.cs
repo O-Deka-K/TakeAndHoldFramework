@@ -13,21 +13,21 @@ namespace TNHTweaker
     public static class LoadedTemplateManager
     {
 
-        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = new Dictionary<TNH_CharacterDef, CustomCharacter>();
-        public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
-        public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = new Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool>();
-        public static Dictionary<string, VaultFile> LoadedVaultFiles = new Dictionary<string, VaultFile>();
-        public static Dictionary<string, SavedGunSerializable> LoadedLegacyVaultFiles = new Dictionary<string, SavedGunSerializable>();
-        public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
-        public static List<CustomCharacter> DefaultCharacters = new List<CustomCharacter>();
-        public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
-        public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
-        public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
+        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = [];
+        public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = [];
+        public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = [];
+        public static Dictionary<string, VaultFile> LoadedVaultFiles = [];
+        public static Dictionary<string, SavedGunSerializable> LoadedLegacyVaultFiles = [];
+        public static List<CustomCharacter> CustomCharacters = [];
+        public static List<CustomCharacter> DefaultCharacters = [];
+        public static List<SosigTemplate> CustomSosigs = [];
+        public static List<SosigEnemyTemplate> DefaultSosigs = [];
+        public static Dictionary<string, int> SosigIDDict = [];
 
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 1000;
 
-        public static Dictionary<string, Sprite> DefaultIconSprites = new Dictionary<string, Sprite>();
+        public static Dictionary<string, Sprite> DefaultIconSprites = [];
 
         /// <summary>
         /// Takes a custom SosigTemplate object, and adds it to the necessary dictionaries. This method assumes that you are sending a template for a custom sosig, and that it should be given a new the SosigEnemyID

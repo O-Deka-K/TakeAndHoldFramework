@@ -583,8 +583,10 @@ namespace TNHTweaker
             else
             {
                 //Debug.Log("Handgun had atleast one fire selector mode, Adding full auto");
-                List<Handgun.FireSelectorMode> modes = new List<Handgun.FireSelectorMode>(gun.FireSelectorModes);
-                modes.Add(fullAuto);
+                List<Handgun.FireSelectorMode> modes = new List<Handgun.FireSelectorMode>(gun.FireSelectorModes)
+                {
+                    fullAuto
+                };
                 gun.FireSelectorModes = modes.ToArray();
 
                 //Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
@@ -642,8 +644,10 @@ namespace TNHTweaker
             else
             {
                 //Debug.Log("Gun had fire selector, adding full");
-                List<ClosedBoltWeapon.FireSelectorMode> modes = new List<ClosedBoltWeapon.FireSelectorMode>(gun.FireSelector_Modes);
-                modes.Add(fullAuto);
+                List<ClosedBoltWeapon.FireSelectorMode> modes = new List<ClosedBoltWeapon.FireSelectorMode>(gun.FireSelector_Modes)
+                {
+                    fullAuto
+                };
                 gun.FireSelector_Modes = modes.ToArray();
             }
         }
@@ -667,8 +671,10 @@ namespace TNHTweaker
             else
             {
                 //Debug.Log("Gun had fire selector, adding full");
-                List<OpenBoltReceiver.FireSelectorMode> modes = new List<OpenBoltReceiver.FireSelectorMode>(gun.FireSelector_Modes);
-                modes.Add(fullAuto);
+                List<OpenBoltReceiver.FireSelectorMode> modes = new List<OpenBoltReceiver.FireSelectorMode>(gun.FireSelector_Modes)
+                {
+                    fullAuto
+                };
                 gun.FireSelector_Modes = modes.ToArray();
             }
         }

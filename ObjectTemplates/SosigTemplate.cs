@@ -71,7 +71,7 @@ namespace TNHTweaker.ObjectTemplates
 				template.TertiaryChance = TertiaryChance;
 
 				TNHTweakerLogger.Log("TNHTweaker -- Getting sosig config", TNHTweakerLogger.LogType.Character);
-				template.ConfigTemplates = new List<SosigConfigTemplate>();
+				template.ConfigTemplates = [];
 				foreach(SosigConfig temp in Configs)
                 {
 					if(temp == null)
@@ -296,7 +296,7 @@ namespace TNHTweaker.ObjectTemplates
 				template.LinkDamageMultipliers = LinkDamageMultipliers;
 				template.LinkStaggerMultipliers = LinkStaggerMultipliers;
 
-				template.StartingLinkIntegrity = new List<Vector2>();
+				template.StartingLinkIntegrity = [];
 				foreach (Vector2Serializable v in StartingLinkIntegrity)
 				{
 					template.StartingLinkIntegrity.Add(v.GetVector2());
@@ -325,8 +325,8 @@ namespace TNHTweaker.ObjectTemplates
 				template.DoesExplodeKill_Upper = DoesExplodeKill_Upper;
 				template.DoesExplodeKill_Lower = DoesExplodeKill_Lower;
 				template.UsesLinkSpawns = false;
-				template.LinkSpawns = new List<FVRObject>();
-				template.LinkSpawnChance = new List<float>();
+				template.LinkSpawns = [];
+				template.LinkSpawnChance = [];
 				template.OverrideSpeech = false;
 			}
 

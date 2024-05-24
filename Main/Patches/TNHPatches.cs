@@ -24,8 +24,8 @@ namespace TNHTweaker.Patches
 {
     public class TNHPatches
     {
-        static List<string> BaseCharStrings = new List<string>
-        {
+        static List<string> BaseCharStrings =
+        [
             "DD_C00",
             "DD_C01",
             "DD_C02",
@@ -38,7 +38,7 @@ namespace TNHTweaker.Patches
             "MM_C01",
             "MM_C02",
             "MM_C03",
-        };
+        ];
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
@@ -433,7 +433,7 @@ namespace TNHTweaker.Patches
             }
             else if (__instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level >= 5)
             {
-                List<int> list2 = new List<int>();
+                List<int> list2 = [];
                 int num4 = -1;
                 for (int i = 0; i < __instance.SafePosMatrix.Entries_HoldPoints[__instance.m_curHoldIndex].SafePositions_SupplyPoints.Count; i++)
                 {
@@ -767,7 +767,7 @@ namespace TNHTweaker.Patches
             //If we have been to all the points, then we just select a random safe one
             else
             {
-                List<int> pointIndexes = new List<int>();
+                List<int> pointIndexes = [];
                 for (int i = 0; i < M.SafePosMatrix.Entries_HoldPoints[currHoldIndex].SafePositions_HoldPoints.Count; i++)
                 {
                     if (i != currHoldIndex && M.SafePosMatrix.Entries_HoldPoints[currHoldIndex].SafePositions_HoldPoints[i])
@@ -787,7 +787,7 @@ namespace TNHTweaker.Patches
 
         public static List<int> GetNextSupplyPointIndexes(TNH_Manager M, TNH_PointSequence pointSequence, int currLevel, int currHoldIndex)
         {
-            List<int> indexes = new List<int>();
+            List<int> indexes = [];
 
             if (currLevel == 0)
             {
@@ -923,8 +923,7 @@ namespace TNHTweaker.Patches
             List<FVRObject> encryptions;
             if (isSimple)
             {
-                encryptions = new List<FVRObject>();
-                encryptions.Add(holdPoint.M.GetEncryptionPrefab(TNH_EncryptionType.Static));
+                encryptions = [holdPoint.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
             }
             else
             {
@@ -1100,7 +1099,7 @@ namespace TNHTweaker.Patches
         {
             if (!__instance.m_decidedTypes.ContainsKey(t))
             {
-                List<FireArmRoundClass> list = new List<FireArmRoundClass>();
+                List<FireArmRoundClass> list = [];
                 CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
 
                 for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
@@ -1135,7 +1134,7 @@ namespace TNHTweaker.Patches
         {
 
             //Collect all pools that could spawn based on level and type, and sum up their rarities
-            List<EquipmentPoolDef.PoolEntry> validPools = new List<EquipmentPoolDef.PoolEntry>();
+            List<EquipmentPoolDef.PoolEntry> validPools = [];
             float summedRarity = 0;
             foreach(EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
             {
@@ -1306,20 +1305,22 @@ namespace TNHTweaker.Patches
 
                 // This gathers all spawn points, so that multiple things can be spawned at the same time, on different spawnpoints.
                 //TODO: I dont like this, but it should work.
-                Dictionary<Transform, List<GameObject>> itemsToSpawn = new Dictionary<Transform, List<GameObject>>();
-                itemsToSpawn.Add(constructor.SpawnPoint_Mag, new List<GameObject>());
-                itemsToSpawn.Add(constructor.SpawnPoint_Ammo, new List<GameObject>());
-                itemsToSpawn.Add(constructor.SpawnPoint_Grenade, new List<GameObject>());
-                itemsToSpawn.Add(constructor.SpawnPoint_Melee, new List<GameObject>());
-                itemsToSpawn.Add(constructor.SpawnPoint_Shield, new List<GameObject>());
-                itemsToSpawn.Add(constructor.SpawnPoint_Object, new List<GameObject>());
-                
-                //This should only have one, and throw when trying to spawn more.
-                itemsToSpawn.Add(constructor.SpawnPoint_Case, new List<GameObject>());
+                Dictionary<Transform, List<GameObject>> itemsToSpawn = new Dictionary<Transform, List<GameObject>>
+                {
+                    { constructor.SpawnPoint_Mag, [] },
+                    { constructor.SpawnPoint_Ammo, [] },
+                    { constructor.SpawnPoint_Grenade, [] },
+                    { constructor.SpawnPoint_Melee, [] },
+                    { constructor.SpawnPoint_Shield, [] },
+                    { constructor.SpawnPoint_Object, [] },
+
+                    //This should only have one, and throw when trying to spawn more.
+                    { constructor.SpawnPoint_Case, [] }
+                };
                 
                 foreach (var gunSpawnPoint in constructor.SpawnPoints_GunsSize)
                 {
-                    itemsToSpawn.Add(gunSpawnPoint, new List<GameObject>());
+                    itemsToSpawn.Add(gunSpawnPoint, []);
                 }
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + selectedGroups.Count + " groups to spawn from", TNHTweakerLogger.LogType.TNH);

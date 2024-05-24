@@ -43,15 +43,15 @@ namespace TNHTweaker
 
         //Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
-        public static List<int> SpawnedBossIndexes = new List<int>();
-        public static List<int> SupplyPointIFFList = new List<int>();
+        public static List<int> SpawnedBossIndexes = [];
+        public static List<int> SupplyPointIFFList = [];
 
-        public static List<GameObject> SpawnedConstructors = new List<GameObject>();
-        public static List<GameObject> SpawnedPanels = new List<GameObject>();
-        public static List<EquipmentPoolDef.PoolEntry> SpawnedPools = new List<EquipmentPoolDef.PoolEntry>();
+        public static List<GameObject> SpawnedConstructors = [];
+        public static List<GameObject> SpawnedPanels = [];
+        public static List<EquipmentPoolDef.PoolEntry> SpawnedPools = [];
 
-        public static List<List<string>> HoldActions = new List<List<string>>();
-        public static List<HoldStats> HoldStats = new List<HoldStats>();
+        public static List<List<string>> HoldActions = [];
+        public static List<HoldStats> HoldStats = [];
 
         public static int GunsRecycled;
         public static int ShotsFired;

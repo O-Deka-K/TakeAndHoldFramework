@@ -68,7 +68,7 @@ namespace TNHTweaker.Patches
 
             Patrol patrol = currLevel.Patrols[patrolIndex];
 
-            List<int> validLocations = new List<int>();
+            List<int> validLocations = [];
             float minDist = __instance.TAHReticle.Range * 1.2f;
 
             //Get a safe starting point for the patrol to spawn
@@ -161,8 +161,8 @@ namespace TNHTweaker.Patches
                 //This could cause strange and unpredictable behaviour
                 //Good luck!
                 __result = new TNH_Manager.SosigPatrolSquad();
-                __result.PatrolPoints = new List<Vector3>();
-                __result.Squad = new List<Sosig>();
+                __result.PatrolPoints = [];
+                __result.Squad = [];
 
                 return false;
             }
@@ -258,9 +258,9 @@ namespace TNHTweaker.Patches
         /// </summary>
         public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, Patrol patrol, int patrolIndex)
         {
-            List<Vector3> SpawnPoints = new List<Vector3>();
-            List<Vector3> PatrolPoints = new List<Vector3>();
-            List<Vector3> ForwardVectors = new List<Vector3>();
+            List<Vector3> SpawnPoints = [];
+            List<Vector3> PatrolPoints = [];
+            List<Vector3> ForwardVectors = [];
 
             foreach (TNH_HoldPoint holdPoint in instance.HoldPoints)
             {

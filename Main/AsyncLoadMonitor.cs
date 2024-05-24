@@ -11,7 +11,7 @@ namespace TNHTweaker
     public static class AsyncLoadMonitor
     {
 
-        public static List<AnvilCallback<AssetBundle>> CallbackList = new List<AnvilCallback<AssetBundle>>();
+        public static List<AnvilCallback<AssetBundle>> CallbackList = [];
 
         public static float GetProgress()
         {
