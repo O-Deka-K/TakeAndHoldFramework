@@ -130,12 +130,17 @@
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\h3vr_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="YamlDotNet, Version=13.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>packages\YamlDotNet.13.7.1\lib\net35\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
     <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\HighScorePatches.cs" />
+    <Compile Include="Main\Patches\HoldPatches.cs" />
     <Compile Include="Main\Patches\PatrolPatches.cs" />
     <Compile Include="Main\Patches\TNHPatches.cs" />
     <Compile Include="Main\TemplateLoadersLegacy.cs" />
@@ -144,6 +149,7 @@
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
     <Compile Include="ObjectTemplates\HoldStats.cs" />
     <Compile Include="ObjectTemplates\MapData.cs" />
+    <Compile Include="ObjectTemplates\Old\CustomCharacterV1.cs" />
     <Compile Include="ObjectTemplates\ScoreEntry.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />

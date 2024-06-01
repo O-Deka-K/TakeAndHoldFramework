@@ -14,6 +14,7 @@ using TNHTweaker.Utilities;
 using UnityEngine;
 using Stratum;
 using Stratum.Extensions;
+using YamlDotNet.Serialization;
 
 namespace TNHTweaker
 {
@@ -25,9 +26,45 @@ namespace TNHTweaker
 
             try
             {
-                SosigTemplate sosig = JsonConvert.DeserializeObject<SosigTemplate>(File.ReadAllText(file.FullName));
+                SosigTemplate sosig = null;
 
-                TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+                if (file.Name.EndsWith(".yaml"))
+                {
+                    var deserializerBuilder = new DeserializerBuilder();
+
+                    var deserializer = deserializerBuilder.Build();
+                    sosig = deserializer.Deserialize<SosigTemplate>(File.ReadAllText(file.FullName));
+
+                    TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+                }
+                else if (file.Name.EndsWith(".json"))
+                {
+                    JsonSerializerSettings settings = new()
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+
+                    sosig = JsonConvert.DeserializeObject<SosigTemplate>(File.ReadAllText(file.FullName));
+
+                    TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+
+                    if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                    {
+                        using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
+                        {
+                            var serializerBuilder = new SerializerBuilder();
+
+                            serializerBuilder.WithIndentedSequences();
+
+                            var serializer = serializerBuilder.Build();
+                            string vaultString = serializer.Serialize(sosig);
+                            sw.WriteLine(vaultString);
+                            sw.Close();
+                        }
+
+                        File.Delete(file.FullName);
+                    }
+                }
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
@@ -49,13 +86,47 @@ namespace TNHTweaker
 
                 foreach (FileInfo file in folder.GetFiles())
                 {
-                    if (file.Name.EndsWith("character.json"))
+                    if (file.Name.EndsWith("character.yaml"))
                     {
-                        JsonSerializerSettings settings = new JsonSerializerSettings
+                        var deserializerBuilder = new DeserializerBuilder();
+
+                        foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                        {
+                            deserializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                        }
+                        var deserializer = deserializerBuilder.Build();
+                        character = deserializer.Deserialize<CustomCharacter>(File.ReadAllText(file.FullName));
+
+                        TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character file", TNHTweakerLogger.LogType.File);
+                    }
+                    else if (file.Name.EndsWith("character.json"))
+                    {
+                        JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         };
-                        character = JsonConvert.DeserializeObject<CustomCharacter>(File.ReadAllText(file.FullName), settings);
+                        // Convert old JSON character files to the newer YAML format.
+                        character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
+
+                        if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                        {
+                            using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
+                            {
+                                var serializerBuilder = new SerializerBuilder();
+
+                                serializerBuilder.WithIndentedSequences();
+                                foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                                {
+                                    serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                                }
+                                var serializer = serializerBuilder.Build();
+                                string characterString = serializer.Serialize(character);
+                                sw.WriteLine(characterString);
+                                sw.Close();
+                            }
+
+                            File.Delete(file.FullName);
+                        }
 
                         TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character file", TNHTweakerLogger.LogType.File);
                     }
@@ -97,7 +168,7 @@ namespace TNHTweaker
 
                 LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TNHTweakerLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
             }
@@ -111,14 +182,52 @@ namespace TNHTweaker
 
             try
             {
-                VaultFile savedGun = JsonConvert.DeserializeObject<VaultFile>(File.ReadAllText(file.FullName));
+                VaultFile savedGun = null;
 
-                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
-                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                if (file.Name.EndsWith(".yaml"))
+                {
+                    var deserializerBuilder = new DeserializerBuilder();
 
-                LoadedTemplateManager.AddVaultFile(savedGun);
+                    var deserializer = deserializerBuilder.Build();
+                    savedGun = deserializer.Deserialize<VaultFile>(File.ReadAllText(file.FullName));
+
+                    TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                }
+                else if (file.Name.EndsWith(".json"))
+                {
+                    JsonSerializerSettings settings = new()
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+
+                    savedGun = JsonConvert.DeserializeObject<VaultFile>(File.ReadAllText(file.FullName));
+
+                    TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+
+                    if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                    {
+                        using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
+                        {
+                            var serializerBuilder = new SerializerBuilder();
+
+                            serializerBuilder.WithIndentedSequences();
+
+                            var serializer = serializerBuilder.Build();
+                            string vaultString = serializer.Serialize(savedGun);
+                            sw.WriteLine(vaultString);
+                            sw.Close();
+                        }
+
+                        File.Delete(file.FullName);
+                    }
+                }
+
+                if (savedGun != null)
+                {
+                    LoadedTemplateManager.AddVaultFile(savedGun);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TNHTweakerLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
             }

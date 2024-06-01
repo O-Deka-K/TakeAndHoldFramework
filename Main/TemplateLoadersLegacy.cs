@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
+using TNHTweaker.ObjectTemplates.V1;
 using TNHTweaker.Utilities;
 using UnityEngine;
 using Stratum;
@@ -35,7 +35,7 @@ namespace TNHTweaker
 
             try
             {
-                SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SosigTemplate>();
+                ObjectTemplates.SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SosigTemplate>();
                 TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
@@ -71,7 +71,7 @@ namespace TNHTweaker
                     if (file.Path.EndsWith("character.json"))
                     {
                         string charString = stage.ImmediateReaders.Get<string>()(file);
-                        JsonSerializerSettings settings = new JsonSerializerSettings
+                        JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         };
@@ -109,7 +109,7 @@ namespace TNHTweaker
 
                 TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
 
-                LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
+                LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
             catch(Exception e)
             {
@@ -132,7 +132,7 @@ namespace TNHTweaker
 
             try
             {
-                SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SavedGunSerializable>();
+                ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
 
                 TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
                 TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);

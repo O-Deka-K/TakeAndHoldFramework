@@ -181,6 +181,14 @@ namespace TNHTweaker.Utilities
                 }
 			}
 
+			foreach (KeyValuePair<FireArmRoundClass, FVRFireArmRoundDisplayData.DisplayDataClass> dogshit in AM.STypeDic[firearm.RoundType])
+			{
+				if (compatibleRounds.Contains(dogshit.Value.ObjectID) && dogshit.Value.Cost > 0)
+				{
+					compatibleRounds.Remove(dogshit.Value.ObjectID);
+				}
+			}
+
 			return compatibleRounds;
 		}
 

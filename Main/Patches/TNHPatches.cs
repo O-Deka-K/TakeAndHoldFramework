@@ -158,7 +158,7 @@ namespace TNHTweaker.Patches
         {
             //Add additional character buttons
             OptionsPanel_ButtonSet buttonSet = manager.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
-            List<FVRPointableButton> buttonList = new List<FVRPointableButton>(buttonSet.ButtonsInSet);
+            List<FVRPointableButton> buttonList = new(buttonSet.ButtonsInSet);
             for (int i = 0; i < 6; i++)
             {
                 Text newCharacterLabel = UnityEngine.Object.Instantiate(manager.LBL_CharacterName[1].gameObject, manager.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
@@ -212,7 +212,7 @@ namespace TNHTweaker.Patches
             }
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
-            if (character.HasPrimaryWeapon)
+            if (character.PrimaryWeapon != null && character.PrimaryWeapon.PrimaryGroup is EquipmentGroup)
             {
                 EquipmentGroup selectedGroup = character.PrimaryWeapon.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.PrimaryWeapon.BackupGroup;
@@ -224,6 +224,7 @@ namespace TNHTweaker.Patches
                     if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
                     {
                         IM.CompatMags.Add(selectedItem.MagazineType, selectedItem.CompatibleMagazines);
+                        TNHTweakerLogger.Log($"{selectedItem.CompatibleMagazines}", TNHTweakerLogger.LogType.TNH);
                     }
                     GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     __instance.m_trackedObjects.Add(weaponCase);
@@ -231,7 +232,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasSecondaryWeapon)
+            if (character.SecondaryWeapon != null)
             {
                 EquipmentGroup selectedGroup = character.SecondaryWeapon.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.SecondaryWeapon.BackupGroup;
@@ -251,7 +252,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasTertiaryWeapon)
+            if (character.TertiaryWeapon != null)
             {
                 EquipmentGroup selectedGroup = character.TertiaryWeapon.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.TertiaryWeapon.BackupGroup;
@@ -265,7 +266,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasPrimaryItem)
+            if (character.PrimaryItem != null)
             {
                 EquipmentGroup selectedGroup = character.PrimaryItem.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.PrimaryItem.BackupGroup;
@@ -279,7 +280,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasSecondaryItem)
+            if (character.SecondaryItem != null)
             {
                 EquipmentGroup selectedGroup = character.SecondaryItem.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.SecondaryItem.BackupGroup;
@@ -293,7 +294,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasTertiaryItem)
+            if (character.TertiaryItem != null)
             {
                 EquipmentGroup selectedGroup = character.TertiaryItem.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.TertiaryItem.BackupGroup;
@@ -307,7 +308,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            if (character.HasShield)
+            if (character.Shield != null)
             {
                 EquipmentGroup selectedGroup = character.Shield.PrimaryGroup;
                 if (selectedGroup == null) selectedGroup = character.Shield.BackupGroup;
@@ -586,7 +587,12 @@ namespace TNHTweaker.Patches
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
 
-                else if (panelType == PanelType.MagDuplicator || panelType == PanelType.MagUpgrader || panelType == PanelType.MagPurchase)
+                else if (panelType == PanelType.MagDuplicator)
+                {
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                }
+
+                else if (panelType == PanelType.MagUpgrader || panelType == PanelType.MagPurchase)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagazinePanel));

@@ -16,6 +16,8 @@ using Valve.Newtonsoft.Json.Converters;
 using Deli.VFS;
 using UnityEngine.Networking;
 using System.Text;
+using YamlDotNet.Serialization;
+using Valve.VR;
 
 namespace TNHTweaker.Utilities
 {
@@ -202,6 +204,28 @@ namespace TNHTweaker.Utilities
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
+
+                    if (File.Exists(path + "/" + charDef.DisplayName + ".yaml"))
+                    {
+                        File.Delete(path + "/" + charDef.DisplayName + ".yaml");
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".yaml"))
+                    {
+                        // i am learning this yaml stuff. it is goofy.
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                        {
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                        }
+                        var serializer = serializerBuilder.Build();
+                        string characterString = serializer.Serialize(charDef);
+                        sw.WriteLine(characterString);
+                        sw.Close();
+                    }
                 }
             }
 
@@ -227,7 +251,7 @@ namespace TNHTweaker.Utilities
 
                 using (StreamWriter sw = File.CreateText(path))
                 {
-                    CustomCharacter character = new CustomCharacter();
+                    CustomCharacter character = new();
                     string characterString = JsonConvert.SerializeObject(character, Formatting.Indented, new StringEnumConverter());
                     sw.WriteLine(characterString);
                     sw.Close();
@@ -264,7 +288,7 @@ namespace TNHTweaker.Utilities
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + template.SosigEnemyID + ".json"))
                     {
-                        SosigTemplate sosig = new SosigTemplate(template);
+                        SosigTemplate sosig = new(template);
                         string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
                         sw.Close();
@@ -356,43 +380,43 @@ namespace TNHTweaker.Utilities
                     using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))
                     {
                         sw.WriteLine("Primary Starting Weapon");
-                        if(character.HasPrimaryWeapon)
+                        if(character.PrimaryWeapon != null)
                         {
                             sw.WriteLine(character.PrimaryWeapon.ToString());
                         }
 
                         sw.WriteLine("\n\nSecondary Starting Weapon");
-                        if (character.HasSecondaryWeapon)
+                        if (character.SecondaryWeapon != null)
                         {
                             sw.WriteLine(character.SecondaryWeapon.ToString());
                         }
 
                         sw.WriteLine("\n\nTertiary Starting Weapon");
-                        if (character.HasTertiaryWeapon)
+                        if (character.TertiaryWeapon != null)
                         {
                             sw.WriteLine(character.TertiaryWeapon.ToString());
                         }
 
                         sw.WriteLine("\n\nPrimary Starting Item");
-                        if (character.HasPrimaryItem)
+                        if (character.PrimaryItem != null)
                         {
                             sw.WriteLine(character.PrimaryItem.ToString());
                         }
 
                         sw.WriteLine("\n\nSecondary Starting Item");
-                        if (character.HasSecondaryItem)
+                        if (character.SecondaryItem != null)
                         {
                             sw.WriteLine(character.SecondaryItem.ToString());
                         }
 
                         sw.WriteLine("\n\nTertiary Starting Item");
-                        if (character.HasTertiaryItem)
+                        if (character.TertiaryItem != null)
                         {
                             sw.WriteLine(character.TertiaryItem.ToString());
                         }
 
                         sw.WriteLine("\n\nStarting Shield");
-                        if (character.HasShield)
+                        if (character.Shield != null)
                         {
                             sw.WriteLine(character.Shield.ToString());
                         }
@@ -415,6 +439,28 @@ namespace TNHTweaker.Utilities
 
 
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
+        {
+            if (group.IDOverride != null)
+            {
+                for (int i = 0; i < group.IDOverride.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(group.IDOverride[i]))
+                    {
+                        //If this was not a vaulted gun, remove it
+                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        {
+                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            group.IDOverride.RemoveAt(i);
+                            i -= 1;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // Necessary? No. I'm just lazy and want the errors to go away.
+        public static void RemoveUnloadedObjectIDs(ObjectTemplates.V1.EquipmentGroup group)
         {
             if (group.IDOverride != null)
             {
@@ -573,13 +619,13 @@ namespace TNHTweaker.Utilities
             // Returns null if load fails
 
             Stream fileStream = file.OpenRead();
-            MemoryStream mem = new MemoryStream();
+            MemoryStream mem = new();
 
             CopyStream(fileStream, mem);
 
             byte[] fileData = mem.ToArray();
 
-            Texture2D tex2D = new Texture2D(2, 2);
+            Texture2D tex2D = new(2, 2);
             if (tex2D.LoadImage(fileData)) return tex2D;
 
             return null;
@@ -598,13 +644,13 @@ namespace TNHTweaker.Utilities
             // Returns null if load fails
 
             Stream fileStream = file.OpenRead();
-            MemoryStream mem = new MemoryStream();
+            MemoryStream mem = new();
 
             CopyStream(fileStream, mem);
 
             byte[] fileData = mem.ToArray();
 
-            Texture2D tex2D = new Texture2D(2, 2);          
+            Texture2D tex2D = new(2, 2);          
             if (tex2D.LoadImage(fileData)) return tex2D;
 
             return null;                     

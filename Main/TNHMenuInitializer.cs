@@ -46,7 +46,94 @@ namespace TNHTweaker
                 isMagPatcherLoaded = true;
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Mag patcher is detected.");
             }
+            else // Honey, we have Magazine Patcher at home.
+            {
+                List<FVRObject> gunsToIterate = [];
 
+                // *violent screaming*
+                foreach (KeyValuePair<string, FVRObject> item in IM.OD)
+                {
+                    if (item.Value.Category == FVRObject.ObjectCategory.Firearm)
+                    {
+                        gunsToIterate.Add(item.Value);
+                    }
+
+                    else if (item.Value.Category == FVRObject.ObjectCategory.Cartridge)
+                    {
+                        if (!TNHTweaker.CartridgeDictionary.ContainsKey(item.Value.RoundType))
+                        {
+                            TNHTweaker.CartridgeDictionary.Add(item.Value.RoundType, []);
+                        }
+                        TNHTweaker.CartridgeDictionary[item.Value.RoundType].Add(item.Value);
+
+                    }
+
+                    else if (item.Value.Category == FVRObject.ObjectCategory.Magazine)
+                    {
+                        if (!TNHTweaker.MagazineDictionary.ContainsKey(item.Value.MagazineType))
+                        {
+                            TNHTweaker.MagazineDictionary.Add(item.Value.MagazineType, []);
+                        }
+                        TNHTweaker.MagazineDictionary[item.Value.MagazineType].Add(item.Value);
+                    }
+
+                    else if (item.Value.Category == FVRObject.ObjectCategory.Clip)
+                    {
+                        if (!TNHTweaker.StripperDictionary.ContainsKey(item.Value.ClipType))
+                        {
+                            TNHTweaker.StripperDictionary.Add(item.Value.ClipType, []);
+                        }
+                        TNHTweaker.StripperDictionary[item.Value.ClipType].Add(item.Value);
+                    }
+
+                    else if (item.Value.Category == FVRObject.ObjectCategory.SpeedLoader)
+                    {
+                        if (!TNHTweaker.SpeedloaderDictionary.ContainsKey(item.Value.RoundType))
+                        {
+                            TNHTweaker.SpeedloaderDictionary.Add(item.Value.RoundType, []);
+                        }
+                        TNHTweaker.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
+                    }
+                }
+
+                foreach (FVRObject firearm in gunsToIterate)
+                {
+                    if ((firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
+                        TNHTweaker.CartridgeDictionary.ContainsKey(firearm.RoundType))
+                    {
+                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new rounds of type " + firearm.RoundType, TNHTweakerLogger.LogType.General);
+                        firearm.CompatibleSingleRounds = TNHTweaker.CartridgeDictionary[firearm.RoundType];
+                    }
+
+                    if ((firearm.CompatibleMagazines == null || firearm.CompatibleMagazines.Count == 0) &&
+                        TNHTweaker.MagazineDictionary.ContainsKey(firearm.MagazineType) &&
+                        firearm.MagazineType != FireArmMagazineType.mNone)
+                    {
+                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new magazines of type " + firearm.MagazineType, TNHTweakerLogger.LogType.General);
+                        firearm.CompatibleMagazines = TNHTweaker.MagazineDictionary[firearm.MagazineType];
+                    }
+
+                    if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
+                        TNHTweaker.StripperDictionary.ContainsKey(firearm.ClipType))
+                    {
+                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHTweakerLogger.LogType.General);
+                        firearm.CompatibleClips = TNHTweaker.StripperDictionary[firearm.ClipType];
+                    }
+
+                    if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
+                        TNHTweaker.SpeedloaderDictionary.ContainsKey(firearm.RoundType))
+                    {
+                        foreach (FVRObject speedloader in TNHTweaker.SpeedloaderDictionary[firearm.RoundType])
+                        {
+                            if (speedloader.MagazineCapacity == firearm.MagazineCapacity)
+                            {
+                                TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new speedloader of type " + firearm.RoundType, TNHTweakerLogger.LogType.General);
+                                firearm.CompatibleSpeedLoaders.Add(speedloader);
+                            }
+                        }
+                    }
+                }
+            }
 
             //First thing we want to do is wait for all asset bundles to be loaded in
             float itemLoadProgress = 0;
@@ -61,7 +148,7 @@ namespace TNHTweaker
                     itemsText.text = GetLoadingItems();
                 }
                 
-                progressText.text = "LOADING ITEMS : " + (int)(itemLoadProgress * 100) + "%";
+                progressText.text = "LOADING ITEMS : " + (itemLoadProgress * 100) + "%";
             }
             while (itemLoadProgress < 1);
 
@@ -75,7 +162,7 @@ namespace TNHTweaker
 
                     cachingProgress = PokeMagPatcher();// PatcherStatus.PatcherProgress;
                     itemsText.text = GetMagPatcherCacheLog();// PatcherStatus.CacheLog;
-                    progressText.text = "CACHING ITEMS : " + (int)(cachingProgress * 100) + "%";
+                    progressText.text = "CACHING ITEMS : " + (cachingProgress * 100) + "%";
 
                     /*
                     if (PatcherStatus.CachingFailed)

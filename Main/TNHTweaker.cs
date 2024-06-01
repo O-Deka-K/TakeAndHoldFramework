@@ -35,11 +35,21 @@ namespace TNHTweaker
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
         public static ConfigEntry<bool> BuildCharacterFiles;
+        public static ConfigEntry<bool> ConvertFilesToYAML;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
 
+        public static string InfoPath;
         public static string OutputFilePath;
+
+        public static Dictionary<string, Type> Serializables = [];
+
+        // Bodged Magazine Patcher replacement stuff.
+        public static Dictionary<FireArmRoundType, List<FVRObject>> CartridgeDictionary = [];
+        public static Dictionary<FireArmMagazineType, List<FVRObject>> MagazineDictionary = [];
+        public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
+        public static Dictionary<FireArmRoundType, List<FVRObject>> SpeedloaderDictionary = [];
 
         //Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
@@ -61,6 +71,8 @@ namespace TNHTweaker
         /// </summary>
         private void Awake()
         {
+            InfoPath = Path.GetDirectoryName(Info.Location);
+
             if (TNHTweakerLogger.BepLog == null)
             {
                 TNHTweakerLogger.Init();
@@ -76,6 +88,7 @@ namespace TNHTweaker
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
+            Harmony.CreateAndPatchAll(typeof(HoldPatches));
 
             if (EnableScoring.Value) Harmony.CreateAndPatchAll(typeof(HighScorePatches));
 
@@ -98,7 +111,7 @@ namespace TNHTweaker
 
         public override void OnSetup(IStageContext<Empty> ctx)
         {
-            TNHLoaders TNHLoader = new TNHLoaders();
+            TNHLoaders TNHLoader = new();
 
             ctx.Loaders.Add("tnhchar", TNHLoader.LoadChar);
             ctx.Loaders.Add("tnhsosig", TNHLoader.LoadSosig);
@@ -118,7 +131,7 @@ namespace TNHTweaker
         /// </summary>
         private void LoadPanelSprites()
         {
-            DirectoryInfo pluginDirectory = new DirectoryInfo(Path.GetDirectoryName(Info.Location));
+            DirectoryInfo pluginDirectory = new(Path.GetDirectoryName(Info.Location));
 
             FileInfo file = ExtDirectoryInfo.GetFile(pluginDirectory, "mag_dupe_background.png");
             Sprite result = TNHTweakerUtils.LoadSprite(file);
@@ -159,6 +172,11 @@ namespace TNHTweaker
                                     "BuildCharacterFiles",
                                     false,
                                     "If true, files useful for character creation will be generated in TNHTweaker folder");
+
+            ConvertFilesToYAML = Config.Bind("General",
+                                    "ConvertFilesToYAML",
+                                    false,
+                                    "If true, any Stratum-based custom characters will have their JSON files converted to YAML");
 
             EnableScoring = Config.Bind("General",
                                     "EnableScoring",
@@ -209,7 +227,7 @@ namespace TNHTweaker
         /// </summary>
         private void SetupOutputDirectory()
         {
-            OutputFilePath = Path.GetDirectoryName(Info.Location) + "CharFiles";
+            OutputFilePath = Path.Combine(Path.GetDirectoryName(Info.Location), "CharFiles");
 
             if (!Directory.Exists(OutputFilePath))
             {
