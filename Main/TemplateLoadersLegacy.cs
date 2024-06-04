@@ -15,13 +15,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates.V1;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates.V1;
+using TNHFramework.Utilities;
 using UnityEngine;
 using Stratum;
 using Stratum.Extensions;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
     public class SosigLoaderDeli
     {
@@ -79,7 +79,7 @@ namespace TNHTweaker
                     }
                     else if (file.Path.EndsWith("thumb.png"))
                     {
-                        thumbnail = TNHTweakerUtils.LoadSprite(file);
+                        thumbnail = TNHFrameworkUtils.LoadSprite(file);
                     }
                 }
 
@@ -102,7 +102,7 @@ namespace TNHTweaker
                     {
                         if (iconFile.Path.Split('/').Last() == pool.IconName)
                         {
-                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
+                            pool.GetPoolEntry().TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
                         }
                     }
                 }

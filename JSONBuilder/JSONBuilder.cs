@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using FistVR;
-using TNHTweaker;
-using TNHTweaker.ObjectTemplates;
+using TNHFramework;
+using TNHFramework.ObjectTemplates;
 
 
 namespace JSONBuilder

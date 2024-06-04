@@ -8,8 +8,8 @@
     <ProjectGuid>{13103263-BAB2-4450-AE68-23C78EB493B2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TNHTweaker</RootNamespace>
-    <AssemblyName>TakeAndHoldTweaker</AssemblyName>
+    <RootNamespace>TNHFramework</RootNamespace>
+    <AssemblyName>TNHFramework</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -160,8 +160,8 @@
     <Compile Include="ObjectTemplates\SavedGunSerializable.cs" />
     <Compile Include="Main\TemplateLoaders.cs" />
     <Compile Include="ObjectTemplates\SosigTemplate.cs" />
-    <Compile Include="Utilities\TNHTweakerUtils.cs" />
-    <Compile Include="Main\TNHTweaker.cs" />
+    <Compile Include="Utilities\TNHFrameworkUtils.cs" />
+    <Compile Include="Main\TNHFramework.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\TolerantEnumConverter.cs" />
   </ItemGroup>
@@ -176,6 +176,6 @@
   <!-- This target copies dll to the folder, for quicker debbugging -->
   <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(ProfileString)' != '' ">
     <Message Text="ProfileString present, copying dll to $(ProfileString)" />
-    <Copy SourceFiles="$(OutDir)TakeAndHoldTweaker.dll" DestinationFolder="$(ProfileString)" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(OutDir)TNHFramework.dll" DestinationFolder="$(ProfileString)" OverwriteReadOnlyFiles="true" />
   </Target>
 </Project>

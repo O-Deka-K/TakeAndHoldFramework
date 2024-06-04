@@ -11,10 +11,10 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Security.Policy;
 using System.Text;
-using TNHTweaker.Utilities;
+using TNHFramework.Utilities;
 using UnityEngine;
 
-namespace TNHTweaker.ObjectTemplates
+namespace TNHFramework.ObjectTemplates
 {
     public class CustomCharacter
     {
@@ -873,7 +873,7 @@ namespace TNHTweaker.ObjectTemplates
         public bool DelayedInit()
         {
             //Before we add anything from the IDOverride list, remove anything that isn't loaded
-            TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
+            TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
 
             //Every item in IDOverride gets added to the list of spawnable objects

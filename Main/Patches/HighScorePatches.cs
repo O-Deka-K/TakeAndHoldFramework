@@ -8,13 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine.Networking;
 using Steamworks;
 using UnityEngine;
 
-namespace TNHTweaker.Patches
+namespace TNHFramework.Patches
 {
     public static class HighScorePatches
     {
@@ -33,11 +33,11 @@ namespace TNHTweaker.Patches
             if (!__instance.m_hasInit && __instance.AIManager.HasInit)
             {
                 //Clear all entries from the tracked stats
-                TNHTweaker.HoldActions.Clear();
-                TNHTweaker.HoldStats.Clear();
+                TNHFramework.HoldActions.Clear();
+                TNHFramework.HoldStats.Clear();
 
-                TNHTweaker.GunsRecycled = 0;
-                TNHTweaker.ShotsFired = 0;
+                TNHFramework.GunsRecycled = 0;
+                TNHFramework.ShotsFired = 0;
 
                 TNHTweakerLogger.Log("Delayed init", TNHTweakerLogger.LogType.TNH);
             }
@@ -50,7 +50,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackPlayerSpawnPatch(TNH_Manager __instance)
         {
-            TNHTweaker.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
+            TNHFramework.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
 
             TNHTweakerLogger.Log("Spawned Player", TNHTweakerLogger.LogType.TNH);
 
@@ -64,22 +64,22 @@ namespace TNHTweaker.Patches
         {
             TNHTweakerLogger.Log("Hold Completion", TNHTweakerLogger.LogType.TNH);
 
-            TNHTweaker.HoldStats.Add(new HoldStats()
+            TNHFramework.HoldStats.Add(new HoldStats()
             {
                 SosigsKilled = __instance.Stats[3],
                 MeleeKills = __instance.Stats[5],
                 Headshots = __instance.Stats[4],
                 TokensSpent = __instance.Stats[8],
-                GunsRecycled = TNHTweaker.GunsRecycled,
-                AmmoSpent = TNHTweaker.ShotsFired
+                GunsRecycled = TNHFramework.GunsRecycled,
+                AmmoSpent = TNHFramework.ShotsFired
             });
 
             __instance.Stats[3] = 0;
             __instance.Stats[5] = 0;
             __instance.Stats[4] = 0;
             __instance.Stats[8] = 0;
-            TNHTweaker.GunsRecycled = 0;
-            TNHTweaker.ShotsFired = 0;
+            TNHFramework.GunsRecycled = 0;
+            TNHFramework.ShotsFired = 0;
 
             return true;
         }
@@ -90,7 +90,7 @@ namespace TNHTweaker.Patches
         public static bool TrackNextLevel(TNH_Manager __instance)
         {
             TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.TNH);
-            TNHTweaker.HoldActions.Add([]);
+            TNHFramework.HoldActions.Add([]);
 
             return true;
         }
@@ -101,24 +101,24 @@ namespace TNHTweaker.Patches
         public static bool TrackDeath(TNH_Manager __instance)
         {
             TNHTweakerLogger.Log("Died", TNHTweakerLogger.LogType.TNH);
-            TNHTweaker.HoldActions.Last().Add("Died");
+            TNHFramework.HoldActions.Last().Add("Died");
 
-            TNHTweaker.HoldStats.Add(new HoldStats()
+            TNHFramework.HoldStats.Add(new HoldStats()
             {
                 SosigsKilled = __instance.Stats[3],
                 MeleeKills = __instance.Stats[5],
                 Headshots = __instance.Stats[4],
                 TokensSpent = __instance.Stats[8],
-                GunsRecycled = TNHTweaker.GunsRecycled,
-                AmmoSpent = TNHTweaker.ShotsFired
+                GunsRecycled = TNHFramework.GunsRecycled,
+                AmmoSpent = TNHFramework.ShotsFired
             });
 
             __instance.Stats[3] = 0;
             __instance.Stats[5] = 0;
             __instance.Stats[4] = 0;
             __instance.Stats[8] = 0;
-            TNHTweaker.GunsRecycled = 0;
-            TNHTweaker.ShotsFired = 0;
+            TNHFramework.GunsRecycled = 0;
+            TNHFramework.ShotsFired = 0;
 
             return true;
         }
@@ -129,7 +129,7 @@ namespace TNHTweaker.Patches
         public static bool TrackVictory(TNH_Manager __instance)
         {
             TNHTweakerLogger.Log("Victory", TNHTweakerLogger.LogType.TNH);
-            TNHTweaker.HoldActions.Last().Add("Victory");
+            TNHFramework.HoldActions.Last().Add("Victory");
 
             return true;
         }
@@ -139,7 +139,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool ResetStats(TNH_Manager __instance)
         {
-            foreach(HoldStats stat in TNHTweaker.HoldStats)
+            foreach(HoldStats stat in TNHFramework.HoldStats)
             {
                 __instance.Stats[3] += stat.SosigsKilled;
                 __instance.Stats[5] += stat.MeleeKills;
@@ -155,7 +155,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackShotFired(TNH_Manager __instance)
         {
-            TNHTweaker.ShotsFired += 1;
+            TNHFramework.ShotsFired += 1;
 
             return true;
         }
@@ -166,7 +166,7 @@ namespace TNHTweaker.Patches
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
         {
             TNHTweakerLogger.Log("Hold Start", TNHTweakerLogger.LogType.TNH);
-            TNHTweaker.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
+            TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
 
             return true;
         }
@@ -179,8 +179,8 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.TNH);
             if (__instance.m_selectedObject != null)
             {
-                TNHTweaker.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
-                TNHTweaker.GunsRecycled += 1;
+                TNHFramework.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
+                TNHFramework.GunsRecycled += 1;
             }
 
             return true;
@@ -204,7 +204,7 @@ namespace TNHTweaker.Patches
                 {
                     __instance.m_contact.SetVisited(true);
                     TNHTweakerLogger.Log("Visiting supply", TNHTweakerLogger.LogType.TNH);
-                    TNHTweaker.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
+                    TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
                 __instance.m_hasBeenVisited = true;
             }
@@ -268,8 +268,8 @@ namespace TNHTweaker.Patches
             entry.EquipmentMode = equipment[(int)GM.TNHOptions.EquipmentModeSetting];
             entry.HealthMode = health[(int)GM.TNHOptions.HealthModeSetting];
             entry.GameLength = length[(int)GM.TNHOptions.ProgressionTypeSetting];
-            entry.HoldActions = JsonConvert.SerializeObject(TNHTweaker.HoldActions);
-            entry.HoldStats = JsonConvert.SerializeObject(TNHTweaker.HoldStats);
+            entry.HoldActions = JsonConvert.SerializeObject(TNHFramework.HoldActions);
+            entry.HoldStats = JsonConvert.SerializeObject(TNHFramework.HoldStats);
 
             return entry;
         }

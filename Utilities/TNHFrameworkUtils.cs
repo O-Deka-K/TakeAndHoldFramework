@@ -10,7 +10,7 @@ using System.IO;
 using System.Collections;
 using System.Linq;
 using UnityEngine.UI;
-using TNHTweaker.ObjectTemplates;
+using TNHFramework.ObjectTemplates;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using Deli.VFS;
@@ -19,9 +19,9 @@ using System.Text;
 using YamlDotNet.Serialization;
 using Valve.VR;
 
-namespace TNHTweaker.Utilities
+namespace TNHFramework.Utilities
 {
-    static class TNHTweakerUtils
+    static class TNHFrameworkUtils
     {
         public static void CreateObjectIDFile(string path)
         {
@@ -217,7 +217,7 @@ namespace TNHTweaker.Utilities
                         var serializerBuilder = new SerializerBuilder();
 
                         serializerBuilder.WithIndentedSequences();
-                        foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
                             serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }

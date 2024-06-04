@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.Utilities;
+using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
     public class DebugPatches
     {

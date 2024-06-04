@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
+using TNHFramework.ObjectTemplates;
 using UnityEngine;
 
-namespace TNHTweaker.Utilities
+namespace TNHFramework.Utilities
 {
     static class FirearmUtils
     {

@@ -9,14 +9,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 using Stratum;
 using Stratum.Extensions;
 using YamlDotNet.Serialization;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
     public class TNHLoaders
     {
@@ -48,7 +48,7 @@ namespace TNHTweaker
 
                     TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
 
-                    if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                    if (TNHFramework.ConvertFilesToYAML.Value == true)
                     {
                         using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                         {
@@ -90,7 +90,7 @@ namespace TNHTweaker
                     {
                         var deserializerBuilder = new DeserializerBuilder();
 
-                        foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
                             deserializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
@@ -108,14 +108,14 @@ namespace TNHTweaker
                         // Convert old JSON character files to the newer YAML format.
                         character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
 
-                        if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                        if (TNHFramework.ConvertFilesToYAML.Value == true)
                         {
                             using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                             {
                                 var serializerBuilder = new SerializerBuilder();
 
                                 serializerBuilder.WithIndentedSequences();
-                                foreach (KeyValuePair<string, Type> thing in TNHTweaker.Serializables)
+                                foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                                 {
                                     serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                                 }
@@ -132,7 +132,7 @@ namespace TNHTweaker
                     }
                     else if (file.FullName.EndsWith("thumb.png"))
                     {
-                        thumbnail = TNHTweakerUtils.LoadSprite(file);
+                        thumbnail = TNHFrameworkUtils.LoadSprite(file);
 
                         TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character icon", TNHTweakerLogger.LogType.File);
                     }
@@ -157,7 +157,7 @@ namespace TNHTweaker
                     {
                         if (iconFile.FullName.Split('\\').Last() == pool.IconName)
                         {
-                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
+                            pool.GetPoolEntry().TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
 
                             TNHTweakerLogger.Log($"TNHTweaker -- Character partially loaded - loaded misc icon {iconFile.Name}", TNHTweakerLogger.LogType.File);
                         }
@@ -204,7 +204,7 @@ namespace TNHTweaker
 
                     TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
 
-                    if (TNHTweaker.ConvertFilesToYAML.Value == true)
+                    if (TNHFramework.ConvertFilesToYAML.Value == true)
                     {
                         using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                         {

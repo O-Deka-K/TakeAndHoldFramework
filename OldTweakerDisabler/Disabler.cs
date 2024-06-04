@@ -9,7 +9,7 @@ using BepInEx;
 using BepInEx.Logging;
 using Mono.Cecil;
 
-namespace OldTweakerDisabler
+namespace TweakerDisabler
 {
     public static class Entrypoint
     {
@@ -32,6 +32,7 @@ namespace OldTweakerDisabler
                 if (dir.Contains("devyndamonster-TakeAndHoldTweaker") && File.Exists(Path.Combine(dir, "TakeAndHoldTweaker.deli")))
                 {
                     File.Move(Path.Combine(dir, "TakeAndHoldTweaker.deli"), Path.Combine(dir, "TakeAndHoldTweaker.deli.bak"));
+                    Logger.LogInfo("Disabled old Take & Hold Tweaker install. Re-enable it via reinstalling or renaming the DLL. Will break compatibility with TNH Framework.");
                 }
             }
         }

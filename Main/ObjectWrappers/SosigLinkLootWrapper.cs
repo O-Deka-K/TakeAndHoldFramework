@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
     public class SosigLinkLootWrapper : MonoBehaviour
     {
@@ -60,7 +60,7 @@ namespace TNHTweaker
                     }
                     else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem))
                     {
-                        AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
+                        AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
                             transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation));
                     }
                     else

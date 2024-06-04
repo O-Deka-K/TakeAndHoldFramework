@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace TNHTweaker.Utilities
+namespace TNHFramework.Utilities
 {  
     public static class Extensions
     {

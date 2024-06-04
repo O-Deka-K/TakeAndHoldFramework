@@ -5,9 +5,9 @@ using System.Text;
 using HarmonyLib;
 using FistVR;
 using UnityEngine;
-using TNHTweaker.ObjectTemplates;
+using TNHFramework.ObjectTemplates;
 
-namespace TNHTweaker.Patches
+namespace TNHFramework.Patches
 {
     [HarmonyPatch(typeof(TNH_HoldPoint))]
     public class HoldPatches

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TNHTweaker.Utilities
+namespace TNHFramework.Utilities
 {
 
     //This code is taken from this stack overflow page: https://stackoverflow.com/questions/22752075/how-can-i-ignore-unknown-enum-values-during-json-deserialization

@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 
-namespace TNHTweaker.Patches
+namespace TNHFramework.Patches
 {
     public static class PatrolPatches
     {
@@ -27,14 +27,14 @@ namespace TNHTweaker.Patches
             int index = UnityEngine.Random.Range(0, patrols.Count);
             int attempts = 0;
 
-            while (TNHTweaker.SpawnedBossIndexes.Contains(index) && attempts < patrols.Count)
+            while (TNHFramework.SpawnedBossIndexes.Contains(index) && attempts < patrols.Count)
             {
                 attempts += 1;
                 index += 1;
                 if (index >= patrols.Count) index = 0;
             }
 
-            if (TNHTweaker.SpawnedBossIndexes.Contains(index)) return -1;
+            if (TNHFramework.SpawnedBossIndexes.Contains(index)) return -1;
 
             return index;
         }
@@ -204,7 +204,7 @@ namespace TNHTweaker.Patches
                 //If this is a boss, then we can only spawn it once, so add it to the list of spawned bosses
                 if (patrol.IsBoss)
                 {
-                    TNHTweaker.SpawnedBossIndexes.Add(patrolIndex);
+                    TNHFramework.SpawnedBossIndexes.Add(patrolIndex);
                 }
 
                 //Select a sosig template from the custom character patrol
@@ -561,7 +561,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool OverrideCloaking()
         {
-            return !TNHTweaker.PreventOutfitFunctionality;
+            return !TNHFramework.PreventOutfitFunctionality;
         }
 
 

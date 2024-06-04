@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.Utilities;
+using TNHFramework.Utilities;
 
-namespace TNHTweaker.ObjectTemplates
+namespace TNHFramework.ObjectTemplates
 {
 
     [JsonConverter(typeof(TolerantEnumConverter))]

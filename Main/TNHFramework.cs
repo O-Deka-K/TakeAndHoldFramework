@@ -12,23 +12,23 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 using Deli.Runtime.Yielding;
 using Anvil;
-using TNHTweaker.Patches;
+using TNHFramework.Patches;
 using Stratum;
 using BepInEx.Bootstrap;
 using BepInEx;
 using Stratum.Extensions;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhtweaker", "TNH Tweaker", "1.8.0")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.0.1")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
-    public class TNHTweaker : StratumPlugin
+    public class TNHFramework : StratumPlugin
     {
         private static ConfigEntry<bool> printCharacters;
         private static ConfigEntry<bool> logTNH;
@@ -85,7 +85,7 @@ namespace TNHTweaker
             LoadConfigFile();
             LoadPanelSprites();
 
-            Harmony.CreateAndPatchAll(typeof(TNHTweaker));
+            Harmony.CreateAndPatchAll(typeof(TNHFramework));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             Harmony.CreateAndPatchAll(typeof(HoldPatches));
@@ -134,27 +134,27 @@ namespace TNHTweaker
             DirectoryInfo pluginDirectory = new(Path.GetDirectoryName(Info.Location));
 
             FileInfo file = ExtDirectoryInfo.GetFile(pluginDirectory, "mag_dupe_background.png");
-            Sprite result = TNHTweakerUtils.LoadSprite(file);
+            Sprite result = TNHFrameworkUtils.LoadSprite(file);
             MagazinePanel.background = result;
 
             file = ExtDirectoryInfo.GetFile(pluginDirectory, "ammo_purchase_background.png");
-            result = TNHTweakerUtils.LoadSprite(file);
+            result = TNHFrameworkUtils.LoadSprite(file);
             AmmoPurchasePanel.background = result;
 
             file = ExtDirectoryInfo.GetFile(pluginDirectory, "full_auto_background.png");
-            result = TNHTweakerUtils.LoadSprite(file);
+            result = TNHFrameworkUtils.LoadSprite(file);
             FullAutoPanel.background = result;
 
             file = ExtDirectoryInfo.GetFile(pluginDirectory, "fire_rate_background.png");
-            result = TNHTweakerUtils.LoadSprite(file);
+            result = TNHFrameworkUtils.LoadSprite(file);
             FireRatePanel.background = result;
 
             file = ExtDirectoryInfo.GetFile(pluginDirectory, "minus_icon.png");
-            result = TNHTweakerUtils.LoadSprite(file);
+            result = TNHFrameworkUtils.LoadSprite(file);
             FireRatePanel.minusSprite = result;
 
             file = ExtDirectoryInfo.GetFile(pluginDirectory, "plus_icon.png");
-            result = TNHTweakerUtils.LoadSprite(file);
+            result = TNHFrameworkUtils.LoadSprite(file);
             FireRatePanel.plusSprite = result;
         }
 

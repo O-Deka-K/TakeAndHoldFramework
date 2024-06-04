@@ -12,15 +12,15 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 using static FistVR.VaultSystem;
 using static RenderHeads.Media.AVProVideo.MediaPlayer.OptionsApple;
 using static RootMotion.FinalIK.IKSolver;
 
-namespace TNHTweaker.Patches
+namespace TNHFramework.Patches
 {
     public class TNHPatches
     {
@@ -96,7 +96,7 @@ namespace TNHTweaker.Patches
 
                 if (!TNHMenuInitializer.MagazineCacheFailed)
                 {
-                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHTweaker.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, ___Categories, ___CharDatabase, __instance, TNHTweaker.BuildCharacterFiles.Value));
+                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHFramework.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, ___Categories, ___CharDatabase, __instance, TNHFramework.BuildCharacterFiles.Value));
                 }
 
                 //If the magazine cache has previously failed, we shouldn't let the player continue
@@ -259,7 +259,7 @@ namespace TNHTweaker.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHTweakerUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Melee.position, __instance.SpawnPoint_Melee.rotation, o => 
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Melee.position, __instance.SpawnPoint_Melee.rotation, o => 
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -273,7 +273,7 @@ namespace TNHTweaker.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHTweakerUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation, o =>
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -287,7 +287,7 @@ namespace TNHTweaker.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHTweakerUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation, o =>
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -301,7 +301,7 @@ namespace TNHTweaker.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHTweakerUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation, o =>
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -315,14 +315,14 @@ namespace TNHTweaker.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHTweakerUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Shield.position, __instance.SpawnPoint_Shield.rotation, o =>
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Shield.position, __instance.SpawnPoint_Shield.rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
                 }
             }
 
-            if (TNHTweaker.UnlimitedTokens.Value) __instance.M.AddTokens(999999, false);
+            if (TNHFramework.UnlimitedTokens.Value) __instance.M.AddTokens(999999, false);
 
             return false;
         }
@@ -342,9 +342,9 @@ namespace TNHTweaker.Patches
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
             Level level = character.GetCurrentLevel(___m_curLevel);
 
-            TNHTweaker.SpawnedBossIndexes.Clear();
+            TNHFramework.SpawnedBossIndexes.Clear();
             __instance.m_activeSupplyPointIndicies.Clear();
-            TNHTweaker.PreventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[__instance.C].ForceDisableOutfitFunctionality;
+            TNHFramework.PreventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[__instance.C].ForceDisableOutfitFunctionality;
 
 
             //Clear the TNH radar
@@ -545,7 +545,7 @@ namespace TNHTweaker.Patches
             for (int i = 0; i < toSpawn && i < point.SpawnPoints_Panels.Count; i++)
             {
                 GameObject constructor = point.M.SpawnObjectConstructor(point.SpawnPoints_Panels[i]);
-                TNHTweaker.SpawnedConstructors.Add(constructor);
+                TNHFramework.SpawnedConstructors.Add(constructor);
             }
         }
 
@@ -630,7 +630,7 @@ namespace TNHTweaker.Patches
                 if (panel != null)
                 {
                     TNHTweakerLogger.Log("TNHTWEAKER -- Panel spawned successfully", TNHTweakerLogger.LogType.TNH);
-                    TNHTweaker.SpawnedPanels.Add(panel);
+                    TNHFramework.SpawnedPanels.Add(panel);
                 }
                 else
                 {
@@ -1163,7 +1163,7 @@ namespace TNHTweaker.Patches
             validPools.Shuffle();
             for(int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
             {
-                if (TNHTweaker.SpawnedPools.Contains(validPools[i]))
+                if (TNHFramework.SpawnedPools.Contains(validPools[i]))
                 {
                     summedRarity -= validPools[i].Rarity;
                     validPools.RemoveAt(i);
@@ -1179,7 +1179,7 @@ namespace TNHTweaker.Patches
                 if(selectValue <= currentSum)
                 {
                     __result = entry;
-                    TNHTweaker.SpawnedPools.Add(entry);
+                    TNHFramework.SpawnedPools.Add(entry);
                     return false;
                 }
             }
@@ -1293,7 +1293,7 @@ namespace TNHTweaker.Patches
                 if (pool.SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
                 FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
-                TNHTweaker.HoldActions[constructor.M.m_level].Add($"Purchased {item.DisplayName}");
+                TNHFramework.HoldActions[constructor.M.m_level].Add($"Purchased {item.DisplayName}");
                 GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 constructor.m_spawnedCase = itemCase;
@@ -1406,8 +1406,8 @@ namespace TNHTweaker.Patches
                         }
 
                         TNHTweakerLogger.Log("Level: " + constructor.M.m_level, TNHTweakerLogger.LogType.TNH);
-                        TNHTweakerLogger.Log("Hold Actions Length: " + TNHTweaker.HoldActions.Count, TNHTweakerLogger.LogType.TNH);
-                        TNHTweaker.HoldActions[constructor.M.m_level].Add($"Purchased {mainObject.DisplayName}");
+                        TNHTweakerLogger.Log("Hold Actions Length: " + TNHFramework.HoldActions.Count, TNHTweakerLogger.LogType.TNH);
+                        TNHFramework.HoldActions[constructor.M.m_level].Add($"Purchased {mainObject.DisplayName}");
 
                         // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
                         if (vaultFile != null)
@@ -1418,7 +1418,7 @@ namespace TNHTweaker.Patches
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         else if (vaultFileLegacy != null)
                         {
-                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation));
+                            AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation));
                             TNHTweakerLogger.Log("TNHTWEAKER -- Legacy vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
                         }
                         else
@@ -1610,33 +1610,33 @@ namespace TNHTweaker.Patches
 
         public static void ClearAllPanels()
         {
-            TNHTweaker.SpawnedPools.Clear();
+            TNHFramework.SpawnedPools.Clear();
 
-            while (TNHTweaker.SpawnedConstructors.Count > 0)
+            while (TNHFramework.SpawnedConstructors.Count > 0)
             {
                 try
                 {
-                    TNH_ObjectConstructor constructor = TNHTweaker.SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
+                    TNH_ObjectConstructor constructor = TNHFramework.SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
 
                     if (constructor != null)
                     {
                         constructor.ClearCase();
                     }
 
-                    UnityEngine.Object.Destroy(TNHTweaker.SpawnedConstructors[0]);
+                    UnityEngine.Object.Destroy(TNHFramework.SpawnedConstructors[0]);
                 }
                 catch
                 {
                     TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
                 }
 
-                TNHTweaker.SpawnedConstructors.RemoveAt(0);
+                TNHFramework.SpawnedConstructors.RemoveAt(0);
             }
 
-            while (TNHTweaker.SpawnedPanels.Count > 0)
+            while (TNHFramework.SpawnedPanels.Count > 0)
             {
-                UnityEngine.Object.Destroy(TNHTweaker.SpawnedPanels[0]);
-                TNHTweaker.SpawnedPanels.RemoveAt(0);
+                UnityEngine.Object.Destroy(TNHFramework.SpawnedPanels[0]);
+                TNHFramework.SpawnedPanels.RemoveAt(0);
             }
         }
 

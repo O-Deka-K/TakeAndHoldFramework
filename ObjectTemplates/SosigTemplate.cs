@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TNHTweaker.Utilities;
+using TNHFramework.Utilities;
 using UnityEngine;
 
-namespace TNHTweaker.ObjectTemplates
+namespace TNHFramework.ObjectTemplates
 {
     public class SosigTemplate
     {
@@ -96,7 +96,7 @@ namespace TNHTweaker.ObjectTemplates
             {
 				TNHTweakerLogger.Log("TNHTweaker -- Delayed init of sosig: " + DisplayName, TNHTweakerLogger.LogType.Character);
 
-				TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
+				TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
 				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
 				template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();

@@ -9,12 +9,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TNHTweaker.ObjectTemplates;
-using TNHTweaker.Utilities;
+using TNHFramework.ObjectTemplates;
+using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TNHTweaker
+namespace TNHFramework
 {
     public static class TNHMenuInitializer
     {
@@ -60,70 +60,70 @@ namespace TNHTweaker
 
                     else if (item.Value.Category == FVRObject.ObjectCategory.Cartridge)
                     {
-                        if (!TNHTweaker.CartridgeDictionary.ContainsKey(item.Value.RoundType))
+                        if (!TNHFramework.CartridgeDictionary.ContainsKey(item.Value.RoundType))
                         {
-                            TNHTweaker.CartridgeDictionary.Add(item.Value.RoundType, []);
+                            TNHFramework.CartridgeDictionary.Add(item.Value.RoundType, []);
                         }
-                        TNHTweaker.CartridgeDictionary[item.Value.RoundType].Add(item.Value);
+                        TNHFramework.CartridgeDictionary[item.Value.RoundType].Add(item.Value);
 
                     }
 
                     else if (item.Value.Category == FVRObject.ObjectCategory.Magazine)
                     {
-                        if (!TNHTweaker.MagazineDictionary.ContainsKey(item.Value.MagazineType))
+                        if (!TNHFramework.MagazineDictionary.ContainsKey(item.Value.MagazineType))
                         {
-                            TNHTweaker.MagazineDictionary.Add(item.Value.MagazineType, []);
+                            TNHFramework.MagazineDictionary.Add(item.Value.MagazineType, []);
                         }
-                        TNHTweaker.MagazineDictionary[item.Value.MagazineType].Add(item.Value);
+                        TNHFramework.MagazineDictionary[item.Value.MagazineType].Add(item.Value);
                     }
 
                     else if (item.Value.Category == FVRObject.ObjectCategory.Clip)
                     {
-                        if (!TNHTweaker.StripperDictionary.ContainsKey(item.Value.ClipType))
+                        if (!TNHFramework.StripperDictionary.ContainsKey(item.Value.ClipType))
                         {
-                            TNHTweaker.StripperDictionary.Add(item.Value.ClipType, []);
+                            TNHFramework.StripperDictionary.Add(item.Value.ClipType, []);
                         }
-                        TNHTweaker.StripperDictionary[item.Value.ClipType].Add(item.Value);
+                        TNHFramework.StripperDictionary[item.Value.ClipType].Add(item.Value);
                     }
 
                     else if (item.Value.Category == FVRObject.ObjectCategory.SpeedLoader)
                     {
-                        if (!TNHTweaker.SpeedloaderDictionary.ContainsKey(item.Value.RoundType))
+                        if (!TNHFramework.SpeedloaderDictionary.ContainsKey(item.Value.RoundType))
                         {
-                            TNHTweaker.SpeedloaderDictionary.Add(item.Value.RoundType, []);
+                            TNHFramework.SpeedloaderDictionary.Add(item.Value.RoundType, []);
                         }
-                        TNHTweaker.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
+                        TNHFramework.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
                     }
                 }
 
                 foreach (FVRObject firearm in gunsToIterate)
                 {
                     if ((firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
-                        TNHTweaker.CartridgeDictionary.ContainsKey(firearm.RoundType))
+                        TNHFramework.CartridgeDictionary.ContainsKey(firearm.RoundType))
                     {
                         TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new rounds of type " + firearm.RoundType, TNHTweakerLogger.LogType.General);
-                        firearm.CompatibleSingleRounds = TNHTweaker.CartridgeDictionary[firearm.RoundType];
+                        firearm.CompatibleSingleRounds = TNHFramework.CartridgeDictionary[firearm.RoundType];
                     }
 
                     if ((firearm.CompatibleMagazines == null || firearm.CompatibleMagazines.Count == 0) &&
-                        TNHTweaker.MagazineDictionary.ContainsKey(firearm.MagazineType) &&
+                        TNHFramework.MagazineDictionary.ContainsKey(firearm.MagazineType) &&
                         firearm.MagazineType != FireArmMagazineType.mNone)
                     {
                         TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new magazines of type " + firearm.MagazineType, TNHTweakerLogger.LogType.General);
-                        firearm.CompatibleMagazines = TNHTweaker.MagazineDictionary[firearm.MagazineType];
+                        firearm.CompatibleMagazines = TNHFramework.MagazineDictionary[firearm.MagazineType];
                     }
 
                     if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
-                        TNHTweaker.StripperDictionary.ContainsKey(firearm.ClipType))
+                        TNHFramework.StripperDictionary.ContainsKey(firearm.ClipType))
                     {
                         TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHTweakerLogger.LogType.General);
-                        firearm.CompatibleClips = TNHTweaker.StripperDictionary[firearm.ClipType];
+                        firearm.CompatibleClips = TNHFramework.StripperDictionary[firearm.ClipType];
                     }
 
                     if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
-                        TNHTweaker.SpeedloaderDictionary.ContainsKey(firearm.RoundType))
+                        TNHFramework.SpeedloaderDictionary.ContainsKey(firearm.RoundType))
                     {
-                        foreach (FVRObject speedloader in TNHTweaker.SpeedloaderDictionary[firearm.RoundType])
+                        foreach (FVRObject speedloader in TNHFramework.SpeedloaderDictionary[firearm.RoundType])
                         {
                             if (speedloader.MagazineCapacity == firearm.MagazineCapacity)
                             {
@@ -243,7 +243,7 @@ namespace TNHTweaker
             TNHTweakerLogger.Log("TNHTweaker -- Adding default characters to template dictionary", TNHTweakerLogger.LogType.General);
             LoadDefaultCharacters(CharDatabase.Characters);
 
-            LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
+            LoadedTemplateManager.DefaultIconSprites = TNHFrameworkUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
             TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of default characters", TNHTweakerLogger.LogType.General);
             InitCharacters(LoadedTemplateManager.DefaultCharacters, false);
@@ -261,14 +261,14 @@ namespace TNHTweaker
         {
             //Create files relevant for character creation
             TNHTweakerLogger.Log("TNHTweaker -- Creating character creation files", TNHTweakerLogger.LogType.General);
-            TNHTweakerUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
-            TNHTweakerUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
-            TNHTweakerUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
-            TNHTweakerUtils.CreateObjectIDFile(path);
-            TNHTweakerUtils.CreateSosigIDFile(path);
-            TNHTweakerUtils.CreateJsonVaultFiles(path);
-            TNHTweakerUtils.CreateGeneratedTables(path);
-            TNHTweakerUtils.CreatePopulatedCharacterTemplate(path);
+            TNHFrameworkUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
+            TNHFrameworkUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
+            TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
+            TNHFrameworkUtils.CreateObjectIDFile(path);
+            TNHFrameworkUtils.CreateSosigIDFile(path);
+            TNHFrameworkUtils.CreateJsonVaultFiles(path);
+            TNHFrameworkUtils.CreateGeneratedTables(path);
+            TNHFrameworkUtils.CreatePopulatedCharacterTemplate(path);
         }
 
 

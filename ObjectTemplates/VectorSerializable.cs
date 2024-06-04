@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace TNHTweaker.ObjectTemplates
+namespace TNHFramework.ObjectTemplates
 {
     public class Vector2Serializable
     {
