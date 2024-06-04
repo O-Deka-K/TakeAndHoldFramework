@@ -114,14 +114,16 @@ namespace TNHFramework
                     }
 
                     if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
-                        TNHFramework.StripperDictionary.ContainsKey(firearm.ClipType))
+                        TNHFramework.StripperDictionary.ContainsKey(firearm.ClipType) &&
+                        firearm.ClipType != FireArmClipType.None)
                     {
                         TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHTweakerLogger.LogType.General);
                         firearm.CompatibleClips = TNHFramework.StripperDictionary[firearm.ClipType];
                     }
 
                     if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
-                        TNHFramework.SpeedloaderDictionary.ContainsKey(firearm.RoundType))
+                        TNHFramework.SpeedloaderDictionary.ContainsKey(firearm.RoundType) &&
+                        firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad))
                     {
                         foreach (FVRObject speedloader in TNHFramework.SpeedloaderDictionary[firearm.RoundType])
                         {
