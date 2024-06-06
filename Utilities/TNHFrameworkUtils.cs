@@ -447,7 +447,7 @@ namespace TNHFramework.Utilities
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
                         //If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
@@ -469,7 +469,7 @@ namespace TNHFramework.Utilities
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
                         //If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);

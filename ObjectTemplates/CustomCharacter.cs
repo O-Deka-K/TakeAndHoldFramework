@@ -507,6 +507,7 @@ namespace TNHFramework.ObjectTemplates
             SpawnsInLargeCase = oldPool.SpawnsInLargeCase;
             PrimaryGroup = new EquipmentGroup(oldPool.PrimaryGroup);
             BackupGroup = new EquipmentGroup(oldPool.BackupGroup);
+            pool = oldPool.GetPoolEntry();
         }
 
         public EquipmentPool(EquipmentPoolDef.PoolEntry pool)
