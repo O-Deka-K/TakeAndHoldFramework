@@ -415,6 +415,11 @@ namespace TNHFramework.Patches
                 supplyPoint.SetContact(contact);
                 __instance.m_activeSupplyPointIndicies.Add(num3);
 
+                if (supplyPointsIndexes.Contains(num3))
+                {
+                    supplyPointsIndexes.Remove(num3);
+                }
+
                 // Adds extra supply points if it's a custom character, with one in the standard location, and any extra located elsewhere.
                 if (isCustomCharacter == true)
                 {
@@ -426,7 +431,7 @@ namespace TNHFramework.Patches
                         TNH_SupplyPoint supplyPoint2 = __instance.SupplyPoints[supplyPointsIndexes[i]];
                         ConfigureSupplyPoint(supplyPoint2, level, ref panelIndex);
                         TAH_ReticleContact contact2 = __instance.TAHReticle.RegisterTrackedObject(supplyPoint2.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
-                        supplyPoint.SetContact(contact2);
+                        supplyPoint2.SetContact(contact2);
                         __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
                     }
                 }
