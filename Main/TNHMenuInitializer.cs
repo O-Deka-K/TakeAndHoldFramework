@@ -367,6 +367,25 @@ namespace TNHFramework
             //Load all characters into the UI
             foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
             {
+                bool flag = false;
+                foreach (TNH_UIManager.CharacterCategory category in Categories)
+                {
+                    if (category.CategoryName == LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Name)
+                    {
+                        flag = true; 
+                        break;
+                    }
+                }
+
+                if (!flag)
+                {
+                    Categories.Insert(LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Priority, new TNH_UIManager.CharacterCategory()
+                    {
+                        CategoryName = LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Name,
+                        Characters = []
+                    });
+                }
+
                 if (!Categories[(int)character.Group].Characters.Contains(character.CharacterID))
                 {
                     Categories[(int)character.Group].Characters.Add(character.CharacterID);

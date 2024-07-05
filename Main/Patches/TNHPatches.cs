@@ -150,6 +150,10 @@ namespace TNHFramework.Patches
         }
 
 
+        public static int OffsetCat = 0;
+        public static int OffsetChar = 0;
+
+
         /// <summary>
         /// Adds more space for characters to be displayed in the TNH menu
         /// </summary>
@@ -159,16 +163,9 @@ namespace TNHFramework.Patches
             //Add additional character buttons
             OptionsPanel_ButtonSet buttonSet = manager.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
             List<FVRPointableButton> buttonList = new(buttonSet.ButtonsInSet);
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 3; i++)
             {
                 Text newCharacterLabel = UnityEngine.Object.Instantiate(manager.LBL_CharacterName[1].gameObject, manager.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
-                Button newButton = newCharacterLabel.gameObject.GetComponent<Button>();
-
-                int buttonIndex = 6 + i;
-
-                newButton.onClick = new Button.ButtonClickedEvent();
-                newButton.onClick.AddListener(() => { manager.SetSelectedCharacter(buttonIndex); });
-                newButton.onClick.AddListener(() => { buttonSet.SetSelectedButton(buttonIndex); });
 
                 manager.LBL_CharacterName.Add(newCharacterLabel);
                 buttonList.Add(newCharacterLabel.gameObject.GetComponent<FVRPointableButton>());
@@ -177,11 +174,141 @@ namespace TNHFramework.Patches
 
             //Adjust buttons to be tighter together
             float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
-            for (int i = 1; i < manager.LBL_CharacterName.Count; i++)
+            for (int i = 0; i < manager.LBL_CharacterName.Count; i++)
             {
-                prevY = prevY - 35f;
-                manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+                Button button = manager.LBL_CharacterName[i].gameObject.GetComponent<Button>();
+
+                button.onClick = new Button.ButtonClickedEvent();
+
+                int whatTheFuck = i;
+                button.onClick.AddListener(() => { buttonSet.SetSelectedButton(whatTheFuck); });
+                button.onClick.AddListener(() => { manager.SetSelectedCharacter(whatTheFuck); });
+                
+                if (i > 0)
+                {
+                    prevY -= 35f;
+                    manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+                }
             }
+        }
+
+        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategory")]
+        [HarmonyPrefix]
+        public static bool SetCategoryUIPatch(TNH_UIManager __instance, int cat)
+        {
+            TNHTweakerLogger.Log("Category number " + cat + ", offset " + OffsetCat + ", max is " + __instance.Categories.Count, TNHTweakerLogger.LogType.TNH);
+
+            __instance.m_selectedCategory = cat + OffsetCat;
+            OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+
+            // probably better done with a switch statement and a single int, but i just wanna get this done first]
+            int adjust = 0;
+            if (cat == OffsetCat)
+            {
+                adjust = Math.Max(-2, 0 - OffsetCat);
+            }
+            else if (cat == OffsetCat + 1)
+            {
+                adjust = Math.Max(-1, 0 - OffsetCat);
+            }
+            else if (cat == 6 && __instance.Categories.Count > 8)
+            {
+                adjust = Math.Min(1, __instance.Categories.Count - OffsetCat - 8);
+            }
+            else if (cat == 7 && __instance.Categories.Count > 8)
+            {
+                adjust = Math.Min(2, __instance.Categories.Count - OffsetCat - 8);
+            }
+
+            TNHTweakerLogger.Log("Adjust is " + adjust, TNHTweakerLogger.LogType.TNH);
+
+            OffsetCat += adjust;
+            buttonSet.SetSelectedButton(buttonSet.selectedButton + (adjust * -1));
+
+            __instance.PlayButtonSound(0);
+
+            for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
+            {
+                TNHTweakerLogger.Log("Category iterator is " + i, TNHTweakerLogger.LogType.TNH);
+
+                if (i + OffsetCat < __instance.Categories.Count)
+                {
+                    __instance.LBL_CategoryName[i].gameObject.SetActive(true);
+                    __instance.LBL_CategoryName[i].text = (i + OffsetCat + 1).ToString() + ". " + __instance.Categories[i + OffsetCat].CategoryName;
+                }
+                else
+                {
+                    __instance.LBL_CategoryName[i].gameObject.SetActive(false);
+                }
+            }
+
+            OffsetChar = 0;
+            __instance.SetSelectedCharacter(0);
+
+            return false;
+        }
+
+        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCharacter")]
+        [HarmonyPrefix]
+        // ANTON
+        // WHY IS IT INT I
+        // INT INDEX
+        // PLEASE.
+        // I WILL SACRIFICE AN F2000 FOR YOU TO CHANGE THIS.
+        public static bool SetCharacterUIPatch(TNH_UIManager __instance, int i)
+        {
+            TNHTweakerLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[__instance.m_selectedCategory].Characters.Count, TNHTweakerLogger.LogType.TNH);
+
+            __instance.m_selectedCharacter = i + OffsetChar;
+            OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+
+            int adjust = 0;
+            if (i == OffsetChar)
+            {
+                adjust = Math.Max(-2, 0 - OffsetChar);
+            }
+            else if (i == OffsetChar + 1)
+            {
+                adjust = Math.Max(-1, 0 - OffsetChar);
+            }
+            else if (i == 10 && __instance.Categories[__instance.m_selectedCategory].Characters.Count > 12)
+            {
+                adjust = Math.Min(1, __instance.Categories[__instance.m_selectedCategory].Characters.Count - OffsetChar - 12);
+            }
+            else if (i == 11 && __instance.Categories[__instance.m_selectedCategory].Characters.Count > 12)
+            {
+                adjust = Math.Min(2, __instance.Categories[__instance.m_selectedCategory].Characters.Count - OffsetChar - 12);
+            }
+
+            TNHTweakerLogger.Log("Adjust is " + adjust, TNHTweakerLogger.LogType.TNH);
+
+            OffsetChar += adjust;
+            buttonSet.SetSelectedButton(buttonSet.selectedButton + (adjust * -1));
+
+            __instance.SetCharacter(__instance.Categories[__instance.m_selectedCategory].Characters[__instance.m_selectedCharacter]);
+            __instance.PlayButtonSound(1);
+
+            // now i don't know what to name this. fuck this, it's getting a j. you did this to me, anton.
+            // ...who am i kidding anton isn't reading this-
+            // ...either that or i'm probably dead.
+            for (int j = 0; j < __instance.LBL_CharacterName.Count; j++)
+            {
+                TNHTweakerLogger.Log("Char iterator is " + j, TNHTweakerLogger.LogType.TNH);
+
+                if (j + OffsetChar < __instance.Categories[__instance.m_selectedCategory].Characters.Count)
+                {
+                    __instance.LBL_CharacterName[j].gameObject.SetActive(true);
+
+                    TNH_CharacterDef def = __instance.CharDatabase.GetDef(__instance.Categories[__instance.m_selectedCategory].Characters[j + OffsetChar]);
+                    __instance.LBL_CharacterName[j].text = (j + OffsetChar + 1).ToString() + ". " + def.DisplayName;
+                }
+                else
+                {
+                    __instance.LBL_CharacterName[j].gameObject.SetActive(false);
+                }
+            }
+
+            return false;
         }
 
         #endregion

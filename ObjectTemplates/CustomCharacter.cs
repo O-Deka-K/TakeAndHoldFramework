@@ -20,7 +20,8 @@ namespace TNHFramework.ObjectTemplates
     {
         public string DisplayName;
         public string Description;
-        public int CharacterGroup;
+        public CategoryInfo CategoryData;
+        // public int CharacterGroup;
         public string TableID;
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
@@ -73,7 +74,28 @@ namespace TNHFramework.ObjectTemplates
         public CustomCharacter(TNH_CharacterDef character)
         {
             DisplayName = character.DisplayName;
-            CharacterGroup = (int)character.Group;
+            CategoryData = new CategoryInfo();
+            switch (character.Group)
+            {
+                case TNH_CharacterDef.CharacterGroup.DaringDefaults:
+                    CategoryData.Name = "Daring Defaults";
+                    break;
+
+                case TNH_CharacterDef.CharacterGroup.WienersThroughTime:
+                    CategoryData.Name = "Wieners Through Time";
+                    break;
+
+                case TNH_CharacterDef.CharacterGroup.MemetasticMeats:
+                    CategoryData.Name = "Memetastic Meats";
+                    break;
+
+                case TNH_CharacterDef.CharacterGroup.Competitive:
+                    CategoryData.Name = "Competitive Casings";
+                    break;
+            }
+            CategoryData.Priority = (int)character.Group;
+
+            // CharacterGroup = (int)character.Group;
             TableID = character.TableID;
             StartingTokens = character.StartingTokens;
             ForceAllAgentWeapons = character.ForceAllAgentWeapons;
@@ -106,7 +128,26 @@ namespace TNHFramework.ObjectTemplates
         {
             DisplayName = character.DisplayName;
             Description = character.Description;
-            CharacterGroup = character.CharacterGroup;
+            CategoryData = new CategoryInfo();
+            switch (character.CharacterGroup)
+            {
+                case 0:
+                    CategoryData.Name = "Daring Defaults";
+                    break;
+
+                case 1:
+                    CategoryData.Name = "Wieners Through Time";
+                    break;
+
+                case 2:
+                    CategoryData.Name = "Memetastic Meats";
+                    break;
+
+                case 3:
+                    CategoryData.Name = "Competitive Casings";
+                    break;
+            }
+            CategoryData.Priority = (int)character.CharacterGroup;
             TableID = character.TableID;
             StartingTokens = character.StartingTokens;
             ForceAllAgentWeapons = character.ForceAllAgentWeapons;
@@ -157,7 +198,7 @@ namespace TNHFramework.ObjectTemplates
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
                 character.CharacterID = (TNH_Char)ID;
-                character.Group = (TNH_CharacterDef.CharacterGroup)CharacterGroup;
+                character.Group = (TNH_CharacterDef.CharacterGroup)CategoryData.Priority;
                 character.TableID = TableID;
                 character.StartingTokens = StartingTokens;
                 character.ForceAllAgentWeapons = ForceAllAgentWeapons;
@@ -383,6 +424,13 @@ namespace TNHFramework.ObjectTemplates
             }
         }
 
+    }
+
+
+    public class CategoryInfo
+    {
+        public string Name;
+        public int Priority;
     }
 
 
