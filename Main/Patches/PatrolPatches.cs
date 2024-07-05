@@ -409,7 +409,7 @@ namespace TNHFramework.Patches
             {
                 SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
                 component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
-                component.group = template.DroppedObjectPool;
+                component.group = new(template.DroppedObjectPool);
             }
 
             return sosigComponent;

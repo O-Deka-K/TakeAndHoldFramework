@@ -123,7 +123,8 @@ namespace TNHFramework
 
                     if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
                         TNHFramework.SpeedloaderDictionary.ContainsKey(firearm.RoundType) &&
-                        firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad))
+                        firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad) &&
+                        !(firearm.TagFirearmAction == FVRObject.OTagFirearmAction.SingleActionRevolver))
                     {
                         foreach (FVRObject speedloader in TNHFramework.SpeedloaderDictionary[firearm.RoundType])
                         {

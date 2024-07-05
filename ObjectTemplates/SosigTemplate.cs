@@ -26,7 +26,7 @@ namespace TNHFramework.ObjectTemplates
         public float SecondaryChance;
         public float TertiaryChance;
 		public float DroppedLootChance;
-		public EquipmentGroup DroppedObjectPool;
+		public V1.EquipmentGroup DroppedObjectPool;
 
         [JsonIgnore]
         private SosigEnemyTemplate template;
@@ -51,7 +51,7 @@ namespace TNHFramework.ObjectTemplates
 			OutfitConfigs = template.OutfitConfig.Select(o => new OutfitConfig(o)).ToList();
 
 			DroppedLootChance = 0;
-			DroppedObjectPool = new EquipmentGroup();
+			DroppedObjectPool = new();
 
 			this.template = template;
 		}
