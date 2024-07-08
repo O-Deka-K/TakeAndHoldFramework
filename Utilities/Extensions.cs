@@ -13,7 +13,7 @@ namespace TNHFramework.Utilities
         public static T GetRandom<T>(this List<T> list)
         {
             if (list.Count < 1)
-                throw new Exception("TNHTWEAKER -- GetRandom failed, list is empty!");
+                throw new Exception("GetRandom failed, list is empty!");
             
             return list[UnityEngine.Random.Range(0, list.Count)];
         }

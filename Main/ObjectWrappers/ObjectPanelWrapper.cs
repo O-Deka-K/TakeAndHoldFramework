@@ -53,7 +53,7 @@ namespace TNHFramework
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-            if (original == null) TNHTweakerLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
+            if (original == null) TNHFrameworkLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
             original.enabled = false;
 
             blacklist = LoadedTemplateManager.LoadedCharactersDict[original.M.C].GetMagazineBlacklist();
@@ -327,7 +327,7 @@ namespace TNHFramework
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-            if (original == null) TNHTweakerLogger.LogError("Ammo Purchaser failed, original mag duplicator was null!");
+            if (original == null) TNHFrameworkLogger.LogError("Ammo Purchaser failed, original mag duplicator was null!");
             original.enabled = false;
 
             InitPanel();
@@ -380,7 +380,7 @@ namespace TNHFramework
                 FVRObject.OTagFirearmRoundPower roundPower = AM.GetRoundPower(detectedFirearm.RoundType);
                 int numSpawned = GetRoundsToSpawn(roundPower);
 
-                TNHTweakerLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
+                TNHFrameworkLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHFrameworkLogger.LogType.General);
 
                 CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
                 MagazineBlacklistEntry blacklistEntry = null;
@@ -480,7 +480,7 @@ namespace TNHFramework
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-            if (original == null) TNHTweakerLogger.LogError("Full Auto Enabler failed, original Mag Duplicator was null!");
+            if (original == null) TNHFrameworkLogger.LogError("Full Auto Enabler failed, original Mag Duplicator was null!");
             original.enabled = false;
 
             InitPanel();
@@ -777,7 +777,7 @@ namespace TNHFramework
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-            if (original == null) TNHTweakerLogger.LogError("Fire Rate Modifier failed, original Mag Duplicator was null!");
+            if (original == null) TNHFrameworkLogger.LogError("Fire Rate Modifier failed, original Mag Duplicator was null!");
             original.enabled = false;
 
             InitPanel();

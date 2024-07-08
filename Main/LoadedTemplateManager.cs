@@ -45,7 +45,7 @@ namespace TNHFramework
             }
             else
             {
-                TNHTweakerLogger.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 
@@ -56,7 +56,7 @@ namespace TNHFramework
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
@@ -71,7 +71,7 @@ namespace TNHFramework
             }
             else
             {
-                TNHTweakerLogger.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 
@@ -79,7 +79,7 @@ namespace TNHFramework
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
@@ -95,7 +95,7 @@ namespace TNHFramework
 
             NewCharacterID += 1;
 
-            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Character added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
@@ -114,7 +114,7 @@ namespace TNHFramework
                 }
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Character added successfuly : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddVaultFile(VaultFile template)
@@ -141,7 +141,7 @@ namespace TNHFramework
                 }
                 else
                 {
-                    TNHTweakerLogger.LogWarning("TNHTweaker -- Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
+                    TNHFrameworkLogger.LogWarning("Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
                 }
             }
         }

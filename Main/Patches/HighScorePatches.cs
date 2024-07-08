@@ -39,7 +39,7 @@ namespace TNHFramework.Patches
                 TNHFramework.GunsRecycled = 0;
                 TNHFramework.ShotsFired = 0;
 
-                TNHTweakerLogger.Log("Delayed init", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
             }
             
             return true;
@@ -52,7 +52,7 @@ namespace TNHFramework.Patches
         {
             TNHFramework.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
 
-            TNHTweakerLogger.Log("Spawned Player", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Spawned Player", TNHFrameworkLogger.LogType.TNH);
 
             return true;
         }
@@ -62,7 +62,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackHoldCompletion(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Hold Completion", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Hold Completion", TNHFrameworkLogger.LogType.TNH);
 
             TNHFramework.HoldStats.Add(new HoldStats()
             {
@@ -89,7 +89,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackNextLevel(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Set Level", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Add([]);
 
             return true;
@@ -100,7 +100,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackDeath(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Died", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Died", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Last().Add("Died");
 
             TNHFramework.HoldStats.Add(new HoldStats()
@@ -128,7 +128,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackVictory(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Victory", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Victory", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Last().Add("Victory");
 
             return true;
@@ -165,7 +165,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
         {
-            TNHTweakerLogger.Log("Hold Start", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Hold Start", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
 
             return true;
@@ -176,7 +176,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
-            TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
             if (__instance.m_selectedObject != null)
             {
                 TNHFramework.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
@@ -203,7 +203,7 @@ namespace TNHFramework.Patches
                 if (!__instance.m_hasBeenVisited && __instance.m_contact != null)
                 {
                     __instance.m_contact.SetVisited(true);
-                    TNHTweakerLogger.Log("Visiting supply", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
                     TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
                 __instance.m_hasBeenVisited = true;
@@ -223,7 +223,7 @@ namespace TNHFramework.Patches
             //The first thing we do is get the top scores
             if (__instance.m_doRequestScoresTop)
             {
-                TNHTweakerLogger.Log("Requesting Top Scores", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Requesting Top Scores", TNHFrameworkLogger.LogType.TNH);
                 __instance.m_doRequestScoresTop = false;
                 __instance.m_scoresTop = [];
 
@@ -233,7 +233,7 @@ namespace TNHFramework.Patches
             //After the top scores are retrieved, request the players score
             if (__instance.m_doRequestScoresPlayer)
             {
-                TNHTweakerLogger.Log("Requesting Player Scores", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Requesting Player Scores", TNHFrameworkLogger.LogType.TNH);
                 __instance.m_doRequestScoresPlayer = false;
                 __instance.m_scoresPlayer = [];
 
@@ -287,7 +287,7 @@ namespace TNHFramework.Patches
 
         public static IEnumerator GetHighScores(int count, TNH_ScoreDisplay instance)
         {
-            TNHTweakerLogger.Log("Getting high scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Getting high scores from TNH Dashboard", TNHFrameworkLogger.LogType.TNH);
 
             string url = "https://tnh-dashboard.azure-api.net/v1/api/scores";
 
@@ -305,7 +305,7 @@ namespace TNHFramework.Patches
                 TNH_UIManager manager = GameObject.FindObjectOfType<TNH_UIManager>();
                 if(manager == null)
                 {
-                    TNHTweakerLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
+                    TNHFrameworkLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
                     yield break;
                 }
 
@@ -317,7 +317,7 @@ namespace TNHFramework.Patches
                 url += "&startingIndex=" + 0 + "&count=" + count;
             }
 
-            TNHTweakerLogger.Log("Request URL: " + url, TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Request URL: " + url, TNHFrameworkLogger.LogType.TNH);
 
             using (UnityWebRequest wwwGetScores = UnityWebRequest.Get(url))
             {
@@ -325,18 +325,18 @@ namespace TNHFramework.Patches
 
                 if (wwwGetScores.isError)
                 {
-                    TNHTweakerLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
+                    TNHFrameworkLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
                 }
                 else if(wwwGetScores.responseCode == 404)
                 {
-                    TNHTweakerLogger.LogWarning("High scores not found for table!");
+                    TNHFrameworkLogger.LogWarning("High scores not found for table!");
                 }
                 else
                 {
-                    TNHTweakerLogger.Log("Got Scores!", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Got Scores!", TNHFrameworkLogger.LogType.TNH);
 
                     string scores = wwwGetScores.downloadHandler.text;
-                    TNHTweakerLogger.Log(scores, TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log(scores, TNHFrameworkLogger.LogType.TNH);
 
                     List<ScoreEntry> highScores = JsonConvert.DeserializeObject<List<ScoreEntry>>(scores);
 
@@ -360,7 +360,7 @@ namespace TNHFramework.Patches
 
         public static IEnumerator GetPlayerScores(int num_before, int num_after, TNH_ScoreDisplay instance)
         {
-            TNHTweakerLogger.Log("Getting player scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Getting player scores from TNH Dashboard", TNHFrameworkLogger.LogType.TNH);
 
             string url = "https://tnh-dashboard.azure-api.net/v1/api/scores/search";
             List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = [];
@@ -381,7 +381,7 @@ namespace TNHFramework.Patches
                 TNH_UIManager manager = GameObject.FindObjectOfType<TNH_UIManager>();
                 if (manager == null)
                 {
-                    TNHTweakerLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
+                    TNHFrameworkLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
                     yield break;
                 }
 
@@ -395,7 +395,7 @@ namespace TNHFramework.Patches
                 url += "&num_after=1";
             }
 
-            TNHTweakerLogger.Log("Request URL: " + url, TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Request URL: " + url, TNHFrameworkLogger.LogType.TNH);
 
             using (UnityWebRequest wwwGetScores = UnityWebRequest.Get(url))
             {
@@ -403,20 +403,20 @@ namespace TNHFramework.Patches
 
                 if (wwwGetScores.isError)
                 {
-                    TNHTweakerLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
+                    TNHFrameworkLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
                 }
                 else if (wwwGetScores.responseCode == 404)
                 {
-                    TNHTweakerLogger.LogWarning("High scores not found for player in table!");
+                    TNHFrameworkLogger.LogWarning("High scores not found for player in table!");
 
                     combinedScores.AddRange(instance.m_scoresTop.Take(6));
                 }
                 else
                 {
-                    TNHTweakerLogger.Log("Got Scores!", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Got Scores!", TNHFrameworkLogger.LogType.TNH);
 
                     string scores = wwwGetScores.downloadHandler.text;
-                    TNHTweakerLogger.Log(scores, TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log(scores, TNHFrameworkLogger.LogType.TNH);
 
                     List<ScoreEntry> playerScores = JsonConvert.DeserializeObject<List<ScoreEntry>>(scores);
 
@@ -449,7 +449,7 @@ namespace TNHFramework.Patches
 
         public static IEnumerator SendScore(int score)
         {
-            TNHTweakerLogger.Log("Sending modded score to the TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Sending modded score to the TNH Dashboard", TNHFrameworkLogger.LogType.TNH);
             waitForScore = true;
 
             //First, send the map data for this map
@@ -458,7 +458,7 @@ namespace TNHFramework.Patches
                 wwwSendMap.SetRequestHeader(Globals.Accept, "*/*");
                 wwwSendMap.SetRequestHeader(Globals.Content_Type, Globals.ApplicationJson);
 
-                GetHoldList().ForEach(o => TNHTweakerLogger.Log($"Hold: x={o.x}, z={o.z}", TNHTweakerLogger.LogType.TNH));
+                GetHoldList().ForEach(o => TNHFrameworkLogger.Log($"Hold: x={o.x}, z={o.z}", TNHFrameworkLogger.LogType.TNH));
 
                 MapData mapData = new MapData()
                 {
@@ -475,11 +475,11 @@ namespace TNHFramework.Patches
 
                 if (wwwSendMap.isError)
                 {
-                    TNHTweakerLogger.LogError("Something bad happened sending map data! \n" + wwwSendMap.error);
+                    TNHFrameworkLogger.LogError("Something bad happened sending map data! \n" + wwwSendMap.error);
                 }
                 else
                 {
-                    TNHTweakerLogger.Log("Sent map data", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Sent map data", TNHFrameworkLogger.LogType.TNH);
                 }
             }
 
@@ -499,11 +499,11 @@ namespace TNHFramework.Patches
 
                 if (wwwScores.isError)
                 {
-                    TNHTweakerLogger.LogError("Something bad happened sending score! \n" + wwwScores.error);
+                    TNHFrameworkLogger.LogError("Something bad happened sending score! \n" + wwwScores.error);
                 }
                 else
                 {
-                    TNHTweakerLogger.Log("Sent score data", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Sent score data", TNHFrameworkLogger.LogType.TNH);
                 }
             }
 

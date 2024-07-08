@@ -48,7 +48,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_PatrolChallenge P, int curStandardIndex, int excludeHoldIndex, bool isStart, TNH_Manager __instance, TNH_Progression.Level ___m_curLevel, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, ref float ___m_timeTilPatrolCanSpawn)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Generating a patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Generating a patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHFrameworkLogger.LogType.TNH);
 
             if (P.Patrols.Count < 1) return false;
 
@@ -59,12 +59,12 @@ namespace TNHFramework.Patches
             int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
             if (patrolIndex == -1)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("No valid patrols can spawn", TNHFrameworkLogger.LogType.TNH);
                 ___m_timeTilPatrolCanSpawn = 999;
                 return false;
             }
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Valid patrol found", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Valid patrol found", TNHFrameworkLogger.LogType.TNH);
 
             Patrol patrol = currLevel.Patrols[patrolIndex];
 
@@ -117,7 +117,7 @@ namespace TNHFramework.Patches
             if (P.Patrols.Count >= 1)
             {
                 jankyWorkaround = true;
-                TNHTweakerLogger.Log("TNHTWEAKER -- Letting GenerateInitial run, pls patch kthxbye", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Letting GenerateInitial run, pls patch kthxbye", TNHFrameworkLogger.LogType.TNH);
                 return true;
             }
             return false;
@@ -139,11 +139,11 @@ namespace TNHFramework.Patches
         {
             if (jankyWorkaround == true)
             {
-                TNHTweakerLogger.Log("Letting stuff do stuff", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Letting stuff do stuff", TNHFrameworkLogger.LogType.TNH);
                 jankyWorkaround = false;
                 return true;
             }
-            TNHTweakerLogger.Log("TNHTWEAKER -- Generating a sentry patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Generating a sentry patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHFrameworkLogger.LogType.TNH);
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
             Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
@@ -154,7 +154,7 @@ namespace TNHFramework.Patches
             int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
             if (patrolIndex == -1)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("No valid patrols can spawn", TNHFrameworkLogger.LogType.TNH);
                 ___m_timeTilPatrolCanSpawn = 999;
 
                 //Returning an empty squad is the easiest way to not generate a patrol when no valid ones are found
@@ -167,7 +167,7 @@ namespace TNHFramework.Patches
                 return false;
             }
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Valid patrol found", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Valid patrol found", TNHFrameworkLogger.LogType.TNH);
 
             Patrol patrol = currLevel.Patrols[patrolIndex];
             TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(__instance, patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
@@ -306,7 +306,7 @@ namespace TNHFramework.Patches
         {
             if (character.ForceAllAgentWeapons) allowAllWeapons = true;
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning sosig: " + template.SosigEnemyID, TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Spawning sosig: " + template.SosigEnemyID, TNHFrameworkLogger.LogType.TNH);
 
             //Create the sosig object
             GameObject sosigPrefab = UnityEngine.Object.Instantiate(IM.OD[template.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation, spawnRotation);
@@ -319,7 +319,7 @@ namespace TNHFramework.Patches
             else if (template.Configs.Count > 0) config = template.Configs.GetRandom<SosigConfig>();
             else
             {
-                TNHTweakerLogger.LogError("TNHTweaker -- Sosig did not have normal difficulty config when playing on normal difficulty! Not spawning this enemy!");
+                TNHFrameworkLogger.LogError("Sosig did not have normal difficulty config when playing on normal difficulty! Not spawning this enemy!");
                 return null;
             }
 
@@ -484,7 +484,7 @@ namespace TNHFramework.Patches
             weapon.SetAutoDestroy(true);
             weapon.O.SpawnLockable = false;
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Equipping sosig weapon: " + weapon.gameObject.name, TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Equipping sosig weapon: " + weapon.gameObject.name, TNHFrameworkLogger.LogType.TNH);
 
             //Equip the sosig weapon to the sosig
             sosig.ForceEquip(weapon);

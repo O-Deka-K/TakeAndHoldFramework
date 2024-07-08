@@ -73,12 +73,12 @@ namespace TNHFramework
         {
             InfoPath = Path.GetDirectoryName(Info.Location);
 
-            if (TNHTweakerLogger.BepLog == null)
+            if (TNHFrameworkLogger.BepLog == null)
             {
-                TNHTweakerLogger.Init();
+                TNHFrameworkLogger.Init();
             }
 
-            TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Hello World (from TNH Tweaker)", TNHFrameworkLogger.LogType.General);
 
             SetupOutputDirectory();
 
@@ -103,7 +103,7 @@ namespace TNHFramework
             {
                 foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
                 {
-                    TNHTweakerLogger.Log($"Plugin loaded: {item.Key}", TNHTweakerLogger.LogType.General);
+                    TNHFrameworkLogger.Log($"Plugin loaded: {item.Key}", TNHFrameworkLogger.LogType.General);
                 }
             }
             */
@@ -166,7 +166,7 @@ namespace TNHFramework
         /// </summary>
         private void LoadConfigFile()
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
+            TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
 
             BuildCharacterFiles = Config.Bind("General",
                                     "BuildCharacterFiles",
@@ -215,10 +215,10 @@ namespace TNHFramework
 
             
 
-            TNHTweakerLogger.AllowLogging = allowLog.Value;
-            TNHTweakerLogger.LogCharacter = printCharacters.Value;
-            TNHTweakerLogger.LogTNH = logTNH.Value;
-            TNHTweakerLogger.LogFile = logFileReads.Value;
+            TNHFrameworkLogger.AllowLogging = allowLog.Value;
+            TNHFrameworkLogger.LogCharacter = printCharacters.Value;
+            TNHFrameworkLogger.LogTNH = logTNH.Value;
+            TNHFrameworkLogger.LogFile = logFileReads.Value;
         }
 
 
@@ -241,7 +241,7 @@ namespace TNHFramework
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
-            TNHTweakerLogger.Log("Preventing vanilla score submition", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Preventing vanilla score submition", TNHFrameworkLogger.LogType.TNH);
 
             GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
 
@@ -266,9 +266,9 @@ namespace TNHFramework
     {
         public void Awake()
         {
-            if (TNHTweakerLogger.BepLog == null)
+            if (TNHFrameworkLogger.BepLog == null)
             {
-                TNHTweakerLogger.Init();
+                TNHFrameworkLogger.Init();
             }
 
             Stages.Setup += DeliOnSetup;

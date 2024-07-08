@@ -187,7 +187,7 @@ namespace TNHFramework.ObjectTemplates.V1
         {
             if (character == null)
             {
-                TNHTweakerLogger.LogError("TNHTweaker -- Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
+                TNHFrameworkLogger.LogError("Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
                 return null;
             }
 
@@ -266,72 +266,72 @@ namespace TNHFramework.ObjectTemplates.V1
 
         public void DelayedInit(bool isCustom)
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Primary Weapon", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Primary Weapon", TNHFrameworkLogger.LogType.Character);
             if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
                 character.Has_Weapon_Primary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Secondary Weapon", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Secondary Weapon", TNHFrameworkLogger.LogType.Character);
             if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
                 character.Has_Weapon_Secondary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Tertiary Weapon", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Tertiary Weapon", TNHFrameworkLogger.LogType.Character);
             if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
                 character.Has_Weapon_Tertiary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Primary Item", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Primary Item", TNHFrameworkLogger.LogType.Character);
             if (HasPrimaryItem && !PrimaryItem.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
                 character.Has_Item_Primary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Secondary Item", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Secondary Item", TNHFrameworkLogger.LogType.Character);
             if (HasSecondaryItem && !SecondaryItem.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
                 character.Has_Item_Secondary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Tertiary Item", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Tertiary Item", TNHFrameworkLogger.LogType.Character);
             if (HasTertiaryItem && !TertiaryItem.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
                 character.Has_Item_Tertiary = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of Shield", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of Shield", TNHFrameworkLogger.LogType.Character);
             if (HasShield && !Shield.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHFrameworkLogger.LogWarning("Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
                 character.Has_Item_Shield = false;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of required sights table", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of required sights table", TNHFrameworkLogger.LogType.Character);
             if (RequireSightTable != null && !RequireSightTable.DelayedInit(completedQuests))
             {
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Required sight table was empty, guns will not spawn with required sights");
+                TNHFrameworkLogger.LogWarning("Required sight table was empty, guns will not spawn with required sights");
                 RequireSightTable = null;
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of equipment pools", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of equipment pools", TNHFrameworkLogger.LogType.Character);
             magazineBlacklistDict = new Dictionary<string, MagazineBlacklistEntry>();
             if (MagazineBlacklist != null)
             {
@@ -346,20 +346,20 @@ namespace TNHFramework.ObjectTemplates.V1
                 EquipmentPool pool = EquipmentPools[i];
                 if (!pool.DelayedInit(completedQuests))
                 {
-                    TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
+                    TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
                     i -= 1;
                 }
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of levels", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of levels", TNHFrameworkLogger.LogType.Character);
             for (int i = 0; i < Levels.Count; i++)
             {
                 Levels[i].DelayedInit(isCustom, i);
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Init of endless levels", TNHTweakerLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Init of endless levels", TNHFrameworkLogger.LogType.Character);
             for (int i = 0; i < LevelsEndless.Count; i++)
             {
                 LevelsEndless[i].DelayedInit(isCustom, i);
@@ -452,7 +452,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!PrimaryGroup.DelayedInit(completedQuests))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Primary group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        TNHFrameworkLogger.Log("Primary group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
                     }
                 }
@@ -461,7 +461,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!BackupGroup.DelayedInit(completedQuests))
                     {
-                        if (PrimaryGroup == null) TNHTweakerLogger.Log("TNHTweaker -- Backup group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         BackupGroup = null;
                     }
                 }
@@ -485,7 +485,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 return BackupGroup.GetSpawnedEquipmentGroups();
             }
 
-            TNHTweakerLogger.LogWarning("TNHTweaker -- EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
+            TNHFrameworkLogger.LogWarning("EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
             return new List<EquipmentGroup>();
         }
 
@@ -773,7 +773,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!SubGroups[i].DelayedInit(completedQuests))
                     {
-                        //TNHTweakerLogger.Log("TNHTweaker -- Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
+                        //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
                         i -= 1;
                     }
@@ -782,7 +782,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
             if (Rarity <= 0)
             {
-                //TNHTweakerLogger.Log("TNHTweaker -- Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
+                //TNHFrameworkLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHFrameworkLogger.LogType.Character);
                 Rarity = 1;
             }
 
@@ -920,7 +920,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!PrimaryGroup.DelayedInit(completedQuests))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Primary group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        TNHFrameworkLogger.Log("Primary group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
                     }
                 }
@@ -929,7 +929,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!BackupGroup.DelayedInit(completedQuests))
                     {
-                        if (PrimaryGroup == null) TNHTweakerLogger.Log("TNHTweaker -- Backup group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         BackupGroup = null;
                     }
                 }

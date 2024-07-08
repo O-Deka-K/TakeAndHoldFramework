@@ -37,14 +37,14 @@ namespace TNHFramework
             catch
             {
                 isOtherLoaderLoaded = false;
-                TNHTweakerLogger.LogWarning("TNHTweaker -- OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
+                TNHFrameworkLogger.LogWarning("OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
             }
 
             if (Chainloader.PluginInfos.ContainsKey("MagazinePatcher"))
             {
                 PokeMagPatcher();
                 isMagPatcherLoaded = true;
-                TNHTweakerLogger.LogWarning("TNHTweaker -- Mag patcher is detected.");
+                TNHFrameworkLogger.LogWarning("Mag patcher is detected.");
             }
             else // Honey, we have Magazine Patcher at home.
             {
@@ -101,7 +101,7 @@ namespace TNHFramework
                     if ((firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
                         TNHFramework.CartridgeDictionary.ContainsKey(firearm.RoundType))
                     {
-                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new rounds of type " + firearm.RoundType, TNHTweakerLogger.LogType.General);
+                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new rounds of type " + firearm.RoundType, TNHFrameworkLogger.LogType.General);
                         firearm.CompatibleSingleRounds = TNHFramework.CartridgeDictionary[firearm.RoundType];
                     }
 
@@ -109,7 +109,7 @@ namespace TNHFramework
                         TNHFramework.MagazineDictionary.ContainsKey(firearm.MagazineType) &&
                         firearm.MagazineType != FireArmMagazineType.mNone)
                     {
-                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new magazines of type " + firearm.MagazineType, TNHTweakerLogger.LogType.General);
+                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new magazines of type " + firearm.MagazineType, TNHFrameworkLogger.LogType.General);
                         firearm.CompatibleMagazines = TNHFramework.MagazineDictionary[firearm.MagazineType];
                     }
 
@@ -117,7 +117,7 @@ namespace TNHFramework
                         TNHFramework.StripperDictionary.ContainsKey(firearm.ClipType) &&
                         firearm.ClipType != FireArmClipType.None)
                     {
-                        TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHTweakerLogger.LogType.General);
+                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHFrameworkLogger.LogType.General);
                         firearm.CompatibleClips = TNHFramework.StripperDictionary[firearm.ClipType];
                     }
 
@@ -130,7 +130,7 @@ namespace TNHFramework
                         {
                             if (speedloader.MagazineCapacity == firearm.MagazineCapacity)
                             {
-                                TNHTweakerLogger.Log("Given firearm " + firearm.DisplayName + " new speedloader of type " + firearm.RoundType, TNHTweakerLogger.LogType.General);
+                                TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new speedloader of type " + firearm.RoundType, TNHFrameworkLogger.LogType.General);
                                 firearm.CompatibleSpeedLoaders.Add(speedloader);
                             }
                         }
@@ -238,23 +238,23 @@ namespace TNHFramework
 
         public static void LoadTNHTemplates(TNH_CharacterDatabase CharDatabase)
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
 
             //Load all of the default templates into our dictionaries
-            TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs to template dictionary", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Adding default sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultSosigs();
-            TNHTweakerLogger.Log("TNHTweaker -- Adding default characters to template dictionary", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultCharacters(CharDatabase.Characters);
 
             LoadedTemplateManager.DefaultIconSprites = TNHFrameworkUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of default characters", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Delayed Init of default characters", TNHFrameworkLogger.LogType.General);
             InitCharacters(LoadedTemplateManager.DefaultCharacters, false);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom characters", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Delayed Init of custom characters", TNHFrameworkLogger.LogType.General);
             InitCharacters(LoadedTemplateManager.CustomCharacters, true);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom sosigs", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Delayed Init of custom sosigs", TNHFrameworkLogger.LogType.General);
             InitSosigs(LoadedTemplateManager.CustomSosigs);
         }
 
@@ -263,7 +263,7 @@ namespace TNHFramework
         public static void CreateTNHFiles(string path)
         {
             //Create files relevant for character creation
-            TNHTweakerLogger.Log("TNHTweaker -- Creating character creation files", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
             TNHFrameworkUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
             TNHFrameworkUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
             TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
@@ -316,7 +316,7 @@ namespace TNHFramework
                 }
                 catch (Exception e)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
+                    TNHFrameworkLogger.LogError("Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
                     characters.RemoveAt(i);
                     LoadedTemplateManager.LoadedCharactersDict.Remove(character.GetCharacter());
                     i -= 1;
@@ -340,7 +340,7 @@ namespace TNHFramework
                 }
                 catch (Exception e)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
+                    TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
                     //Find any characters that use this sosig, and remove them
                     for (int j = 0; j < LoadedTemplateManager.LoadedCharactersDict.Values.Count; j++)
@@ -350,7 +350,7 @@ namespace TNHFramework
 
                         if (value_pair.Value.CharacterUsesSosig(sosig.SosigEnemyID))
                         {
-                            TNHTweakerLogger.LogError("TNHTweaker -- Removing character that used removed sosig: " + value_pair.Value.DisplayName);
+                            TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + value_pair.Value.DisplayName);
                             LoadedTemplateManager.LoadedCharactersDict.Remove(value_pair.Key);
                             j -= 1;
                         }
@@ -362,7 +362,7 @@ namespace TNHFramework
 
         public static void RefreshTNHUI(TNH_UIManager instance, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase)
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Refreshing TNH UI", TNHTweakerLogger.LogType.General);
+            TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
 
             //Load all characters into the UI
             foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)

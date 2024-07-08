@@ -64,7 +64,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -92,7 +92,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -120,7 +120,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -166,7 +166,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Icon found (" + pool.TableDef.Icon.name + ")", TNHTweakerLogger.LogType.Character);
+                        TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
                         icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
                     }
                 }
@@ -181,7 +181,7 @@ namespace TNHFramework.Utilities
 
             try
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Creating default character template files", TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Creating default character template files", TNHFrameworkLogger.LogType.File);
 
                 path = path + "/DefaultCharacters";
 
@@ -231,7 +231,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -240,7 +240,7 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Creating populated character template file", TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
 
                 path = path + "/PopulatedCharacterTemplate.json";
 
@@ -260,7 +260,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -269,7 +269,7 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Creating default sosig template files", TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
 
                 path = path + "/DefaultSosigTemplates";
 
@@ -299,7 +299,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -333,7 +333,7 @@ namespace TNHFramework.Utilities
                     }
                     catch(Exception e)
                     {
-                        TNHTweakerLogger.LogError("Vault File could not be loaded");
+                        TNHFrameworkLogger.LogError("Vault File could not be loaded");
                     }
                 }
                 
@@ -356,7 +356,7 @@ namespace TNHFramework.Utilities
 
             catch (Exception ex)
             {
-                TNHTweakerLogger.LogError(ex.ToString());
+                TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
 
@@ -449,7 +449,7 @@ namespace TNHFramework.Utilities
                         //If this was not a vaulted gun, remove it
                         if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
                             i -= 1;
                         }
@@ -471,7 +471,7 @@ namespace TNHFramework.Utilities
                         //If this was not a vaulted gun, remove it
                         if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
                             i -= 1;
                         }
@@ -491,7 +491,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
                         i -= 1;
                     }
@@ -502,7 +502,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -513,7 +513,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -524,7 +524,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
                         i -= 1;
                     }
@@ -535,7 +535,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
                         i -= 1;
                     }
@@ -546,7 +546,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
                         i -= 1;
                     }
@@ -557,7 +557,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
+                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
                         i -= 1;
                     }
@@ -689,7 +689,7 @@ namespace TNHFramework.Utilities
             {
                 AnvilCallback<GameObject> gameObjectCallback = IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync();
 
-                TNHTweakerLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHTweakerLogger.LogType.General);
+                TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
 
                 yield return gameObjectCallback;
                 gameObjects.Add(gameObjectCallback.Result);

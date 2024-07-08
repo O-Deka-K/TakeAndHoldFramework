@@ -36,13 +36,13 @@ namespace TNHFramework
             try
             {
                 ObjectTemplates.SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SosigTemplate>();
-                TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
             catch (Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
             }
 
         }
@@ -85,13 +85,13 @@ namespace TNHFramework
 
                 if (character == null)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
+                    TNHFrameworkLogger.LogError("Failed to load custom character! No character.json file found");
                     return;
                 }
 
                 else if (thumbnail == null)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
+                    TNHFrameworkLogger.LogError("Failed to load custom character! No thumb.png file found");
                     return;
                 }
 
@@ -107,13 +107,13 @@ namespace TNHFramework
                     }
                 }
 
-                TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.File);
 
                 LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
             catch(Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
             }
         }
     }
@@ -134,14 +134,14 @@ namespace TNHFramework
             {
                 ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
 
-                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
-                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }
             catch(Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
             }
         }
     }

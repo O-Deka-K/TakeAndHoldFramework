@@ -35,7 +35,7 @@ namespace TNHFramework
                     var deserializer = deserializerBuilder.Build();
                     sosig = deserializer.Deserialize<SosigTemplate>(File.ReadAllText(file.FullName));
 
-                    TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+                    TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
                 }
                 else if (file.Name.EndsWith(".json"))
                 {
@@ -46,7 +46,7 @@ namespace TNHFramework
 
                     sosig = JsonConvert.DeserializeObject<SosigTemplate>(File.ReadAllText(file.FullName));
 
-                    TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+                    TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
 
                     if (TNHFramework.ConvertFilesToYAML.Value == true)
                     {
@@ -70,7 +70,7 @@ namespace TNHFramework
             }
             catch (Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
             }
             return new Empty();
         }
@@ -97,7 +97,7 @@ namespace TNHFramework
                         var deserializer = deserializerBuilder.Build();
                         character = deserializer.Deserialize<CustomCharacter>(File.ReadAllText(file.FullName));
 
-                        TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character file", TNHTweakerLogger.LogType.File);
+                        TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);
                     }
                     else if (file.Name.EndsWith("character.json"))
                     {
@@ -128,25 +128,25 @@ namespace TNHFramework
                             File.Delete(file.FullName);
                         }
 
-                        TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character file", TNHTweakerLogger.LogType.File);
+                        TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);
                     }
                     else if (file.FullName.EndsWith("thumb.png"))
                     {
                         thumbnail = TNHFrameworkUtils.LoadSprite(file);
 
-                        TNHTweakerLogger.Log("TNHTweaker -- Character partially loaded - loaded character icon", TNHTweakerLogger.LogType.File);
+                        TNHFrameworkLogger.Log("Character partially loaded - loaded character icon", TNHFrameworkLogger.LogType.File);
                     }
                 }
 
                 if (character == null)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
+                    TNHFrameworkLogger.LogError("Failed to load custom character! No character.json file found");
                     return new Empty();
                 }
 
                 else if (thumbnail == null)
                 {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
+                    TNHFrameworkLogger.LogError("Failed to load custom character! No thumb.png file found");
                     return new Empty();
                 }
 
@@ -159,18 +159,18 @@ namespace TNHFramework
                         {
                             pool.GetPoolEntry().TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
 
-                            TNHTweakerLogger.Log($"TNHTweaker -- Character partially loaded - loaded misc icon {iconFile.Name}", TNHTweakerLogger.LogType.File);
+                            TNHFrameworkLogger.Log($"Character partially loaded - loaded misc icon {iconFile.Name}", TNHFrameworkLogger.LogType.File);
                         }
                     }
                 }
 
-                TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
+                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.File);
 
                 LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
             }
             catch (Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
             }
 
             return new Empty();
@@ -191,7 +191,7 @@ namespace TNHFramework
                     var deserializer = deserializerBuilder.Build();
                     savedGun = deserializer.Deserialize<VaultFile>(File.ReadAllText(file.FullName));
 
-                    TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                    TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
                 }
                 else if (file.Name.EndsWith(".json"))
                 {
@@ -202,7 +202,7 @@ namespace TNHFramework
 
                     savedGun = JsonConvert.DeserializeObject<VaultFile>(File.ReadAllText(file.FullName));
 
-                    TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                    TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 
                     if (TNHFramework.ConvertFilesToYAML.Value == true)
                     {
@@ -229,7 +229,7 @@ namespace TNHFramework
             }
             catch (Exception e)
             {
-                TNHTweakerLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
+                TNHFrameworkLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
             }
 
             return new Empty();

@@ -21,7 +21,7 @@ namespace TNHFramework
             if (dontDrop)
                 return;
             
-            TNHTweakerLogger.Log("TNHTweaker -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Lootable link was destroyed!", TNHFrameworkLogger.LogType.TNH);
 
             List<EquipmentGroup> selectedGroups = group.GetSpawnedEquipmentGroups();
             string selectedItem;
@@ -40,9 +40,9 @@ namespace TNHFramework
                         }
                         else
                         {
-                            TNHTweakerLogger.Log(
-                                "TNHTweaker -- Spawning nothing, since group was compatible magazines, and could not find a compatible magazine for player",
-                                TNHTweakerLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log(
+                                "Spawning nothing, since group was compatible magazines, and could not find a compatible magazine for player",
+                                TNHFrameworkLogger.LogType.TNH);
                             return;
                         }
                     }
