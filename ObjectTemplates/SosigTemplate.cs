@@ -61,7 +61,7 @@ namespace TNHFramework.ObjectTemplates
 			if(template == null)
             {
 
-				TNHTweakerLogger.Log("TNHTWEAKER -- Getting sosig template", TNHTweakerLogger.LogType.Character);
+				TNHFrameworkLogger.Log("Getting sosig template", TNHFrameworkLogger.LogType.Character);
 
 				template = (SosigEnemyTemplate)ScriptableObject.CreateInstance(typeof(SosigEnemyTemplate));
 
@@ -70,13 +70,13 @@ namespace TNHFramework.ObjectTemplates
 				template.SecondaryChance = SecondaryChance;
 				template.TertiaryChance = TertiaryChance;
 
-				TNHTweakerLogger.Log("TNHTWEAKER -- Getting sosig config", TNHTweakerLogger.LogType.Character);
+				TNHFrameworkLogger.Log("Getting sosig config", TNHFrameworkLogger.LogType.Character);
 				template.ConfigTemplates = [];
 				foreach(SosigConfig temp in Configs)
                 {
 					if(temp == null)
                     {
-						TNHTweakerLogger.LogError("One of the sosig configs is null!");
+						TNHFrameworkLogger.LogError("One of the sosig configs is null!");
 						continue;
 					}
 
@@ -94,7 +94,7 @@ namespace TNHFramework.ObjectTemplates
         {
 			if (template != null)
             {
-				TNHTweakerLogger.Log("TNHTWEAKER -- Delayed init of sosig: " + DisplayName, TNHTweakerLogger.LogType.Character);
+				TNHFrameworkLogger.Log("Delayed init of sosig: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
 				TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 

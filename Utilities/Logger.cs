@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TNHFramework.Utilities
 {
-    static class TNHTweakerLogger
+    static class TNHFrameworkLogger
     {
         public static ManualLogSource BepLog = null;
 
@@ -31,6 +31,8 @@ namespace TNHFramework.Utilities
 
         public static void Log(string log, LogType type)
         {
+            log = "TNHFramework -- " + log;
+
             if (AllowLogging)
             {
                 //log = $"[{DateTime.Now:HH:mm:ss}] {log}";  // Add timestamp
@@ -56,11 +58,15 @@ namespace TNHFramework.Utilities
 
         public static void LogWarning(string log)
         {
+            log = "TNHFramework -- " + log;
+
             BepLog.LogWarning(log);
         }
 
         public static void LogError(string log)
         {
+            log = "TNHFramework -- " + log;
+
             BepLog.LogError(log);
         }
 

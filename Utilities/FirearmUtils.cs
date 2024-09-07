@@ -290,7 +290,7 @@ namespace TNHFramework.Utilities
 
 			if (!IM.CompatMags.ContainsKey(currentMagazine.MagazineType))
 			{
-				TNHTweakerLogger.LogError($"TNHTWEAKER -- magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
+				TNHFrameworkLogger.LogError($"magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
 				return null;
 			}
 

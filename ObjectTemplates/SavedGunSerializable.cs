@@ -74,7 +74,7 @@ namespace TNHFramework.ObjectTemplates
             }
 
             if (!result)
-                TNHTweakerLogger.LogWarning($"TNHTWEAKER -- Vaulted gun in table does not have all components loaded, removing it! VaultID: {FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
+                TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID: {FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
 
             return result;
         }

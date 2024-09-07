@@ -27,7 +27,7 @@ namespace TNHFramework.Patches
             {
                 // Clear all entries from the tracked stats
                 TNHFramework.HoldActions.Clear();
-                TNHTweakerLogger.Log("Delayed init", TNHTweakerLogger.LogType.TNH);
+                TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
             }
             
             return true;
@@ -39,7 +39,7 @@ namespace TNHFramework.Patches
         public static bool TrackPlayerSpawnPatch(TNH_Manager __instance)
         {
             TNHFramework.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
-            TNHTweakerLogger.Log("Spawned Player", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Spawned Player", TNHFrameworkLogger.LogType.TNH);
 
             return true;
         }
@@ -49,7 +49,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackHoldCompletion()
         {
-            TNHTweakerLogger.Log("Hold Completion", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Hold Completion", TNHFrameworkLogger.LogType.TNH);
 
             return true;
         }
@@ -59,7 +59,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackNextLevel()
         {
-            TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Set Level", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Add([]);
 
             return true;
@@ -70,7 +70,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackDeath()
         {
-            TNHTweakerLogger.Log("Died", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Died", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Last().Add("Died");
 
             return true;
@@ -81,7 +81,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackVictory()
         {
-            TNHTweakerLogger.Log("Victory", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Victory", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions.Last().Add("Victory");
 
             return true;
@@ -92,7 +92,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
         {
-            TNHTweakerLogger.Log("Hold Start", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Hold Start", TNHFrameworkLogger.LogType.TNH);
             TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
 
             return true;
@@ -103,7 +103,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackRecyclePatch()
         {
-            TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
 
             return true;
         }
@@ -125,7 +125,7 @@ namespace TNHFramework.Patches
                 if (!__instance.m_hasBeenVisited && __instance.m_contact != null)
                 {
                     __instance.m_contact.SetVisited(true);
-                    TNHTweakerLogger.Log("Visiting supply", TNHTweakerLogger.LogType.TNH);
+                    TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
                     TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
 

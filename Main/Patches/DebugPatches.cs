@@ -20,7 +20,7 @@ namespace TNHFramework
 			foreach(TNH_HoldPoint hold in __instance.HoldPoints)
             {
 
-				TNHTweakerLogger.Log("Adding text!", TNHTweakerLogger.LogType.TNH);
+				TNHFrameworkLogger.Log("Adding text!", TNHFrameworkLogger.LogType.TNH);
 
 				GameObject canvas = new GameObject("Canvas");
 				canvas.transform.rotation = Quaternion.LookRotation(Vector3.right);

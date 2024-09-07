@@ -19,7 +19,7 @@ namespace TNHFramework
             if (dontDrop)
                 return;
             
-            TNHTweakerLogger.Log("TNHTWEAKER -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Lootable link was destroyed!", TNHFrameworkLogger.LogType.TNH);
 
             List<EquipmentGroup> selectedGroups = group.GetSpawnedEquipmentGroups();
             string selectedItem = null;
@@ -38,7 +38,7 @@ namespace TNHFramework
                         }
                         else
                         {
-                            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning nothing since group was compatible magazines, and could not find a compatible magazine for player", TNHTweakerLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log("Spawning nothing since group was compatible magazines, and could not find a compatible magazine for player", TNHFrameworkLogger.LogType.TNH);
                             //return;
                         }
                     }
@@ -48,7 +48,7 @@ namespace TNHFramework
 
                         if (list.Count == 0)
                         {
-                            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning nothing since group was empty", TNHTweakerLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log("Spawning nothing since group was empty", TNHFrameworkLogger.LogType.TNH);
                         }
                         else
                         {
@@ -62,7 +62,7 @@ namespace TNHFramework
 
                     if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
                     {
-                        TNHTweakerLogger.Log($"TNHTWEAKER -- Spawning vault file {selectedItem}", TNHTweakerLogger.LogType.TNH);
+                        TNHFrameworkLogger.Log($"Spawning vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
 
                         Transform newTransform = transform;
                         newTransform.position = transform.position + (Vector3.up * 0.1f * spawnedItems);
@@ -70,13 +70,13 @@ namespace TNHFramework
                     }
                     else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem))
                     {
-                        TNHTweakerLogger.Log($"TNHTWEAKER -- Spawning legacy vault file {selectedItem}", TNHTweakerLogger.LogType.TNH);
+                        TNHFrameworkLogger.Log($"Spawning legacy vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
                         AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
                             transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation));
                     }
                     else
                     {
-                        TNHTweakerLogger.Log($"TNHTWEAKER -- Spawning item {selectedItem}", TNHTweakerLogger.LogType.TNH);
+                        TNHFrameworkLogger.Log($"Spawning item {selectedItem}", TNHFrameworkLogger.LogType.TNH);
                         Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation);
                     }
 

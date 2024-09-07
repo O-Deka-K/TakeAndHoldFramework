@@ -14,7 +14,7 @@ namespace TNHFramework.Utilities
         {
             if (list.Count < 1)
             {
-                TNHTweakerLogger.LogWarning("TNHTWEAKER -- GetRandom() was called on an empty list!");
+                TNHFrameworkLogger.LogWarning("GetRandom() was called on an empty list!");
                 return default;
             }
             
