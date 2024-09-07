@@ -483,7 +483,7 @@ namespace TNHFramework.Utilities
                         // If this is not a vaulted gun, remove it
                         else
                         {
-                            TNHFrameworkLogger.LogWarning($"TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
+                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
                             i--;
                         }
@@ -519,7 +519,7 @@ namespace TNHFramework.Utilities
                         // If this is not a vaulted gun, remove it
                         else
                         {
-                            TNHFrameworkLogger.LogWarning($"TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : {group.IDOverride[i]}");
+                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID : {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
                             i--;
                         }
