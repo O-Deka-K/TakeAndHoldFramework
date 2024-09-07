@@ -134,7 +134,6 @@ namespace TNHFramework
                 ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
-                TNHTweakerLogger.Log("TNHTWEAKER -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }

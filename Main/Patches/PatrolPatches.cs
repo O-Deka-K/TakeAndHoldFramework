@@ -514,7 +514,7 @@ namespace TNHFramework.Patches
             {
                 PatrolPoints.Add(instance.HoldPoints[list[i]].SpawnPoints_Sosigs_Defense.GetRandom<Transform>().position);
             }
-            TNHTweakerLogger.Log($"TNHTWEAKER -- Patrol path is: {string.Join(", ", list.Select(x => x.ToString()).ToArray())}", TNHTweakerLogger.LogType.TNH);
+            TNHTweakerLogger.Log($"TNHTWEAKER -- Patrol path is: {string.Join(", ", PatrolPoints.Select(x => x.ToString()).ToArray())}", TNHTweakerLogger.LogType.TNH);
 
             List<Vector3> SpawnPoints = [];
             List<Vector3> ForwardVectors = [];

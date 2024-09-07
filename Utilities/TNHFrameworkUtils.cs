@@ -4,8 +4,10 @@ using FistVR;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
@@ -428,6 +430,30 @@ namespace TNHFramework.Utilities
         }
 
 
+        public static bool VaultFileComponentsLoaded(VaultFile template)
+        {
+            bool result = true;
+            List<string> missing = [];
+
+            foreach (VaultObject vaultObject in template.Objects)
+            {
+                foreach (VaultElement vaultElement in vaultObject.Elements)
+                {
+                    if (!IM.OD.ContainsKey(vaultElement.ObjectID))
+                    {
+                        missing.Add(vaultElement.ObjectID);
+                        result = false;
+                    }
+                }
+            }
+
+            if (!result)
+                TNHTweakerLogger.LogWarning($"TNHTWEAKER -- Vaulted gun in table does not have all components loaded, removing it! VaultID: {template.FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
+
+            return result;
+        }
+
+
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.IDOverride != null)
@@ -436,12 +462,30 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        // If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHTweakerLogger.LogWarning("TNHTWEAKER -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        {
+                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+                        // If this is not a vaulted gun, remove it
+                        else
+                        {
+                            TNHTweakerLogger.LogWarning($"TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i -= 1;
+                            i--;
                         }
                     }
                 }
@@ -458,12 +502,26 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        // If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                         {
-                            TNHTweakerLogger.LogWarning("TNHTWEAKER -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            TNHTweakerLogger.LogWarning($"TNHTWEAKER -- Vaulted gun in table does not have all components loaded, removing it! VaultID : {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i -= 1;
+                            i--;
+                        }
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                        {
+                            TNHTweakerLogger.LogWarning($"TNHTWEAKER -- Vaulted gun in table does not have all components loaded! VaultID : {group.IDOverride[i]}");
+                            group.IDOverride.RemoveAt(i);
+                            i--;
+                        }
+                        // If this is not a vaulted gun, remove it
+                        else
+                        {
+                            TNHTweakerLogger.LogWarning($"TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : {group.IDOverride[i]}");
+                            group.IDOverride.RemoveAt(i);
+                            i--;
                         }
                     }
                 }
@@ -473,7 +531,6 @@ namespace TNHFramework.Utilities
 
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
-            
             // Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
