@@ -1743,6 +1743,8 @@ namespace TNHFramework.ObjectTemplates
             PatrolSize = oldPatrol.PatrolSize;
             MaxPatrols = oldPatrol.MaxPatrols;
             MaxPatrolsLimited = oldPatrol.MaxPatrolsLimited;
+            PatrolCadence = oldPatrol.PatrolCadence;
+            PatrolCadenceLimited = oldPatrol.PatrolCadenceLimited;
             IFFUsed = oldPatrol.IFFUsed;
             SwarmPlayer = oldPatrol.SwarmPlayer;
             AssualtSpeed = oldPatrol.AssualtSpeed;
