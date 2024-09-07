@@ -1,32 +1,22 @@
-﻿using ADepIn;
+﻿using BepInEx;
 using BepInEx.Configuration;
-using Deli;
-using Deli.Immediate;
 using Deli.Setup;
-using Deli.VFS;
-using Deli.Runtime;
 using FistVR;
 using HarmonyLib;
+using Stratum;
+using Stratum.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using TNHFramework.ObjectTemplates;
+using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
-using UnityEngine.UI;
-using Deli.Runtime.Yielding;
-using Anvil;
-using TNHFramework.Patches;
-using Stratum;
-using BepInEx.Bootstrap;
-using BepInEx;
-using Stratum.Extensions;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.0.1")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.0.0")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -36,9 +26,9 @@ namespace TNHFramework
         private static ConfigEntry<bool> allowLog;
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> ConvertFilesToYAML;
+        public static ConfigEntry<bool> AlwaysMagUpgrader;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
-        public static ConfigEntry<bool> EnableScoring;
 
         public static string InfoPath;
         public static string OutputFilePath;
@@ -51,9 +41,10 @@ namespace TNHFramework
         public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
         public static Dictionary<FireArmRoundType, List<FVRObject>> SpeedloaderDictionary = [];
 
-        //Variables used by various patches
+        // Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
+        public static List<int> PatrolIndexPool = [];
         public static List<int> SupplyPointIFFList = [];
 
         public static List<GameObject> SpawnedConstructors = [];
@@ -66,19 +57,17 @@ namespace TNHFramework
         public static int GunsRecycled;
         public static int ShotsFired;
 
-        /// <summary>
-        /// First method that gets called
-        /// </summary>
+        // First method that gets called
         private void Awake()
         {
             InfoPath = Path.GetDirectoryName(Info.Location);
 
-            if (TNHFrameworkLogger.BepLog == null)
+            if (TNHTweakerLogger.BepLog == null)
             {
-                TNHFrameworkLogger.Init();
+                TNHTweakerLogger.Init();
             }
 
-            TNHFrameworkLogger.Log("Hello World (from TNH Tweaker)", TNHFrameworkLogger.LogType.General);
+            TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
             SetupOutputDirectory();
 
@@ -89,10 +78,10 @@ namespace TNHFramework
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             Harmony.CreateAndPatchAll(typeof(HoldPatches));
+            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
 
-            if (EnableScoring.Value) Harmony.CreateAndPatchAll(typeof(HighScorePatches));
-
-            if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
+            if (EnableDebugText.Value)
+                Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
             /*
             if (Chainloader.PluginInfos.ContainsKey("Deli"))
@@ -103,7 +92,7 @@ namespace TNHFramework
             {
                 foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
                 {
-                    TNHFrameworkLogger.Log($"Plugin loaded: {item.Key}", TNHFrameworkLogger.LogType.General);
+                    TNHTweakerLogger.Log($"Plugin loaded: {item.Key}", TNHTweakerLogger.LogType.General);
                 }
             }
             */
@@ -120,15 +109,12 @@ namespace TNHFramework
 
         public override IEnumerator OnRuntime(IStageContext<IEnumerator> ctx)
         {
-            // Do we... Need anything here?
             yield break;
         }
 
 
 
-        /// <summary>
-        /// Loads the sprites used in secondary panels in TNH
-        /// </summary>
+        // Loads the sprites used in secondary panels in TNH
         private void LoadPanelSprites()
         {
             DirectoryInfo pluginDirectory = new(Path.GetDirectoryName(Info.Location));
@@ -161,27 +147,26 @@ namespace TNHFramework
 
 
 
-        /// <summary>
-        /// Loads the bepinex config file, and applys those settings
-        /// </summary>
+        // Loads the bepinex config file, and applies those settings
         private void LoadConfigFile()
         {
-            TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting config file", TNHTweakerLogger.LogType.File);
 
             BuildCharacterFiles = Config.Bind("General",
                                     "BuildCharacterFiles",
                                     false,
                                     "If true, files useful for character creation will be generated in TNHTweaker folder");
 
+            AlwaysMagUpgrader = Config.Bind("General",
+                                    "AlwaysMagUpgrade",
+                                    true,
+                                    "If true, all Mag Duplicators become Mag Upgraders. This is default legacy TNHTweaker behavior.\n" +
+                                    "If false, Mag Duplicators and Mag Upgraders are different. Mag Upgraders allow you to buy a new mag for your current gun, while Mag Duplicators don't.");
+
             ConvertFilesToYAML = Config.Bind("General",
                                     "ConvertFilesToYAML",
                                     false,
                                     "If true, any Stratum-based custom characters will have their JSON files converted to YAML");
-
-            EnableScoring = Config.Bind("General",
-                                    "EnableScoring",
-                                    true,
-                                    "If true, TNH scores will be uploaded to the TNH Dashboard (https://devyndamonster.github.io/TNHDashboard/index.html)");
 
             allowLog = Config.Bind("Debug",
                                     "EnableLogging",
@@ -189,9 +174,9 @@ namespace TNHFramework
                                     "Set to true to enable logging");
 
             printCharacters = Config.Bind("Debug",
-                                         "LogCharacterInfo",
-                                         false,
-                                         "Decide if should print all character info");
+                                    "LogCharacterInfo",
+                                    false,
+                                    "Decide if should print all character info");
 
             logTNH = Config.Bind("Debug",
                                     "LogTNH",
@@ -215,16 +200,14 @@ namespace TNHFramework
 
             
 
-            TNHFrameworkLogger.AllowLogging = allowLog.Value;
-            TNHFrameworkLogger.LogCharacter = printCharacters.Value;
-            TNHFrameworkLogger.LogTNH = logTNH.Value;
-            TNHFrameworkLogger.LogFile = logFileReads.Value;
+            TNHTweakerLogger.AllowLogging = allowLog.Value;
+            TNHTweakerLogger.LogCharacter = printCharacters.Value;
+            TNHTweakerLogger.LogTNH = logTNH.Value;
+            TNHTweakerLogger.LogFile = logFileReads.Value;
         }
 
 
-        /// <summary>
-        /// Creates the main TNH Tweaker file folder
-        /// </summary>
+        // Creates the main TNH Tweaker file folder
         private void SetupOutputDirectory()
         {
             OutputFilePath = Path.Combine(Path.GetDirectoryName(Info.Location), "CharFiles");
@@ -237,23 +220,18 @@ namespace TNHFramework
 
 
 
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
-            TNHFrameworkLogger.Log("Preventing vanilla score submition", TNHFrameworkLogger.LogType.TNH);
+            TNHTweakerLogger.Log("Preventing vanilla score submission", TNHTweakerLogger.LogType.TNH);
 
             GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
 
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
 
-            if (EnableScoring.Value)
-            {
-                AnvilManager.Instance.StartCoroutine(HighScorePatches.SendScore(score));
-            }
-
-            //Draw local scores
+            // Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
 
             GM.Omni.SaveToFile();
@@ -266,18 +244,15 @@ namespace TNHFramework
     {
         public void Awake()
         {
-            if (TNHFrameworkLogger.BepLog == null)
+            if (TNHTweakerLogger.BepLog == null)
             {
-                TNHFrameworkLogger.Init();
+                TNHTweakerLogger.Init();
             }
 
             Stages.Setup += DeliOnSetup;
         }
 
-        /// <summary>
-        /// Performs initial setup for TNH Tweaker
-        /// </summary>
-        /// <param name="stage"></param>
+        // Performs initial setup for TNH Tweaker
         private void DeliOnSetup(SetupStage stage)
         {
             stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoaderDeli().LoadAsset;

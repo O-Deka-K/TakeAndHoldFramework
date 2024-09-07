@@ -1,18 +1,11 @@
 ﻿using ADepIn;
-using Valve.Newtonsoft.Json;
 using FistVR;
-// using MagazinePatcher;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Security.Policy;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
@@ -30,6 +23,7 @@ namespace TNHFramework.ObjectTemplates
         public bool DisableCleanupSosigDrops;
         public List<TagEra> ValidAmmoEras;
         public List<TagSet> ValidAmmoSets;
+        public List<string> GlobalObjectBlacklist;
         public List<string> GlobalAmmoBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
 
@@ -56,6 +50,7 @@ namespace TNHFramework.ObjectTemplates
         {
             ValidAmmoEras = [];
             ValidAmmoSets = [];
+            GlobalObjectBlacklist = [];
             GlobalAmmoBlacklist = [];
             MagazineBlacklist = [];
             RequireSightTable = new EquipmentGroup();
@@ -103,6 +98,7 @@ namespace TNHFramework.ObjectTemplates
             UsesPurchasePriceIncrement = character.UsesPurchasePriceIncrement;
             ValidAmmoEras = character.ValidAmmoEras.Select(o => (TagEra)o).ToList();
             ValidAmmoSets = character.ValidAmmoSets.Select(o => (TagSet)o).ToList();
+            GlobalObjectBlacklist = [];
             GlobalAmmoBlacklist = [];
             MagazineBlacklist = [];
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
@@ -156,6 +152,7 @@ namespace TNHFramework.ObjectTemplates
             DisableCleanupSosigDrops = character.DisableCleanupSosigDrops;
             ValidAmmoEras = character.ValidAmmoEras;
             ValidAmmoSets = character.ValidAmmoSets;
+            GlobalObjectBlacklist = [];
             GlobalAmmoBlacklist = character.GlobalAmmoBlacklist;
             MagazineBlacklist = character.MagazineBlacklist;
 
@@ -192,8 +189,8 @@ namespace TNHFramework.ObjectTemplates
         {
             if (character == null)
             {
-                if (ValidAmmoSets == null) ValidAmmoSets = [];
-                if (ValidAmmoEras == null) ValidAmmoEras = [];
+                ValidAmmoSets ??= [];
+                ValidAmmoEras ??= [];
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
@@ -251,7 +248,7 @@ namespace TNHFramework.ObjectTemplates
         {
             if (character == null)
             {
-                TNHFrameworkLogger.LogError("Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
+                TNHTweakerLogger.LogError("TNHTWEAKER -- Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
                 return null;
             }
 
@@ -330,65 +327,65 @@ namespace TNHFramework.ObjectTemplates
 
         public void DelayedInit(bool isCustom)
         {
-            TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
 
-            TNHFrameworkLogger.Log("Init of Primary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (PrimaryWeapon != null && !PrimaryWeapon.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Primary Weapon", TNHTweakerLogger.LogType.Character);
+            if (PrimaryWeapon != null && !PrimaryWeapon.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Weapon_Primary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Secondary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (SecondaryWeapon != null && !SecondaryWeapon.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Secondary Weapon", TNHTweakerLogger.LogType.Character);
+            if (SecondaryWeapon != null && !SecondaryWeapon.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Weapon_Secondary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Tertiary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (TertiaryWeapon != null && !TertiaryWeapon.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Tertiary Weapon", TNHTweakerLogger.LogType.Character);
+            if (TertiaryWeapon != null && !TertiaryWeapon.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Weapon_Tertiary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Primary Item", TNHFrameworkLogger.LogType.Character);
-            if (PrimaryItem != null && !PrimaryItem.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Primary Item", TNHTweakerLogger.LogType.Character);
+            if (PrimaryItem != null && !PrimaryItem.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Primary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Item_Primary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Secondary Item", TNHFrameworkLogger.LogType.Character);
-            if (SecondaryItem != null && !SecondaryItem.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Secondary Item", TNHTweakerLogger.LogType.Character);
+            if (SecondaryItem != null && !SecondaryItem.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Secondary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Item_Secondary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Tertiary Item", TNHFrameworkLogger.LogType.Character);
-            if (TertiaryItem != null && !TertiaryItem.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Tertiary Item", TNHTweakerLogger.LogType.Character);
+            if (TertiaryItem != null && !TertiaryItem.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Item_Tertiary = false;
             }
 
-            TNHFrameworkLogger.Log("Init of Shield", TNHFrameworkLogger.LogType.Character);
-            if (Shield != null && !Shield.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of Shield", TNHTweakerLogger.LogType.Character);
+            if (Shield != null && !Shield.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Shield starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 character.Has_Item_Shield = false;
             }
 
-            TNHFrameworkLogger.Log("Init of required sights table", TNHFrameworkLogger.LogType.Character);
-            if (RequireSightTable != null && !RequireSightTable.DelayedInit())
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of required sights table", TNHTweakerLogger.LogType.Character);
+            if (RequireSightTable != null && !RequireSightTable.DelayedInit(GlobalObjectBlacklist))
             {
-                TNHFrameworkLogger.LogWarning("Required sight table was empty, guns will not spawn with required sights");
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Required sight table was empty, guns will not spawn with required sights");
                 RequireSightTable = null;
             }
 
-            TNHFrameworkLogger.Log("Init of equipment pools", TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of equipment pools", TNHTweakerLogger.LogType.Character);
             magazineBlacklistDict = [];
 
             if (MagazineBlacklist != null)
@@ -402,22 +399,22 @@ namespace TNHFramework.ObjectTemplates
             for (int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if (!pool.DelayedInit())
+                if (!pool.DelayedInit(GlobalObjectBlacklist))
                 {
-                    TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
+                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
                     i -= 1;
                 }
             }
 
-            TNHFrameworkLogger.Log("Init of levels", TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of levels", TNHTweakerLogger.LogType.Character);
             for (int i = 0; i < Levels.Count; i++)
             {
                 Levels[i].DelayedInit(isCustom, i);
             }
 
-            TNHFrameworkLogger.Log("Init of endless levels", TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Init of endless levels", TNHTweakerLogger.LogType.Character);
             for (int i = 0; i < LevelsEndless.Count; i++)
             {
                 LevelsEndless[i].DelayedInit(isCustom, i);
@@ -520,9 +517,7 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    /// <summary>
-    /// An equipment pool is an entry that can spawn at a constructor panel
-    /// </summary>
+    // An equipment pool is an entry that can spawn at a constructor panel
     public class EquipmentPool
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
@@ -566,8 +561,10 @@ namespace TNHFramework.ObjectTemplates
             TokenCostLimited = pool.TokenCost_Limited;
             MinLevelAppears = pool.MinLevelAppears;
             MaxLevelAppears = pool.MaxLevelAppears;
-            PrimaryGroup = new EquipmentGroup(pool.TableDef);
-            PrimaryGroup.Rarity = pool.Rarity;
+            PrimaryGroup = new EquipmentGroup(pool.TableDef)
+            {
+                Rarity = pool.Rarity
+            };
             SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
             SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
             BackupGroup = new EquipmentGroup();
@@ -579,12 +576,14 @@ namespace TNHFramework.ObjectTemplates
         {
             if (pool == null)
             {
-                pool = new EquipmentPoolDef.PoolEntry();
-                pool.Type = Type;
-                pool.TokenCost = TokenCost;
-                pool.TokenCost_Limited = TokenCostLimited;
-                pool.MinLevelAppears = MinLevelAppears;
-                pool.MaxLevelAppears = MaxLevelAppears;
+                pool = new EquipmentPoolDef.PoolEntry
+                {
+                    Type = Type,
+                    TokenCost = TokenCost,
+                    TokenCost_Limited = TokenCostLimited,
+                    MinLevelAppears = MinLevelAppears,
+                    MaxLevelAppears = MaxLevelAppears
+                };
 
                 if (PrimaryGroup != null)
                 {
@@ -602,7 +601,7 @@ namespace TNHFramework.ObjectTemplates
         }
 
 
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> globalObjectBlacklist)
         {
             if (pool != null)
             {
@@ -617,18 +616,18 @@ namespace TNHFramework.ObjectTemplates
 
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit())
+                    if (!PrimaryGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        TNHFrameworkLogger.Log("Primary group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- Primary group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
                         PrimaryGroup = null;
                     }
                 }
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit())
+                    if (!BackupGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null) TNHTweakerLogger.Log("TNHTWEAKER -- Backup group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
                         BackupGroup = null;
                     }
                 }
@@ -646,13 +645,12 @@ namespace TNHFramework.ObjectTemplates
             {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
             }
-
             else if (BackupGroup != null)
             {
                 return BackupGroup.GetSpawnedEquipmentGroups();
             }
 
-            TNHFrameworkLogger.LogWarning("EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
+            TNHTweakerLogger.LogWarning("TNHTWEAKER -- EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
             return [];
         }
 
@@ -796,21 +794,21 @@ namespace TNHFramework.ObjectTemplates
                 }
                 else
                 {
-                    if (Tags.Eras == null) Tags.Eras = [];
-                    if (Tags.Sets == null) Tags.Sets = [];
-                    if (Tags.Sizes == null) Tags.Sizes = [];
-                    if (Tags.Actions == null) Tags.Actions = [];
-                    if (Tags.Modes == null) Tags.Modes = [];
-                    if (Tags.ExcludedModes == null) Tags.ExcludedModes = [];
-                    if (Tags.FeedOptions == null) Tags.FeedOptions = [];
-                    if (Tags.MountsAvailable == null) Tags.MountsAvailable = [];
-                    if (Tags.RoundPowers == null) Tags.RoundPowers = [];
-                    if (Tags.Features == null) Tags.Features = [];
-                    if (Tags.MeleeHandedness == null) Tags.MeleeHandedness = [];
-                    if (Tags.MeleeStyles == null) Tags.MeleeStyles = [];
-                    if (Tags.PowerupTypes == null) Tags.PowerupTypes = [];
-                    if (Tags.ThrownTypes == null) Tags.ThrownTypes = [];
-                    if (Tags.ThrownDamageTypes == null) Tags.ThrownDamageTypes = [];
+                    Tags.Eras ??= [];
+                    Tags.Sets ??= [];
+                    Tags.Sizes ??= [];
+                    Tags.Actions ??= [];
+                    Tags.Modes ??= [];
+                    Tags.ExcludedModes ??= [];
+                    Tags.FeedOptions ??= [];
+                    Tags.MountsAvailable ??= [];
+                    Tags.RoundPowers ??= [];
+                    Tags.Features ??= [];
+                    Tags.MeleeHandedness ??= [];
+                    Tags.MeleeStyles ??= [];
+                    Tags.PowerupTypes ??= [];
+                    Tags.ThrownTypes ??= [];
+                    Tags.ThrownDamageTypes ??= [];
                 }
 
                 objectTableDef = (ObjectTableDef)ScriptableObject.CreateInstance(typeof(ObjectTableDef));
@@ -858,19 +856,9 @@ namespace TNHFramework.ObjectTemplates
                 result = [this];
                 return result;
             }
-
             else if (ForceSpawnAllSubPools)
             {
-                // whuh
-                // result = [.. objects.Count > 0 ? [this] : []];
-                if (objects.Count > 0)
-                {
-                    result = [this];
-                }
-                else
-                {
-                    result = [];
-                }
+                result = (objects.Count == 0) ? [] : [this];
 
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -879,10 +867,10 @@ namespace TNHFramework.ObjectTemplates
 
                 return result;
             }
-
             else
             {
-                float combinedRarity = objects.Count;
+                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
                     combinedRarity += group.Rarity;
@@ -890,15 +878,14 @@ namespace TNHFramework.ObjectTemplates
 
                 float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
 
-                if (randomSelection < objects.Count)
+                if (randomSelection < thisRarity)
                 {
                     result = [this];
                     return result;
                 }
-
                 else
                 {
-                    float progress = objects.Count;
+                    float progress = thisRarity;
                     for (int i = 0; i < SubGroups.Count; i++)
                     {
                         progress += SubGroups[i].Rarity;
@@ -915,38 +902,32 @@ namespace TNHFramework.ObjectTemplates
 
 
 
-        /// <summary>
-        /// Fills out the object table and removes any unloaded items
-        /// </summary>
-        /// <returns> Returns true if valid, and false if empty </returns>
-        public bool DelayedInit()
+        // Fills out the object table and removes any unloaded items
+        public bool DelayedInit(List<string> globalObjectBlacklist)
         {
-            //Before we add anything from the IDOverride list, remove anything that isn't loaded
+            // Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
-
-            //Every item in IDOverride gets added to the list of spawnable objects
+            // Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
                 objects.AddRange(IDOverride);
             }
 
-
-            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+            // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
-                Initialise();
+                Initialise(globalObjectBlacklist);
             }
 
-
-            //Perform delayed init on all subgroups. If they are empty, we remove them
+            // Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
                 for (int i = 0; i < SubGroups.Count; i++)
                 {
-                    if (!SubGroups[i].DelayedInit())
+                    if (!SubGroups[i].DelayedInit(globalObjectBlacklist))
                     {
-                        //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
+                        //TNHTweakerLogger.Log("TNHTWEAKER -- Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
                         i -= 1;
                     }
@@ -955,21 +936,25 @@ namespace TNHFramework.ObjectTemplates
 
             if (Rarity <= 0)
             {
-                //TNHFrameworkLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHFrameworkLogger.LogType.Character);
+                //TNHTweakerLogger.Log("TNHTWEAKER -- Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
                 Rarity = 1;
             }
 
-            //The table is valid if it has items in it, or is a compatible magazine
+            // The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
 
-        public void Initialise()
+        public void Initialise(List<string> globalObjectBlacklist)
         {
             List<FVRObject> Objs = new(ManagerSingleton<IM>.Instance.odicTagCategory[(FVRObject.ObjectCategory)Category]);
             for (int j = Objs.Count - 1; j >= 0; j--)
             {
                 FVRObject fvrobject = Objs[j];
-                if (!fvrobject.OSple)
+                if (globalObjectBlacklist.Contains(fvrobject.ItemID))
+                {
+                    continue;
+                }
+                else if (!fvrobject.OSple)
                 {
                     continue;
                 }
@@ -1128,7 +1113,6 @@ namespace TNHFramework.ObjectTemplates
             {
                 output += prefix + "Compatible Magazine";
             }
-
             else
             {
                 foreach (string item in objects)
@@ -1196,11 +1180,12 @@ namespace TNHFramework.ObjectTemplates
         {
             if (loadout == null)
             {
-                loadout = new TNH_CharacterDef.LoadoutEntry();
-                loadout.TableDefs = [];
-                loadout.ListOverride = [];
+                loadout = new TNH_CharacterDef.LoadoutEntry
+                {
+                    TableDefs = [],
+                    ListOverride = []
+                };
             }
-
             else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
             {
                 PrimaryGroup = new EquipmentGroup
@@ -1215,10 +1200,9 @@ namespace TNHFramework.ObjectTemplates
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
             }
-
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
-                //If we have just one pool, then the primary pool becomes that pool
+                // If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
                 {
                     PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0])
@@ -1229,7 +1213,6 @@ namespace TNHFramework.ObjectTemplates
                         NumRoundsSpawned = loadout.Num_Rounds
                     };
                 }
-
                 else
                 {
                     PrimaryGroup = new EquipmentGroup
@@ -1239,11 +1222,13 @@ namespace TNHFramework.ObjectTemplates
                     };
                     foreach (ObjectTableDef table in loadout.TableDefs)
                     {
-                        EquipmentGroup group = new(table);
-                        group.Rarity = 1;
-                        group.NumMagsSpawned = loadout.Num_Mags_SL_Clips;
-                        group.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
-                        group.NumRoundsSpawned = loadout.Num_Rounds;
+                        EquipmentGroup group = new(table)
+                        {
+                            Rarity = 1,
+                            NumMagsSpawned = loadout.Num_Mags_SL_Clips,
+                            NumClipsSpawned = loadout.Num_Mags_SL_Clips,
+                            NumRoundsSpawned = loadout.Num_Rounds
+                        };
                         PrimaryGroup.SubGroups.Add(group);
                     }
                 }
@@ -1256,9 +1241,11 @@ namespace TNHFramework.ObjectTemplates
         {
             if (loadout == null)
             {
-                loadout = new TNH_CharacterDef.LoadoutEntry();
-                loadout.Num_Mags_SL_Clips = 3;
-                loadout.Num_Rounds = 9;
+                loadout = new TNH_CharacterDef.LoadoutEntry
+                {
+                    Num_Mags_SL_Clips = 3,
+                    Num_Rounds = 9
+                };
 
                 if (PrimaryGroup != null)
                 {
@@ -1271,24 +1258,26 @@ namespace TNHFramework.ObjectTemplates
 
 
 
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> globalObjectBlacklist)
         {
             if (loadout != null)
             {
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit())
+                    if (!PrimaryGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        TNHFrameworkLogger.Log("Primary group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- Primary group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
                         PrimaryGroup = null;
                     }
                 }
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit())
+                    if (!BackupGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null)
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Backup group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+
                         BackupGroup = null;
                     }
                 }
@@ -1419,12 +1408,15 @@ namespace TNHFramework.ObjectTemplates
         {
             if (level == null)
             {
-                level = new();
-                level.NumOverrideTokensForHold = NumOverrideTokensForHold;
-                level.TakeChallenge = TakeChallenge.GetTakeChallenge();
+                level = new()
+                {
+                    NumOverrideTokensForHold = NumOverrideTokensForHold,
+                    TakeChallenge = TakeChallenge.GetTakeChallenge(),
 
-                level.HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge));
+                    HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
+                };
                 level.HoldChallenge.Phases = [];
+
                 foreach (Phase phase in HoldPhases)
                 {
                     level.HoldChallenge.Phases.Add(phase.GetPhase());
@@ -1452,7 +1444,7 @@ namespace TNHFramework.ObjectTemplates
 
         public void DelayedInit(bool isCustom, int levelIndex)
         {
-            //If this is a level for a default character, we should try to replicate the vanilla layout
+            // If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
@@ -1471,7 +1463,6 @@ namespace TNHFramework.ObjectTemplates
             {
                 return true;
             }
-
             else if (SupplyChallenge.EnemyType == id)
             {
                 return true;
@@ -1557,7 +1548,7 @@ namespace TNHFramework.ObjectTemplates
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                 {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
@@ -1675,7 +1666,7 @@ namespace TNHFramework.ObjectTemplates
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
@@ -1778,7 +1769,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];

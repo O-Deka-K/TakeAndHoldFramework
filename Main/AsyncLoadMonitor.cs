@@ -26,7 +26,6 @@ namespace TNHFramework
                     CallbackList.RemoveAt(i);
                     i -= 1;
                 }
-
                 else
                 {
                     totalStatus += CallbackList[i].Progress;

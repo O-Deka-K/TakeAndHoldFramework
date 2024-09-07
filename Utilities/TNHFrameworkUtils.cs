@@ -1,23 +1,16 @@
-﻿using System;
-using BepInEx;
-using UnityEngine;
+﻿using ADepIn;
+using Deli.VFS;
 using FistVR;
-using HarmonyLib;
-using System.Collections.Generic;
-using System.Reflection;
-using BepInEx.Configuration;
-using System.IO;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using UnityEngine.UI;
 using TNHFramework.ObjectTemplates;
+using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
-using Deli.VFS;
-using UnityEngine.Networking;
-using System.Text;
 using YamlDotNet.Serialization;
-using Valve.VR;
 
 namespace TNHFramework.Utilities
 {
@@ -35,11 +28,14 @@ namespace TNHFramework.Utilities
                 // Create a new file     
                 using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
                 {
-                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    sw.WriteLine("DisplayName,ObjectID,Mod Content,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
+                            obj.DisplayName.Replace(",", ".") + "," +  // ODK - Added
                             obj.ItemID.Replace(",", ".") + "," + 
+                            obj.IsModContent.ToString() + "," +  // ODK - Added
                             obj.Category + "," +
                             obj.TagEra + "," +
                             obj.TagSet + "," +
@@ -58,13 +54,13 @@ namespace TNHFramework.Utilities
                             obj.TagThrownDamageType + "," +
                             obj.TagThrownType);
                     }
+
                     sw.Close();
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -82,17 +78,21 @@ namespace TNHFramework.Utilities
                 using (StreamWriter sw = File.CreateText(path + "/SosigIDs.txt"))
                 {
                     sw.WriteLine("#Available Sosig IDs for spawning");
-                    foreach (SosigEnemyID ID in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Keys)
+
+                    List<String> sosigList = [.. LoadedTemplateManager.SosigIDDict.Keys];
+                    sosigList.Sort();
+
+                    foreach (string ID in sosigList)
                     {
-                        sw.WriteLine(ID.ToString());
+                        sw.WriteLine(ID);
                     }
+
                     sw.Close();
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -117,10 +117,9 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -140,11 +139,7 @@ namespace TNHFramework.Utilities
                 }
                 catch (Exception e)
                 {
-                    if (onError != null)
-                    {
-                        onError(e);
-                    }
-
+                    onError?.Invoke(e);
                     yield break;
                 }
 
@@ -166,7 +161,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
-                        TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- Icon found (" + pool.TableDef.Icon.name + ")", TNHTweakerLogger.LogType.Character);
                         icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
                     }
                 }
@@ -181,9 +176,9 @@ namespace TNHFramework.Utilities
 
             try
             {
-                TNHFrameworkLogger.Log("Creating default character template files", TNHFrameworkLogger.LogType.File);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Creating default character template files", TNHTweakerLogger.LogType.File);
 
-                path = path + "/DefaultCharacters";
+                path += "/DefaultCharacters";
 
                 if (!Directory.Exists(path))
                 {
@@ -215,23 +210,24 @@ namespace TNHFramework.Utilities
                     {
                         // i am learning this yaml stuff. it is goofy.
                         var serializerBuilder = new SerializerBuilder();
-
                         serializerBuilder.WithIndentedSequences();
+
                         foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
                             serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
+
                         var serializer = serializerBuilder.Build();
                         string characterString = serializer.Serialize(charDef);
+
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -240,9 +236,9 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Creating populated character template file", TNHTweakerLogger.LogType.File);
 
-                path = path + "/PopulatedCharacterTemplate.json";
+                path += "/PopulatedCharacterTemplate.json";
 
                 if (!File.Exists(path))
                 {
@@ -257,10 +253,9 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -269,9 +264,9 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Creating default sosig template files", TNHTweakerLogger.LogType.File);
 
-                path = path + "/DefaultSosigTemplates";
+                path += "/DefaultSosigTemplates";
 
                 if (!Directory.Exists(path))
                 {
@@ -294,12 +289,10 @@ namespace TNHFramework.Utilities
                         sw.Close();
                     }
                 }
-
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -307,7 +300,7 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                path = path + "/VaultFiles";
+                path += "/VaultFiles";
 
                 if (!Directory.Exists(path))
                 {
@@ -331,9 +324,9 @@ namespace TNHFramework.Utilities
                             }
                         }
                     }
-                    catch(Exception e)
+                    catch
                     {
-                        TNHFrameworkLogger.LogError("Vault File could not be loaded");
+                        TNHTweakerLogger.LogError("Vault File could not be loaded");
                     }
                 }
                 
@@ -353,10 +346,9 @@ namespace TNHFramework.Utilities
                     }
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception e)
             {
-                TNHFrameworkLogger.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(e.ToString());
             }
         }
 
@@ -366,13 +358,12 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                path = path + "/GeneratedEquipmentPools";
+                path += "/GeneratedEquipmentPools";
 
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
                 }
-
 
                 foreach(CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
                 {
@@ -430,10 +421,9 @@ namespace TNHFramework.Utilities
                     }
                 }
             }
-
-            catch (Exception ex)
+            catch (Exception /*e*/)
             {
-                //Debug.LogError(ex.ToString());
+                //Debug.LogError(e.ToString());
             }
         }
 
@@ -446,10 +436,10 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this was not a vaulted gun, remove it
+                        // If this was not a vaulted gun, remove it
                         if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            TNHTweakerLogger.LogWarning("TNHTWEAKER -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
                             i -= 1;
                         }
@@ -468,10 +458,10 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this was not a vaulted gun, remove it
+                        // If this was not a vaulted gun, remove it
                         if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            TNHTweakerLogger.LogWarning("TNHTWEAKER -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
                             group.IDOverride.RemoveAt(i);
                             i -= 1;
                         }
@@ -484,14 +474,14 @@ namespace TNHFramework.Utilities
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
             
-            //Loop through all outfit configs and remove any clothing objects that don't exist
+            // Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
                 for(int i = 0; i < config.Headwear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
                         i -= 1;
                     }
@@ -502,7 +492,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -513,7 +503,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -524,7 +514,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
                         i -= 1;
                     }
@@ -535,7 +525,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
                         i -= 1;
                     }
@@ -546,7 +536,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
                         i -= 1;
                     }
@@ -557,7 +547,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
+                        TNHTweakerLogger.LogWarning("TNHTWEAKER -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
                         i -= 1;
                     }
@@ -568,12 +558,7 @@ namespace TNHFramework.Utilities
         }
 
 
-        /// <summary>
-        /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
-        /// </summary>
-        /// <param name=""></param>
-        /// <param name="pixelsPerUnit"></param>
-        /// <returns></returns>
+        // Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
         public static Sprite LoadSprite(FileInfo file)
         {
             Texture2D spriteTexture = LoadTexture(file);
@@ -584,12 +569,7 @@ namespace TNHFramework.Utilities
         }
 
 
-        /// <summary>
-        /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
-        /// </summary>
-        /// <param name=""></param>
-        /// <param name="pixelsPerUnit"></param>
-        /// <returns></returns>
+        // Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
         public static Sprite LoadSprite(IFileHandle file)
         {
             Texture2D spriteTexture = LoadTexture(file);
@@ -608,11 +588,7 @@ namespace TNHFramework.Utilities
 
 
 
-        /// <summary>
-        /// Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
-        /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
+        // Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
         public static Texture2D LoadTexture(FileInfo file)
         {
             // Load a PNG or JPG file from disk to a Texture2D
@@ -633,11 +609,7 @@ namespace TNHFramework.Utilities
 
 
 
-        /// <summary>
-        /// Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
-        /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
+        // Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
         public static Texture2D LoadTexture(IFileHandle file)
         {
             // Load a PNG or JPG file from disk to a Texture2D
@@ -658,11 +630,7 @@ namespace TNHFramework.Utilities
 
 
 
-        /// <summary>
-        /// Copies the input stream into the output stream. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
-        /// </summary>
-        /// <param name="input"></param>
-        /// <param name="output"></param>
+        // Copies the input stream into the output stream. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
         public static void CopyStream(Stream input, Stream output)
         {
             byte[] b = new byte[32768];
@@ -688,10 +656,10 @@ namespace TNHFramework.Utilities
             for (int i = 0; i < gun.Components.Count; i++)
             {
                 AnvilCallback<GameObject> gameObjectCallback = IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync();
-
-                TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
+                TNHTweakerLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHTweakerLogger.LogType.General);
 
                 yield return gameObjectCallback;
+
                 gameObjects.Add(gameObjectCallback.Result);
             }
 
@@ -701,6 +669,7 @@ namespace TNHFramework.Utilities
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
+
                 if (gun.Components[j].isFirearm)
                 {
                     myGun = gameObject.GetComponent<FVRFireArm>();
@@ -714,6 +683,7 @@ namespace TNHFramework.Utilities
                 {
                     myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
                     validIndexes.Add(j);
+
                     if (myMagazine != null)
                     {
                         gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
@@ -729,6 +699,7 @@ namespace TNHFramework.Utilities
                 else
                 {
                     toMoveToTrays.Add(gameObject);
+
                     if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
                     {
                         Speedloader component = gameObject.GetComponent<Speedloader>();
@@ -740,17 +711,21 @@ namespace TNHFramework.Utilities
                         component2.ReloadClipWithList(gun.LoadedRoundsInMag);
                     }
                 }
+
                 gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
             }
+
             if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
             {
                 myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
                 myGun.Magazine.IsInfinite = false;
             }
+
             int BreakIterator = 200;
             while (toDealWith.Count > 0 && BreakIterator > 0)
             {
                 BreakIterator--;
+
                 for (int k = toDealWith.Count - 1; k >= 0; k--)
                 {
                     SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
@@ -759,22 +734,28 @@ namespace TNHFramework.Utilities
                         GameObject gameObject2 = toDealWith[k];
                         FVRFireArmAttachment component3 = gameObject2.GetComponent<FVRFireArmAttachment>();
                         FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
+
                         gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
                         gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
+
                         if (component3.CanScaleToMount && mount.CanThisRescale())
                         {
                             component3.ScaleToMount(mount);
                         }
+
                         component3.AttachToMount(mount, false);
+
                         if (component3 is Suppressor)
                         {
                             (component3 as Suppressor).AutoMountWell();
                         }
+
                         validIndexes.Add(savedGunComponent.Index);
                         toDealWith.RemoveAt(k);
                     }
                 }
             }
+
             int trayIndex = 0;
             int itemIndex = 0;
             for (int l = 0; l < toMoveToTrays.Count; l++)
@@ -783,11 +764,13 @@ namespace TNHFramework.Utilities
                 toMoveToTrays[l].transform.rotation = rotation;
                 itemIndex++;
                 trayIndex++;
+
                 if (trayIndex > 2)
                 {
                     trayIndex = 0;
                 }
             }
+
             myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
             myGun.transform.rotation = rotation;
             yield break;
@@ -803,40 +786,27 @@ namespace TNHFramework.Utilities
             Vector3 a = gun.position;
             a += gun.up * data.PosOffset.y;
             a += gun.right * data.PosOffset.x;
+
             return a + gun.forward * data.PosOffset.z;
         }
 
 
-        /// <summary>
-        /// Used to spawn more than one, same objects at a position
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="position"></param>
-        /// <param name="count"></param>
-        /// <param name="tolerance"></param>
-        public static IEnumerator InstantiateMultiple(GameObject gameObject, Vector3 position, int count,
-            float tolerance = 1.3f)
+        // Used to spawn more than one, same objects at a position
+        public static IEnumerator InstantiateMultiple(GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
         {
             float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
+
             for (var index = 0; index < count; index++)
             {
                 float current = index * heightNeeded;
-                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current),
-                    new Quaternion());
+
+                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
                 yield return null;
             }
         }
         
 
-        /// <summary>
-        /// Spawns items from the equipment group
-        /// </summary>
-        /// <param name="selectedGroup"></param>
-        /// <param name="position"></param>
-        /// <param name="rotation"></param>
-        /// <param name="callback"></param>
-        /// <param name="tolerance"></param>
-        /// <returns></returns>
+        // Spawns items from the equipment group
         public static IEnumerator InstantiateFromEquipmentGroup(EquipmentGroup selectedGroup, Vector3 position, Quaternion rotation, Action<GameObject> callback = null, float tolerance = 1.3f)
         {
             float currentHeight = 0;
@@ -845,29 +815,26 @@ namespace TNHFramework.Utilities
             {
                 for (int i = 0; i < group.ItemsToSpawn; i++)
                 {
-                    FVRObject selectedFVR;
-                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out selectedFVR))
+                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
                     {
-                        //First, async get the game object to spawn
+                        // First, async get the game object to spawn
                         AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
                         yield return objectCallback;
-                        GameObject gameObject = objectCallback.Result;
 
-                        //Next calculate the height needed for this item
+                        // Next calculate the height needed for this item
+                        GameObject gameObject = objectCallback.Result;
                         float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
                         currentHeight += heightNeeded;
 
-                        //Finally spawn the item and call the callback if it's not null
+                        // Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
-                        if(callback != null) callback.Invoke(spawnedObject);
+
+                        callback?.Invoke(spawnedObject);
                         yield return null;
                     }
                 }
             }
         }
-
-
-
     }
 
 

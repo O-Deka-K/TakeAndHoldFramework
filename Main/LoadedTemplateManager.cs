@@ -1,9 +1,5 @@
 ﻿using FistVR;
-// using MagazinePatcher;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -29,15 +25,12 @@ namespace TNHFramework
 
         public static Dictionary<string, Sprite> DefaultIconSprites = [];
 
-        /// <summary>
-        /// Takes a custom SosigTemplate object, and adds it to the necessary dictionaries. This method assumes that you are sending a template for a custom sosig, and that it should be given a new the SosigEnemyID
-        /// </summary>
-        /// <param name="template">A template for a custom sosig (Loaded at runtime)</param>
+        // Takes a custom SosigTemplate object, and adds it to the necessary dictionaries. This method assumes that you are sending a template for a custom sosig, and that it should be given a new the SosigEnemyID
         public static void AddSosigTemplate(SosigTemplate template)
         {
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
-            //Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
+            // Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, NewSosigID);
@@ -45,41 +38,41 @@ namespace TNHFramework
             }
             else
             {
-                TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHTweakerLogger.LogError("TNHTWEAKER -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 
-            //Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
+            // Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
             realTemplate.SosigEnemyID = (SosigEnemyID)SosigIDDict[template.SosigEnemyID];
 
-            //Finally add the templates to our global dictionary
+            // Finally add the templates to our global dictionary
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
 
         public static void AddSosigTemplate(SosigEnemyTemplate realTemplate)
         {
-            SosigTemplate template = new SosigTemplate(realTemplate);
+            SosigTemplate template = new(realTemplate);
 
-            //This template is from a sogig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+            // This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
             }
             else
             {
-                TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHTweakerLogger.LogError("TNHTWEAKER -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 
-            //Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
+            // Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
 
@@ -95,7 +88,7 @@ namespace TNHFramework
 
             NewCharacterID += 1;
 
-            TNHFrameworkLogger.Log("Character added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
@@ -107,14 +100,14 @@ namespace TNHFramework
 
             foreach (EquipmentPool pool in template.EquipmentPools)
             {
-                //Must check for this, since default characters can have references to the same pools
+                // Must check for this, since default characters can have references to the same pools
                 if (!EquipmentPoolDictionary.ContainsKey(pool.GetPoolEntry()))
                 {
                     EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
                 }
             }
 
-            TNHFrameworkLogger.Log("Character added successfuly : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
         public static void AddVaultFile(VaultFile template)
@@ -141,7 +134,7 @@ namespace TNHFramework
                 }
                 else
                 {
-                    TNHFrameworkLogger.LogWarning("Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
+                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
                 }
             }
         }

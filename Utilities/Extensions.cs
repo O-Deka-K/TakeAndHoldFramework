@@ -13,7 +13,10 @@ namespace TNHFramework.Utilities
         public static T GetRandom<T>(this List<T> list)
         {
             if (list.Count < 1)
-                throw new Exception("GetRandom failed, list is empty!");
+            {
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- GetRandom() was called on an empty list!");
+                return default;
+            }
             
             return list[UnityEngine.Random.Range(0, list.Count)];
         }
@@ -27,11 +30,7 @@ namespace TNHFramework.Utilities
             return false;
         }
         
-        /// <summary>
-        /// Calculates needed space for an object
-        /// </summary>
-        /// <param name="g"></param>
-        /// <returns></returns>
+        // Calculates needed space for an object
         public static Bounds GetMaxBounds(this GameObject g) {
             var b = new Bounds(g.transform.position, Vector3.zero);
             foreach (Renderer r in g.GetComponentsInChildren<Renderer>()) {

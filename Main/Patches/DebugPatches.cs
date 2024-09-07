@@ -20,7 +20,7 @@ namespace TNHFramework
 			foreach(TNH_HoldPoint hold in __instance.HoldPoints)
             {
 
-				TNHFrameworkLogger.Log("Adding text!", TNHFrameworkLogger.LogType.TNH);
+				TNHTweakerLogger.Log("Adding text!", TNHTweakerLogger.LogType.TNH);
 
 				GameObject canvas = new GameObject("Canvas");
 				canvas.transform.rotation = Quaternion.LookRotation(Vector3.right);
@@ -53,7 +53,7 @@ namespace TNHFramework
 
 
 		/*
-		[HarmonyPatch(typeof(ObjectTable))] // Specify target method with HarmonyPatch attribute
+		[HarmonyPatch(typeof(ObjectTable))]
 		[HarmonyPatch("Initialize")]
 		[HarmonyPatch(new Type[] { typeof(ObjectTableDef), typeof(FVRObject.ObjectCategory), typeof(List<FVRObject.OTagEra>), typeof(List<FVRObject.OTagSet>), typeof(List<FVRObject.OTagFirearmSize>), typeof(List<FVRObject.OTagFirearmAction>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFeedOption>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagFirearmRoundPower>), typeof(List<FVRObject.OTagAttachmentFeature>), typeof(List<FVRObject.OTagMeleeStyle>), typeof(List<FVRObject.OTagMeleeHandedness>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagPowerupType>), typeof(List<FVRObject.OTagThrownType>), typeof(List<FVRObject.OTagThrownDamageType>), typeof(int), typeof(int), typeof(int), typeof(bool)})]
 		[HarmonyPrefix]
@@ -63,12 +63,12 @@ namespace TNHFramework
 			__instance.MaxCapacity = maxCapacity;
 			if (isBlanked)
 			{
-				TNHFrameworkLogger.Log("Table is blanked, not populating!", TNHFrameworkLogger.LogType.TNH);
+				TNHTweakerLogger.Log("Table is blanked, not populating!", TNHTweakerLogger.LogType.TNH);
 				return false;
 			}
 			if (Def.UseIDListOverride)
 			{
-				TNHFrameworkLogger.Log("Using IDOverride! Will only add IDs manually", TNHFrameworkLogger.LogType.TNH);
+				TNHTweakerLogger.Log("Using IDOverride! Will only add IDs manually", TNHTweakerLogger.LogType.TNH);
 
 				for (int i = 0; i < Def.IDOverride.Count; i++)
 				{
@@ -77,63 +77,63 @@ namespace TNHFramework
 				return false;
 			}
 
-			TNHFrameworkLogger.Log("Not using IDOverride, table will populate automatically", TNHFrameworkLogger.LogType.TNH);
+			TNHTweakerLogger.Log("Not using IDOverride, table will populate automatically", TNHTweakerLogger.LogType.TNH);
 
 			__instance.Objs = new List<FVRObject>(ManagerSingleton<IM>.Instance.odicTagCategory[category]);
 
-			TNHFrameworkLogger.Log("Aquired all objects from Category (" + category + "), Listing them below", TNHFrameworkLogger.LogType.TNH);
-			TNHFrameworkLogger.Log(string.Join("\n", __instance.Objs.Select(o => o.ItemID).ToArray()), TNHFrameworkLogger.LogType.TNH);
+			TNHTweakerLogger.Log("Aquired all objects from Category (" + category + "), Listing them below", TNHTweakerLogger.LogType.TNH);
+			TNHTweakerLogger.Log(string.Join("\n", __instance.Objs.Select(o => o.ItemID).ToArray()), TNHTweakerLogger.LogType.TNH);
 
-			TNHFrameworkLogger.Log("Going through and removing items that do not match desired tags", TNHFrameworkLogger.LogType.TNH);
+			TNHTweakerLogger.Log("Going through and removing items that do not match desired tags", TNHTweakerLogger.LogType.TNH);
 
 			for (int j = __instance.Objs.Count - 1; j >= 0; j--)
 			{
 				FVRObject fvrobject = __instance.Objs[j];
-				TNHFrameworkLogger.Log("Looking at item (" + fvrobject.ItemID + ")", TNHFrameworkLogger.LogType.TNH);
+				TNHTweakerLogger.Log("Looking at item (" + fvrobject.ItemID + ")", TNHTweakerLogger.LogType.TNH);
 
 				if (!fvrobject.OSple)
 				{
-					TNHFrameworkLogger.Log("OSple is false, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("OSple is false, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (minCapacity > -1 && fvrobject.MaxCapacityRelated < minCapacity)
 				{
-					TNHFrameworkLogger.Log("Magazines not big enough, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Magazines not big enough, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (maxCapacity > -1 && fvrobject.MinCapacityRelated > maxCapacity)
 				{
-					TNHFrameworkLogger.Log("Magazines not small enough, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Magazines not small enough, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (requiredExactCapacity > -1 && !__instance.DoesGunMatchExactCapacity(fvrobject))
 				{
-					TNHFrameworkLogger.Log("Not exact capacity, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Not exact capacity, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (eras != null && eras.Count > 0 && !eras.Contains(fvrobject.TagEra))
 				{
-					TNHFrameworkLogger.Log("Wrong era, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Wrong era, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (sets != null && sets.Count > 0 && !sets.Contains(fvrobject.TagSet))
 				{
-					TNHFrameworkLogger.Log("Wrong set, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Wrong set, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (sizes != null && sizes.Count > 0 && !sizes.Contains(fvrobject.TagFirearmSize))
 				{
-					TNHFrameworkLogger.Log("Wrong size, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Wrong size, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (actions != null && actions.Count > 0 && !actions.Contains(fvrobject.TagFirearmAction))
 				{
-					TNHFrameworkLogger.Log("Wrong actions, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Wrong actions, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else if (roundPowers != null && roundPowers.Count > 0 && !roundPowers.Contains(fvrobject.TagFirearmRoundPower))
 				{
-					TNHFrameworkLogger.Log("Wrong round power, removing", TNHFrameworkLogger.LogType.TNH);
+					TNHTweakerLogger.Log("Wrong round power, removing", TNHTweakerLogger.LogType.TNH);
 					__instance.Objs.RemoveAt(j);
 				}
 				else
@@ -151,7 +151,7 @@ namespace TNHFramework
 						}
 						if (flag)
 						{
-							TNHFrameworkLogger.Log("Wrong firing modes, removing", TNHFrameworkLogger.LogType.TNH);
+							TNHTweakerLogger.Log("Wrong firing modes, removing", TNHTweakerLogger.LogType.TNH);
 							__instance.Objs.RemoveAt(j);
 							break;
 						}
@@ -169,7 +169,7 @@ namespace TNHFramework
 						}
 						if (flag2)
 						{
-							TNHFrameworkLogger.Log("Excluded firing modes, removing", TNHFrameworkLogger.LogType.TNH);
+							TNHTweakerLogger.Log("Excluded firing modes, removing", TNHTweakerLogger.LogType.TNH);
 							__instance.Objs.RemoveAt(j);
 							break;
 						}
@@ -187,7 +187,7 @@ namespace TNHFramework
 						}
 						if (flag3)
 						{
-							TNHFrameworkLogger.Log("Wrong feed options, removing", TNHFrameworkLogger.LogType.TNH);
+							TNHTweakerLogger.Log("Wrong feed options, removing", TNHTweakerLogger.LogType.TNH);
 							__instance.Objs.RemoveAt(j);
 							break;
 						}
@@ -205,19 +205,19 @@ namespace TNHFramework
 						}
 						if (flag4)
 						{
-							TNHFrameworkLogger.Log("Wrong mounts, removing", TNHFrameworkLogger.LogType.TNH);
+							TNHTweakerLogger.Log("Wrong mounts, removing", TNHTweakerLogger.LogType.TNH);
 							__instance.Objs.RemoveAt(j);
 							break;
 						}
 					}
 					if (powerupTypes != null && powerupTypes.Count > 0 && !powerupTypes.Contains(fvrobject.TagPowerupType))
 					{
-						TNHFrameworkLogger.Log("Wrong powerup type, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong powerup type, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
 					else if (thrownTypes != null && thrownTypes.Count > 0 && !thrownTypes.Contains(fvrobject.TagThrownType))
 					{
-						TNHFrameworkLogger.Log("Wrong thrown type, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong thrown type, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
 					else if (thrownTypes != null && thrownTypes.Count > 0 && !thrownTypes.Contains(fvrobject.TagThrownType))
@@ -226,28 +226,27 @@ namespace TNHFramework
 					}
 					else if (meleeStyles != null && meleeStyles.Count > 0 && !meleeStyles.Contains(fvrobject.TagMeleeStyle))
 					{
-						TNHFrameworkLogger.Log("Wrong melee style, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong melee style, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
 					else if (meleeHandedness != null && meleeHandedness.Count > 0 && !meleeHandedness.Contains(fvrobject.TagMeleeHandedness))
 					{
-						TNHFrameworkLogger.Log("Wrong melee handedness, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong melee handedness, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
 					else if (mounttype != null && mounttype.Count > 0 && !mounttype.Contains(fvrobject.TagAttachmentMount))
 					{
-						TNHFrameworkLogger.Log("Wrong mount type, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong mount type, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
 					else if (features != null && features.Count > 0 && !features.Contains(fvrobject.TagAttachmentFeature))
 					{
-						TNHFrameworkLogger.Log("Wrong features, removing", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Wrong features, removing", TNHTweakerLogger.LogType.TNH);
 						__instance.Objs.RemoveAt(j);
 					}
-
                     else
                     {
-						TNHFrameworkLogger.Log("Keeping item!", TNHFrameworkLogger.LogType.TNH);
+						TNHTweakerLogger.Log("Keeping item!", TNHTweakerLogger.LogType.TNH);
 					}
 				}
 			}
