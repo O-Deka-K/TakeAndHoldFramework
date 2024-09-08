@@ -89,8 +89,7 @@ namespace TNHFramework
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             Harmony.CreateAndPatchAll(typeof(HoldPatches));
-
-            if (EnableScoring.Value) Harmony.CreateAndPatchAll(typeof(HighScorePatches));
+            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
 
             if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
@@ -120,7 +119,6 @@ namespace TNHFramework
 
         public override IEnumerator OnRuntime(IStageContext<IEnumerator> ctx)
         {
-            // Do we... Need anything here?
             yield break;
         }
 
@@ -181,7 +179,7 @@ namespace TNHFramework
             EnableScoring = Config.Bind("General",
                                     "EnableScoring",
                                     true,
-                                    "If true, TNH scores will be uploaded to the TNH Dashboard (https://devyndamonster.github.io/TNHDashboard/index.html)");
+                                    "Custom scoreboard is permanently offline, so this does nothing");
 
             allowLog = Config.Bind("Debug",
                                     "EnableLogging",
@@ -189,9 +187,9 @@ namespace TNHFramework
                                     "Set to true to enable logging");
 
             printCharacters = Config.Bind("Debug",
-                                         "LogCharacterInfo",
-                                         false,
-                                         "Decide if should print all character info");
+                                    "LogCharacterInfo",
+                                    false,
+                                    "Decide if should print all character info");
 
             logTNH = Config.Bind("Debug",
                                     "LogTNH",
@@ -237,23 +235,18 @@ namespace TNHFramework
 
 
 
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
-            TNHFrameworkLogger.Log("Preventing vanilla score submition", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
             GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
 
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
 
-            if (EnableScoring.Value)
-            {
-                AnvilManager.Instance.StartCoroutine(HighScorePatches.SendScore(score));
-            }
-
-            //Draw local scores
+            // Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
 
             GM.Omni.SaveToFile();
