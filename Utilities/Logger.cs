@@ -12,9 +12,9 @@ namespace TNHFramework.Utilities
         public static ManualLogSource BepLog = null;
 
         public static bool AllowLogging = true;
-        public static bool LogCharacter = true;
-        public static bool LogFile = true;
-        public static bool LogTNH = true;
+        public static bool LogCharacter = false;
+        public static bool LogFile = false;
+        public static bool LogTNH = false;
 
         public enum LogType
         {

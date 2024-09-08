@@ -503,23 +503,27 @@ namespace TNHFramework.Utilities
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
                         // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
+                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID : {group.IDOverride[i]}");
-                            group.IDOverride.RemoveAt(i);
-                            i--;
+                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
                         }
                         // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded! VaultID : {group.IDOverride[i]}");
-                            group.IDOverride.RemoveAt(i);
-                            i--;
+                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
                         }
                         // If this is not a vaulted gun, remove it
                         else
                         {
-                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID : {group.IDOverride[i]}");
+                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
                             i--;
                         }

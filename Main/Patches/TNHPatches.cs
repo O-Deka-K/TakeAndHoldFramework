@@ -14,7 +14,7 @@ namespace TNHFramework.Patches
 {
     public class TNHPatches
     {
-        static List<string> BaseCharStrings =
+        static readonly List<string> BaseCharStrings =
         [
             "DD_C00",
             "DD_C01",
@@ -958,8 +958,8 @@ namespace TNHFramework.Patches
         {
             // We've replaced all calls to SpawnHoldEnemyGroup() with our own, so stub this out
             TNHFrameworkLogger.LogWarning("SpawnHoldEnemyGroupStub() called! This should have been overridden!");
-            throw new ArgumentException("SpawnHoldEnemyGroupStub called");  // DEBUG
-            //return false;
+            //throw new ArgumentException("SpawnHoldEnemyGroupStub called");  // DEBUG
+            return false;
         }
 
 
