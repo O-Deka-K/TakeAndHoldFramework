@@ -1,5 +1,4 @@
 ﻿using FistVR;
-// using MagazinePatcher;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +30,7 @@ namespace TNHFramework
         public int DupeCost = 2;
         public int UpgradeCost = 3;
         public int PurchaseCost = 2;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 
@@ -42,13 +42,13 @@ namespace TNHFramework
         private Text priceText_1;
         private Text priceText_2;
 
+        private FVRPhysicalObject selectedObject = null;
         private FVRFireArmMagazine detectedMag = null;
         private Speedloader detectedSpeedLoader = null;
         private FVRObject purchaseMag = null;
         private FVRObject upgradeMag = null;
 
         private Collider[] colBuffer = new Collider[50];
-        private float scanTick = 1f;
 
         public void Awake()
         {
@@ -60,11 +60,23 @@ namespace TNHFramework
 
             InitPanel();
             UpdateIcons();
+
+            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
+        private void OnDestroy()
+        {
+            if (original.M != null)
+                original.M.TokenCountChangeEvent -= UpdateTokenDisplay;
+        }
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Mag Dupe / Upgrade / Buy --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -88,7 +100,6 @@ namespace TNHFramework
             buttonTransform_2.position = iconTransform_2.position;
 
             Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
-
             backgroundImage.sprite = background;
 
             DupeIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
@@ -174,8 +185,7 @@ namespace TNHFramework
                     FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
-                detectedMag = null;
-                detectedSpeedLoader = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -197,8 +207,7 @@ namespace TNHFramework
                 Destroy(detectedMag.GameObject);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
-                upgradeMag = null;
-                detectedMag = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -219,7 +228,7 @@ namespace TNHFramework
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
-                purchaseMag = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -227,84 +236,184 @@ namespace TNHFramework
 
         private void Update()
         {
-            scanTick -= Time.deltaTime;
-            if(scanTick <= 0)
+            if ((float)Vector3.Distance(original.ScanningVolume.position, GM.CurrentPlayerBody.Head.transform.position) < 2f)
             {
-                scanTick = 1;
-                if(Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
-                {
-                    Scan();
-                    UpdateIcons();
-                }
+                Scan();
+                UpdateIcons();
+            }
+            else
+            {
+                ClearSelection();
             }
         }
 
-        private void Scan()
+        private void ClearSelection()
         {
-            int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
-
             detectedMag = null;
             detectedSpeedLoader = null;
             purchaseMag = null;
             upgradeMag = null;
+            selectedObject = null;
 
-            for(int i = 0; i < colliderCount; i++)
+            original.PlacementBoundsRenderer?.gameObject.SetActive(false);
+        }
+
+        private void Scan()
+        {
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+
+            if (selectedObject != null)
             {
-                if(colBuffer[i].attachedRigidbody != null)
+                //Find the bounds of the selected object
+                Bounds objBounds = new(selectedObject.transform.position, new Vector3(0.01f, 0.01f, 0.01f));
+                Collider[] objColliders = selectedObject.transform.GetComponentsInChildren<Collider>();
+
+                foreach (Collider collider in objColliders)
                 {
-                    FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
-                    if (purchaseMag == null && firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
+                    if (collider != null && collider.isTrigger)
                     {
-                        MagazineBlacklistEntry entry = null;
-                        if (blacklist.ContainsKey(firearm.ObjectWrapper.ItemID)) entry = blacklist[firearm.ObjectWrapper.ItemID];
-                        List<FVRObject> spawnableMags = FirearmUtils.GetCompatibleMagazines(firearm.ObjectWrapper, -1, -1, false, entry);
+                        objBounds.Encapsulate(collider.bounds);
+                    }
+                }
 
-                        if (spawnableMags.Count > 0)
+                //Get the selected object's position
+                Vector3 objPosition = selectedObject.RootRigidbody.position;
+                Vector3 b = objBounds.center - selectedObject.transform.position;
+
+                //Create the scanning box effect
+                if (original.PlacementBoundsRenderer == null)
+                {
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
+                }
+
+                //Place the scanning box effect over the selected object
+                original.PlacementBoundsRenderer.gameObject.SetActive(true);
+                original.PlacementBoundsRenderer.PoseAndRescale(objPosition + b, objBounds.extents * 2f, original.EmitterPoint.position);
+
+                //Find the bounds of the scanning volume
+                Bounds scanBounds = new(original.ScanningVolume.position, new Vector3(0.001f, 0.001f, 0.001f));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(0.5f, 0.5f, 0.5f)));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(-0.5f, -0.5f, -0.5f)));
+
+                //If the selected object is no longer within the scanning volume, deselect it
+                if (!objBounds.Intersects(scanBounds))
+                {
+                    ClearSelection();
+                }
+            }
+
+            if (selectedObject == null)
+            {
+                int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+
+                detectedMag = null;
+                detectedSpeedLoader = null;
+                purchaseMag = null;
+                upgradeMag = null;
+
+                for(int i = 0; i < colliderCount; i++)
+                {
+                    if(colBuffer[i].attachedRigidbody != null)
+                    {
+                        FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
+                        if (purchaseMag == null && firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
                         {
-                            purchaseMag = FirearmUtils.GetSmallestCapacityMagazine(spawnableMags);
+                            MagazineBlacklistEntry entry = null;
+                            if (blacklist.ContainsKey(firearm.ObjectWrapper.ItemID)) entry = blacklist[firearm.ObjectWrapper.ItemID];
+                            List<FVRObject> spawnableMags = FirearmUtils.GetCompatibleMagazines(firearm.ObjectWrapper, -1, -1, false, entry);
+
+                            if (spawnableMags.Count > 0)
+                            {
+                                purchaseMag = FirearmUtils.GetSmallestCapacityMagazine(spawnableMags);
+                                selectedObject = firearm;
+                            }
                         }
-                    }
 
-                    FVRFireArmMagazine mag = colBuffer[i].GetComponent<FVRFireArmMagazine>();
-                    if (mag != null && mag.FireArm == null && (!mag.IsHeld) && mag.QuickbeltSlot == null && (!mag.IsIntegrated))
-                    {
-                        detectedMag = mag;
-                    }
+                        FVRFireArmMagazine mag = colBuffer[i].attachedRigidbody.GetComponent<FVRFireArmMagazine>();
+                        if (mag != null && mag.FireArm == null && (!mag.IsHeld) && mag.QuickbeltSlot == null && (!mag.IsIntegrated))
+                        {
+                            detectedMag = mag;
+                            selectedObject = mag;
+                        }
 
-                    Speedloader speedloader = colBuffer[i].GetComponent<Speedloader>();
-                    if (speedloader != null && (!speedloader.IsHeld) && speedloader.QuickbeltSlot == null && speedloader.IsPretendingToBeAMagazine)
-                    {
-                        detectedSpeedLoader = speedloader;
-                    }
+                        Speedloader speedloader = colBuffer[i].attachedRigidbody.GetComponent<Speedloader>();
+                        if (speedloader != null && (!speedloader.IsHeld) && speedloader.QuickbeltSlot == null && speedloader.IsPretendingToBeAMagazine)
+                        {
+                            detectedSpeedLoader = speedloader;
+                            selectedObject = speedloader;
+                        }
 
-                    //If at this point we have a valid ammo container and firearm, we can stop looping
-                    if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
+                        //If at this point we have a valid ammo container and firearm, we can stop looping
+                        if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
+                    }
                 }
             }
         }
 
         private void UpdateIcons()
         {
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+
             DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
-            if (detectedMag != null || detectedSpeedLoader != null) DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (detectedMag != null || detectedSpeedLoader != null)
+            {
+                DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= DupeCost) numTokensSelected = DupeCost;
+            }
 
-            if (purchaseMag != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (purchaseMag != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PurchaseCost) numTokensSelected = PurchaseCost;
+            }
 
             if (detectedMag != null)
             {
                 upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
-                if (upgradeMag != null) UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (upgradeMag != null)
+                {
+                    UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                    if (numTokens >= UpgradeCost) numTokensSelected = UpgradeCost;
+                }
             }
-            
+
             DupeIcon.UpdateIconDisplay();
             UpgradeIcon.UpdateIconDisplay();
             PurchaseIcon.UpdateIconDisplay();
+            UpdateTokenDisplay(numTokens);
         }
 
-        
+        private void UpdateTokenDisplay(int numTokens)
+        {
+            //Display the total number of tokens
+            for (int i = 0; i < original.TokenList.Count; i++)
+            {
+                if (i < numTokens)
+                {
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
+                }
+
+                else
+                {
+                    original.TokenList[i].color = original.Token_Empty;
+                }
+            }
+        }
+
+
     }
 
 
@@ -315,14 +424,15 @@ namespace TNHFramework
         public TNH_MagDuplicator original;
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
         public int PanelCost = 1;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 
         private TNH_ObjectConstructorIcon PurchaseIcon;
 
+        private FVRPhysicalObject selectedObject = null;
         private FVRFireArm detectedFirearm = null;
         private Collider[] colBuffer = new Collider[50];
-        private float scanTick = 1f;
 
         public void Awake()
         {
@@ -332,11 +442,23 @@ namespace TNHFramework
 
             InitPanel();
             UpdateIcons();
+
+            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
+        private void OnDestroy()
+        {
+            if (original.M != null)
+                original.M.TokenCountChangeEvent -= UpdateTokenDisplay;
+        }
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Ammo Purchaser --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -390,7 +512,7 @@ namespace TNHFramework
 
                 AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 
-                detectedFirearm = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -417,34 +539,87 @@ namespace TNHFramework
 
         private void Update()
         {
-            scanTick -= Time.deltaTime;
-            if (scanTick <= 0)
+            if ((float)Vector3.Distance(original.ScanningVolume.position, GM.CurrentPlayerBody.Head.transform.position) < 2f)
             {
-                scanTick = 1;
-                if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
-                {
-                    Scan();
-                    UpdateIcons();
-                }
+                Scan();
+                UpdateIcons();
             }
+
+            else
+            {
+                ClearSelection();
+            }
+        }
+
+        private void ClearSelection()
+        {
+            detectedFirearm = null;
+            selectedObject = null;
+
+            original.PlacementBoundsRenderer?.gameObject.SetActive(false);
         }
 
         private void Scan()
         {
-            int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
-
-            detectedFirearm = null;
-
-            for (int i = 0; i < colliderCount; i++)
+            if (selectedObject != null)
             {
-                if (colBuffer[i].attachedRigidbody != null)
-                {
-                    FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
+                //Find the bounds of the selected object
+                Bounds objBounds = new(selectedObject.transform.position, new Vector3(0.01f, 0.01f, 0.01f));
+                Collider[] objColliders = selectedObject.transform.GetComponentsInChildren<Collider>();
 
-                    if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
+                foreach (Collider collider in objColliders)
+                {
+                    if (collider != null && collider.isTrigger)
                     {
-                        detectedFirearm = firearm;
-                        return;
+                        objBounds.Encapsulate(collider.bounds);
+                    }
+                }
+
+                //Get the selected object's position
+                Vector3 objPosition = selectedObject.RootRigidbody.position;
+                Vector3 b = objBounds.center - selectedObject.transform.position;
+
+                //Create the scanning box effect
+                if (original.PlacementBoundsRenderer == null)
+                {
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
+                }
+
+                //Place the scanning box effect over the selected object
+                original.PlacementBoundsRenderer.gameObject.SetActive(true);
+                original.PlacementBoundsRenderer.PoseAndRescale(objPosition + b, objBounds.extents * 2f, original.EmitterPoint.position);
+
+                //Find the bounds of the scanning volume
+                Bounds scanBounds = new(original.ScanningVolume.position, new Vector3(0.001f, 0.001f, 0.001f));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(0.5f, 0.5f, 0.5f)));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(-0.5f, -0.5f, -0.5f)));
+
+                //If the selected object is no longer within the scanning volume, deselect it
+                if (!objBounds.Intersects(scanBounds))
+                {
+                    ClearSelection();
+                }
+            }
+
+            if (selectedObject == null)
+            {
+                int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+
+                detectedFirearm = null;
+
+                for (int i = 0; i < colliderCount; i++)
+                {
+                    if (colBuffer[i].attachedRigidbody != null)
+                    {
+                        FVRFireArm firearm = colBuffer[i].attachedRigidbody.GetComponent<FVRFireArm>();
+
+                        if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
+                        {
+                            detectedFirearm = firearm;
+                            selectedObject = firearm;
+                            return;
+                        }
                     }
                 }
             }
@@ -453,10 +628,41 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
-            if (detectedFirearm != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (detectedFirearm != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+            }
 
             PurchaseIcon.UpdateIconDisplay();
+            UpdateTokenDisplay(numTokens);
+        }
+
+        private void UpdateTokenDisplay(int numTokens)
+        {
+            //Display the total number of tokens
+            for (int i = 0; i < original.TokenList.Count; i++)
+            {
+                if (i < numTokens)
+                {
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
+                }
+
+                else
+                {
+                    original.TokenList[i].color = original.Token_Empty;
+                }
+            }
         }
     }
 
@@ -465,17 +671,18 @@ namespace TNHFramework
     {
         public TNH_MagDuplicator original;
         public int PanelCost = 4;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 
         private TNH_ObjectConstructorIcon PurchaseIcon;
 
+        private FVRPhysicalObject selectedObject = null;
         public Handgun detectedHandgun = null;
         public ClosedBoltWeapon detectedClosedBolt = null;
         public OpenBoltReceiver detectedOpenBolt = null;
 
         private Collider[] colBuffer = new Collider[50];
-        private float scanTick = 1f;
 
         public void Awake()
         {
@@ -485,10 +692,23 @@ namespace TNHFramework
 
             InitPanel();
             UpdateIcons();
+
+            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+        }
+
+        private void OnDestroy()
+        {
+            if (original.M != null)
+                original.M.TokenCountChangeEvent -= UpdateTokenDisplay;
         }
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Full Auto Upgrader --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -535,21 +755,21 @@ namespace TNHFramework
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedHandgun.ObjectWrapper.DisplayName}");
                     AddFullAutoToHandgun(detectedHandgun);
-                    detectedHandgun = null;
+                    ClearSelection();
                 }
 
                 else if (detectedClosedBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedClosedBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToClosedBolt(detectedClosedBolt);
-                    detectedClosedBolt = null;
+                    ClearSelection();
                 }
 
                 else if(detectedOpenBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedOpenBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToOpenBolt(detectedOpenBolt);
-                    detectedOpenBolt = null;
+                    ClearSelection();
                 }
             }
         }
@@ -682,60 +902,117 @@ namespace TNHFramework
 
         private void Update()
         {
-            scanTick -= Time.deltaTime;
-            if (scanTick <= 0)
+            if ((float)Vector3.Distance(original.ScanningVolume.position, GM.CurrentPlayerBody.Head.transform.position) < 2f)
             {
-                scanTick = 1;
-                if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
-                {
-                    Scan();
-                    UpdateIcons();
-                }
+                Scan();
+                UpdateIcons();
+            }
+
+            else
+            {
+                ClearSelection();
             }
         }
 
-        private void Scan()
+        private void ClearSelection()
         {
             detectedHandgun = null;
             detectedClosedBolt = null;
             detectedOpenBolt = null;
+            selectedObject = null;
 
-            int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+            original.PlacementBoundsRenderer?.gameObject.SetActive(false);
+        }
 
-            for (int i = 0; i < colliderCount; i++)
+        private void Scan()
+        {
+            if (selectedObject != null)
             {
-                if (colBuffer[i].attachedRigidbody != null)
+                //Find the bounds of the selected object
+                Bounds objBounds = new(selectedObject.transform.position, new Vector3(0.01f, 0.01f, 0.01f));
+                Collider[] objColliders = selectedObject.transform.GetComponentsInChildren<Collider>();
+
+                foreach (Collider collider in objColliders)
                 {
-                    Handgun handgun = colBuffer[i].GetComponent<Handgun>();
-                    if(handgun != null)
+                    if (collider != null && collider.isTrigger)
                     {
-                        if(handgun.FireSelectorModes == null || !handgun.FireSelectorModes.Any(o => o.ModeType == Handgun.FireSelectorModeType.FullAuto))
-                        {
-                            //Debug.Log("Hand gun detected!");
-                            detectedHandgun = handgun;
-                            return;
-                        }
+                        objBounds.Encapsulate(collider.bounds);
                     }
+                }
 
-                    ClosedBoltWeapon closedBolt = colBuffer[i].GetComponent<ClosedBoltWeapon>();
-                    if(closedBolt != null)
+                //Get the selected object's position
+                Vector3 objPosition = selectedObject.RootRigidbody.position;
+                Vector3 b = objBounds.center - selectedObject.transform.position;
+
+                //Create the scanning box effect
+                if (original.PlacementBoundsRenderer == null)
+                {
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
+                }
+
+                //Place the scanning box effect over the selected object
+                original.PlacementBoundsRenderer.gameObject.SetActive(true);
+                original.PlacementBoundsRenderer.PoseAndRescale(objPosition + b, objBounds.extents * 2f, original.EmitterPoint.position);
+
+                //Find the bounds of the scanning volume
+                Bounds scanBounds = new(original.ScanningVolume.position, new Vector3(0.001f, 0.001f, 0.001f));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(0.5f, 0.5f, 0.5f)));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(-0.5f, -0.5f, -0.5f)));
+
+                //If the selected object is no longer within the scanning volume, deselect it
+                if (!objBounds.Intersects(scanBounds))
+                {
+                    ClearSelection();
+                }
+            }
+
+            if (selectedObject == null)
+            {
+                detectedHandgun = null;
+                detectedClosedBolt = null;
+                detectedOpenBolt = null;
+
+                int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+
+                for (int i = 0; i < colliderCount; i++)
+                {
+                    if (colBuffer[i].attachedRigidbody != null)
                     {
-                        if(closedBolt.FireSelector_Modes == null || !closedBolt.FireSelector_Modes.Any(o => o.ModeType == ClosedBoltWeapon.FireSelectorModeType.FullAuto))
+                        Handgun handgun = colBuffer[i].attachedRigidbody.GetComponent<Handgun>();
+                        if(handgun != null)
                         {
-                            //Debug.Log("Closed bolt detected!");
-                            detectedClosedBolt = closedBolt;
-                            return;
+                            if(handgun.FireSelectorModes == null || !handgun.FireSelectorModes.Any(o => o.ModeType == Handgun.FireSelectorModeType.FullAuto))
+                            {
+                                //Debug.Log("Hand gun detected!");
+                                detectedHandgun = handgun;
+                                    selectedObject = handgun;
+                                return;
+                            }
                         }
-                    }
 
-                    OpenBoltReceiver openBolt = colBuffer[i].GetComponent<OpenBoltReceiver>();
-                    if(openBolt != null)
-                    {
-                        if(openBolt.FireSelector_Modes == null || !openBolt.FireSelector_Modes.Any(o => o.ModeType == OpenBoltReceiver.FireSelectorModeType.FullAuto))
+                        ClosedBoltWeapon closedBolt = colBuffer[i].attachedRigidbody.GetComponent<ClosedBoltWeapon>();
+                        if(closedBolt != null)
                         {
-                            //Debug.Log("Open bolt detected!");
-                            detectedOpenBolt = openBolt;
-                            return;
+                            if(closedBolt.FireSelector_Modes == null || !closedBolt.FireSelector_Modes.Any(o => o.ModeType == ClosedBoltWeapon.FireSelectorModeType.FullAuto))
+                            {
+                                //Debug.Log("Closed bolt detected!");
+                                detectedClosedBolt = closedBolt;
+                                    selectedObject = closedBolt;
+                                return;
+                            }
+                        }
+
+                        OpenBoltReceiver openBolt = colBuffer[i].attachedRigidbody.GetComponent<OpenBoltReceiver>();
+                        if(openBolt != null)
+                        {
+                            if(openBolt.FireSelector_Modes == null || !openBolt.FireSelector_Modes.Any(o => o.ModeType == OpenBoltReceiver.FireSelectorModeType.FullAuto))
+                            {
+                                //Debug.Log("Open bolt detected!");
+                                detectedOpenBolt = openBolt;
+                                selectedObject = openBolt;
+                                return;
+                            }
                         }
                     }
                 }
@@ -745,10 +1022,41 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
-            if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+            }
 
             PurchaseIcon.UpdateIconDisplay();
+            UpdateTokenDisplay(numTokens);
+        }
+
+        private void UpdateTokenDisplay(int numTokens)
+        {
+            //Display the total number of tokens
+            for (int i = 0; i < original.TokenList.Count; i++)
+            {
+                if (i < numTokens)
+                {
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
+                }
+
+                else
+                {
+                    original.TokenList[i].color = original.Token_Empty;
+                }
+            }
         }
     }
 
@@ -764,13 +1072,14 @@ namespace TNHFramework
         private TNH_ObjectConstructorIcon PlusIcon;
         private TNH_ObjectConstructorIcon MinusIcon;
 
+        private FVRPhysicalObject selectedObject = null;
         public Handgun detectedHandgun = null;
         public ClosedBoltWeapon detectedClosedBolt = null;
         public OpenBoltReceiver detectedOpenBolt = null;
 
         private int PanelCost = 1;
+        private int numTokensSelected = 0;
         private Collider[] colBuffer = new Collider[50];
-        private float scanTick = 1f;
 
         private float fireRateMultiplier = 1.5f;
 
@@ -782,10 +1091,23 @@ namespace TNHFramework
 
             InitPanel();
             UpdateIcons();
+
+            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+        }
+
+        private void OnDestroy()
+        {
+            if (original.M != null)
+                original.M.TokenCountChangeEvent -= UpdateTokenDisplay;
         }
 
         public void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Fire Rate Up / Down --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -836,9 +1158,7 @@ namespace TNHFramework
                 original.M.SubtractTokens(PanelCost);
 
                 IncreaseFireRate();
-                detectedHandgun = null;
-                detectedOpenBolt = null;
-                detectedClosedBolt = null;
+                ClearSelection();
             }
         }
 
@@ -856,9 +1176,7 @@ namespace TNHFramework
                 original.M.SubtractTokens(PanelCost);
 
                 DecreaseFireRate();
-                detectedHandgun = null;
-                detectedOpenBolt = null;
-                detectedClosedBolt = null;
+                ClearSelection();
             }
         }
 
@@ -928,52 +1246,108 @@ namespace TNHFramework
 
         private void Update()
         {
-            scanTick -= Time.deltaTime;
-            if (scanTick <= 0)
+            if ((float)Vector3.Distance(original.ScanningVolume.position, GM.CurrentPlayerBody.Head.transform.position) < 2f)
             {
-                scanTick = 1;
-                if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
-                {
-                    Scan();
-                    UpdateIcons();
-                }
+                Scan();
+                UpdateIcons();
+            }
+            else
+            {
+                ClearSelection();
             }
         }
 
-        private void Scan()
+        private void ClearSelection()
         {
             detectedHandgun = null;
             detectedClosedBolt = null;
             detectedOpenBolt = null;
+            selectedObject = null;
 
-            int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+            original.PlacementBoundsRenderer?.gameObject.SetActive(false);
+        }
 
-            for (int i = 0; i < colliderCount; i++)
+        private void Scan()
+        {
+            if (selectedObject != null)
             {
-                if (colBuffer[i].attachedRigidbody != null)
+                //Find the bounds of the selected object
+                Bounds objBounds = new(selectedObject.transform.position, new Vector3(0.01f, 0.01f, 0.01f));
+                Collider[] objColliders = selectedObject.transform.GetComponentsInChildren<Collider>();
+
+                foreach (Collider collider in objColliders)
                 {
-                    Handgun handgun = colBuffer[i].GetComponent<Handgun>();
-                    if (handgun != null)
+                    if (collider != null && collider.isTrigger)
                     {
-                        //Debug.Log("Hand gun detected!");
-                        detectedHandgun = handgun;
-                        return;
+                        objBounds.Encapsulate(collider.bounds);
                     }
+                }
 
-                    ClosedBoltWeapon closedBolt = colBuffer[i].GetComponent<ClosedBoltWeapon>();
-                    if (closedBolt != null)
-                    {
-                        //Debug.Log("Closed bolt detected!");
-                        detectedClosedBolt = closedBolt;
-                        return;
-                    }
+                //Get the selected object's position
+                Vector3 objPosition = selectedObject.RootRigidbody.position;
+                Vector3 b = objBounds.center - selectedObject.transform.position;
 
-                    OpenBoltReceiver openBolt = colBuffer[i].GetComponent<OpenBoltReceiver>();
-                    if (openBolt != null)
+                //Create the scanning box effect
+                if (original.PlacementBoundsRenderer == null)
+                {
+                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
+                }
+
+                //Place the scanning box effect over the selected object
+                original.PlacementBoundsRenderer.gameObject.SetActive(true);
+                original.PlacementBoundsRenderer.PoseAndRescale(objPosition + b, objBounds.extents * 2f, original.EmitterPoint.position);
+
+                //Find the bounds of the scanning volume
+                Bounds scanBounds = new(original.ScanningVolume.position, new Vector3(0.001f, 0.001f, 0.001f));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(0.5f, 0.5f, 0.5f)));
+                scanBounds.Encapsulate(original.ScanningVolume.TransformPoint(new Vector3(-0.5f, -0.5f, -0.5f)));
+
+                //If the selected object is no longer within the scanning volume, deselect it
+                if (!objBounds.Intersects(scanBounds))
+                {
+                    ClearSelection();
+                }
+            }
+
+            if (selectedObject == null)
+            {
+                detectedHandgun = null;
+                detectedClosedBolt = null;
+                detectedOpenBolt = null;
+
+                int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
+
+                for (int i = 0; i < colliderCount; i++)
+                {
+                    if (colBuffer[i].attachedRigidbody != null)
                     {
-                        //Debug.Log("Open bolt detected!");
-                        detectedOpenBolt = openBolt;
-                        return;
+                        Handgun handgun = colBuffer[i].attachedRigidbody.GetComponent<Handgun>();
+                        if (handgun != null)
+                        {
+                            //Debug.Log("Hand gun detected!");
+                            detectedHandgun = handgun;
+                            selectedObject = handgun;
+                            return;
+                        }
+
+                        ClosedBoltWeapon closedBolt = colBuffer[i].attachedRigidbody.GetComponent<ClosedBoltWeapon>();
+                        if (closedBolt != null)
+                        {
+                            //Debug.Log("Closed bolt detected!");
+                            detectedClosedBolt = closedBolt;
+                            selectedObject = closedBolt;
+                            return;
+                        }
+
+                        OpenBoltReceiver openBolt = colBuffer[i].attachedRigidbody.GetComponent<OpenBoltReceiver>();
+                        if (openBolt != null)
+                        {
+                            //Debug.Log("Open bolt detected!");
+                            detectedOpenBolt = openBolt;
+                            selectedObject = openBolt;
+                            return;
+                        }
                     }
                 }
             }
@@ -983,17 +1357,45 @@ namespace TNHFramework
         {
             PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
             {
                 PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
                 MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
             PlusIcon.UpdateIconDisplay();
             MinusIcon.UpdateIconDisplay();
+            UpdateTokenDisplay(numTokens);
         }
+
+        private void UpdateTokenDisplay(int numTokens)
+        {
+            //Display the total number of tokens
+            for (int i = 0; i < original.TokenList.Count; i++)
+            {
+                if (i < numTokens)
+                {
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
+                }
+
+                else
+                {
+                    original.TokenList[i].color = original.Token_Empty;
+                }
+            }
+        }
+
+
     }
-
-
 }
