@@ -73,6 +73,11 @@ namespace TNHFramework
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Mag Dupe / Upgrade / Buy --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -178,8 +183,7 @@ namespace TNHFramework
                     FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
-                detectedMag = null;
-                detectedSpeedLoader = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -200,8 +204,7 @@ namespace TNHFramework
                 Destroy(detectedMag.GameObject);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
-                upgradeMag = null;
-                detectedMag = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -221,7 +224,7 @@ namespace TNHFramework
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
-                purchaseMag = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -320,27 +323,27 @@ namespace TNHFramework
                             {
                                 purchaseMag = FirearmUtils.GetSmallestCapacityMagazine(spawnableMags, character.GlobalObjectBlacklist, entry);
                                 selectedObject = firearm;
-                                break;
                             }
                         }
 
                         // Detect magazines
-                        FVRFireArmMagazine magazine = colBuffer[i].attachedRigidbody.gameObject.GetComponent<FVRFireArmMagazine>();
-                        if (magazine != null && magazine.FireArm == null && !magazine.IsHeld && magazine.QuickbeltSlot == null && !magazine.IsIntegrated)
+                        FVRFireArmMagazine mag = colBuffer[i].attachedRigidbody.GetComponent<FVRFireArmMagazine>();
+                        if (mag != null && mag.FireArm == null && !mag.IsHeld && mag.QuickbeltSlot == null && !mag.IsIntegrated)
                         {
-                            detectedMag = magazine;
-                            selectedObject = magazine;
-                            break;
+                            detectedMag = mag;
+                            selectedObject = mag;
                         }
 
-                        // Detect speedloaders (do we need this anymore?)
-                        Speedloader speedloader = colBuffer[i].attachedRigidbody.gameObject.GetComponent<Speedloader>();
+                        // Detect speedloaders
+                        Speedloader speedloader = colBuffer[i].attachedRigidbody.GetComponent<Speedloader>();
                         if (speedloader != null && !speedloader.IsHeld && speedloader.QuickbeltSlot == null && speedloader.IsPretendingToBeAMagazine)
                         {
                             detectedSpeedLoader = speedloader;
                             selectedObject = speedloader;
-                            break;
                         }
+
+                        // If at this point we have a valid ammo container and firearm, we can stop looping
+                        if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
                     }
                 }
             }
@@ -353,25 +356,35 @@ namespace TNHFramework
             DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
             if (detectedMag != null || detectedSpeedLoader != null)
+            {
                 DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= DupeCost) numTokensSelected = DupeCost;
+            }
 
             if (purchaseMag != null)
+            {
                 PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PurchaseCost) numTokensSelected = PurchaseCost;
+            }
 
             if (detectedMag != null)
             {
-                upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper, character.GlobalObjectBlacklist);
-
+                upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
                 if (upgradeMag != null)
+                {
                     UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                    if (numTokens >= UpgradeCost) numTokensSelected = UpgradeCost;
+                }
             }
-            
+
             DupeIcon.UpdateIconDisplay();
             UpgradeIcon.UpdateIconDisplay();
             PurchaseIcon.UpdateIconDisplay();
-            UpdateTokenDisplay(GM.TNH_Manager.GetNumTokens());
+            UpdateTokenDisplay(numTokens);
         }
 
         private void UpdateTokenDisplay(int numTokens)
@@ -381,7 +394,14 @@ namespace TNHFramework
             {
                 if (i < numTokens)
                 {
-                    original.TokenList[i].color = original.Token_Unselected;
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
                 }
                 else
                 {
@@ -429,6 +449,11 @@ namespace TNHFramework
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Ammo Purchaser --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -480,7 +505,7 @@ namespace TNHFramework
 
                 AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 
-                detectedFirearm = null;
+                ClearSelection();
                 UpdateIcons();
             }
         }
@@ -579,7 +604,7 @@ namespace TNHFramework
                 {
                     if (colBuffer[i].attachedRigidbody != null)
                     {
-                        FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
+                        FVRFireArm firearm = colBuffer[i].attachedRigidbody.GetComponent<FVRFireArm>();
 
                         if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
                         {
@@ -595,11 +620,17 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
-            if (detectedFirearm != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (detectedFirearm != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+            }
 
             PurchaseIcon.UpdateIconDisplay();
-            UpdateTokenDisplay(GM.TNH_Manager.GetNumTokens());
+            UpdateTokenDisplay(numTokens);
         }
 
         private void UpdateTokenDisplay(int numTokens)
@@ -609,7 +640,14 @@ namespace TNHFramework
             {
                 if (i < numTokens)
                 {
-                    original.TokenList[i].color = original.Token_Unselected;
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
                 }
                 else
                 {
@@ -624,6 +662,7 @@ namespace TNHFramework
     {
         public TNH_MagDuplicator original;
         public int PanelCost = 4;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 
@@ -659,6 +698,11 @@ namespace TNHFramework
 
         private void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Full Auto Upgrader --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -703,19 +747,19 @@ namespace TNHFramework
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedHandgun.ObjectWrapper.DisplayName}");
                     AddFullAutoToHandgun(detectedHandgun);
-                    detectedHandgun = null;
+                    ClearSelection();
                 }
                 else if (detectedClosedBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedClosedBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToClosedBolt(detectedClosedBolt);
-                    detectedClosedBolt = null;
+                    ClearSelection();
                 }
                 else if(detectedOpenBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedOpenBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToOpenBolt(detectedOpenBolt);
-                    detectedOpenBolt = null;
+                    ClearSelection();
                 }
             }
         }
@@ -932,7 +976,7 @@ namespace TNHFramework
                 {
                     if (colBuffer[i].attachedRigidbody != null)
                     {
-                        Handgun handgun = colBuffer[i].GetComponent<Handgun>();
+                        Handgun handgun = colBuffer[i].attachedRigidbody.GetComponent<Handgun>();
                         if (handgun != null)
                         {
                             if (handgun.FireSelectorModes == null || !handgun.FireSelectorModes.Any(o => o.ModeType == Handgun.FireSelectorModeType.FullAuto))
@@ -944,7 +988,7 @@ namespace TNHFramework
                             }
                         }
 
-                        ClosedBoltWeapon closedBolt = colBuffer[i].GetComponent<ClosedBoltWeapon>();
+                        ClosedBoltWeapon closedBolt = colBuffer[i].attachedRigidbody.GetComponent<ClosedBoltWeapon>();
                         if (closedBolt != null)
                         {
                             if (closedBolt.FireSelector_Modes == null || !closedBolt.FireSelector_Modes.Any(o => o.ModeType == ClosedBoltWeapon.FireSelectorModeType.FullAuto))
@@ -956,7 +1000,7 @@ namespace TNHFramework
                             }
                         }
 
-                        OpenBoltReceiver openBolt = colBuffer[i].GetComponent<OpenBoltReceiver>();
+                        OpenBoltReceiver openBolt = colBuffer[i].attachedRigidbody.GetComponent<OpenBoltReceiver>();
                         if (openBolt != null)
                         {
                             if (openBolt.FireSelector_Modes == null || !openBolt.FireSelector_Modes.Any(o => o.ModeType == OpenBoltReceiver.FireSelectorModeType.FullAuto))
@@ -975,11 +1019,17 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
-            if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+            if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+            }
 
             PurchaseIcon.UpdateIconDisplay();
-            UpdateTokenDisplay(GM.TNH_Manager.GetNumTokens());
+            UpdateTokenDisplay(numTokens);
         }
 
         private void UpdateTokenDisplay(int numTokens)
@@ -989,7 +1039,14 @@ namespace TNHFramework
             {
                 if (i < numTokens)
                 {
-                    original.TokenList[i].color = original.Token_Unselected;
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
                 }
                 else
                 {
@@ -1017,6 +1074,7 @@ namespace TNHFramework
         public OpenBoltReceiver detectedOpenBolt = null;
 
         private int PanelCost = 1;
+        private int numTokensSelected = 0;
         private Collider[] colBuffer = new Collider[50];
 
         private float fireRateMultiplier = 1.5f;
@@ -1044,6 +1102,11 @@ namespace TNHFramework
 
         public void InitPanel()
         {
+            Transform titleTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/AmmoReloaderTitle (3)");
+
+            Text titleText = titleTransform.gameObject.GetComponent<Text>();
+            titleText.text = "-- Fire Rate Up / Down --";
+
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
@@ -1092,9 +1155,7 @@ namespace TNHFramework
                 original.M.SubtractTokens(PanelCost);
 
                 IncreaseFireRate();
-                detectedHandgun = null;
-                detectedOpenBolt = null;
-                detectedClosedBolt = null;
+                ClearSelection();
             }
         }
 
@@ -1111,9 +1172,7 @@ namespace TNHFramework
                 original.M.SubtractTokens(PanelCost);
 
                 DecreaseFireRate();
-                detectedHandgun = null;
-                detectedOpenBolt = null;
-                detectedClosedBolt = null;
+                ClearSelection();
             }
         }
 
@@ -1251,7 +1310,7 @@ namespace TNHFramework
                 {
                     if (colBuffer[i].attachedRigidbody != null)
                     {
-                        Handgun handgun = colBuffer[i].GetComponent<Handgun>();
+                        Handgun handgun = colBuffer[i].attachedRigidbody.GetComponent<Handgun>();
                         if (handgun != null)
                         {
                             //Debug.Log("Hand gun detected!");
@@ -1260,7 +1319,7 @@ namespace TNHFramework
                             return;
                         }
 
-                        ClosedBoltWeapon closedBolt = colBuffer[i].GetComponent<ClosedBoltWeapon>();
+                        ClosedBoltWeapon closedBolt = colBuffer[i].attachedRigidbody.GetComponent<ClosedBoltWeapon>();
                         if (closedBolt != null)
                         {
                             //Debug.Log("Closed bolt detected!");
@@ -1269,7 +1328,7 @@ namespace TNHFramework
                             return;
                         }
 
-                        OpenBoltReceiver openBolt = colBuffer[i].GetComponent<OpenBoltReceiver>();
+                        OpenBoltReceiver openBolt = colBuffer[i].attachedRigidbody.GetComponent<OpenBoltReceiver>();
                         if (openBolt != null)
                         {
                             //Debug.Log("Open bolt detected!");
@@ -1286,16 +1345,19 @@ namespace TNHFramework
         {
             PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            int numTokens = GM.TNH_Manager.GetNumTokens();
+            numTokensSelected = 0;
 
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
             {
                 PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
                 MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
             PlusIcon.UpdateIconDisplay();
             MinusIcon.UpdateIconDisplay();
-            UpdateTokenDisplay(GM.TNH_Manager.GetNumTokens());
+            UpdateTokenDisplay(numTokens);
         }
 
         private void UpdateTokenDisplay(int numTokens)
@@ -1305,7 +1367,14 @@ namespace TNHFramework
             {
                 if (i < numTokens)
                 {
-                    original.TokenList[i].color = original.Token_Unselected;
+                    if (i < numTokens - numTokensSelected)
+                    {
+                        original.TokenList[i].color = original.Token_Unselected;
+                    }
+                    else
+                    {
+                        original.TokenList[i].color = original.Token_Selected;
+                    }
                 }
                 else
                 {
