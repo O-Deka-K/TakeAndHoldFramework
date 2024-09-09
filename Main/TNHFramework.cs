@@ -34,6 +34,7 @@ namespace TNHFramework
         private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
+        public static ConfigEntry<bool> InternalMagPatcher;
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> ConvertFilesToYAML;
         public static ConfigEntry<bool> UnlimitedTokens;
@@ -167,6 +168,11 @@ namespace TNHFramework
         private void LoadConfigFile()
         {
             TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
+
+            InternalMagPatcher = Config.Bind("General",
+                                    "InternalMagPatcher",
+                                    true,
+                                    "If true and MagazinePatcher plugin is NOT used, run internal version. There may be a short delay in the TNH lobby");
 
             BuildCharacterFiles = Config.Bind("General",
                                     "BuildCharacterFiles",
