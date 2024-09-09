@@ -30,6 +30,7 @@ namespace TNHFramework
         public int DupeCost = 2;
         public int UpgradeCost = 3;
         public int PurchaseCost = 2;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 
@@ -417,6 +418,7 @@ namespace TNHFramework
         public TNH_MagDuplicator original;
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
         public int PanelCost = 1;
+        private int numTokensSelected = 0;
 
         public static Sprite background;
 

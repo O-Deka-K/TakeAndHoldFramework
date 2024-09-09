@@ -29,6 +29,7 @@ namespace TNHFramework
         public static ConfigEntry<bool> AlwaysMagUpgrader;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
+        public static ConfigEntry<bool> EnableScoring;
 
         public static string InfoPath;
         public static string OutputFilePath;
