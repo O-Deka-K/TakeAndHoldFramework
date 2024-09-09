@@ -1,7 +1,6 @@
 ﻿using ADepIn;
 using Valve.Newtonsoft.Json;
 using FistVR;
-// using MagazinePatcher;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
@@ -861,16 +860,7 @@ namespace TNHFramework.ObjectTemplates
 
             else if (ForceSpawnAllSubPools)
             {
-                // whuh
-                // result = [.. objects.Count > 0 ? [this] : []];
-                if (objects.Count > 0)
-                {
-                    result = [this];
-                }
-                else
-                {
-                    result = [];
-                }
+                result = (objects.Count == 0) ? [] : [this];
 
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -882,7 +872,8 @@ namespace TNHFramework.ObjectTemplates
 
             else
             {
-                float combinedRarity = objects.Count;
+                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
                     combinedRarity += group.Rarity;
@@ -890,7 +881,7 @@ namespace TNHFramework.ObjectTemplates
 
                 float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
 
-                if (randomSelection < objects.Count)
+                if (randomSelection < thisRarity)
                 {
                     result = [this];
                     return result;
@@ -898,7 +889,7 @@ namespace TNHFramework.ObjectTemplates
 
                 else
                 {
-                    float progress = objects.Count;
+                    float progress = thisRarity;
                     for (int i = 0; i < SubGroups.Count; i++)
                     {
                         progress += SubGroups[i].Rarity;

@@ -694,7 +694,8 @@ namespace TNHFramework.ObjectTemplates.V1
 
             else
             {
-                float combinedRarity = objects.Count;
+                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
                     combinedRarity += group.Rarity;
@@ -702,7 +703,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
 
-                if (randomSelection < objects.Count)
+                if (randomSelection < thisRarity)
                 {
                     result = new List<EquipmentGroup>();
                     result.Add(this);
@@ -711,7 +712,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 else
                 {
-                    float progress = objects.Count;
+                    float progress = thisRarity;
                     for (int i = 0; i < SubGroups.Count; i++)
                     {
                         progress += SubGroups[i].Rarity;
