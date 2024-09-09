@@ -689,7 +689,8 @@ namespace TNHFramework.ObjectTemplates.V1
             }
             else
             {
-                float combinedRarity = objects.Count;
+                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
                     combinedRarity += group.Rarity;
@@ -697,7 +698,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
 
-                if (randomSelection < objects.Count)
+                if (randomSelection < thisRarity)
                 {
                     result = new List<EquipmentGroup>();
                     result.Add(this);
@@ -705,7 +706,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 }
                 else
                 {
-                    float progress = objects.Count;
+                    float progress = thisRarity;
                     for (int i = 0; i < SubGroups.Count; i++)
                     {
                         progress += SubGroups[i].Rarity;
@@ -764,7 +765,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!SubGroups[i].DelayedInit(completedQuests))
                     {
-                        //TNHTweakerLogger.Log("Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
+                        //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
                         i -= 1;
                     }
@@ -773,7 +774,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
             if (Rarity <= 0)
             {
-                //TNHTweakerLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
+                //TNHFrameworkLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHFrameworkLogger.LogType.Character);
                 Rarity = 1;
             }
 

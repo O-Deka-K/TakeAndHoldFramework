@@ -92,7 +92,7 @@ namespace TNHFramework
             {
                 foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
                 {
-                    TNHTweakerLogger.Log($"Plugin loaded: {item.Key}", TNHTweakerLogger.LogType.General);
+                    TNHFrameworkLogger.Log($"Plugin loaded: {item.Key}", TNHFrameworkLogger.LogType.General);
                 }
             }
             */
@@ -167,6 +167,11 @@ namespace TNHFramework
                                     "ConvertFilesToYAML",
                                     false,
                                     "If true, any Stratum-based custom characters will have their JSON files converted to YAML");
+
+            EnableScoring = Config.Bind("General",
+                                    "EnableScoring",
+                                    true,
+                                    "Custom scoreboard is permanently offline, so this does nothing");
 
             allowLog = Config.Bind("Debug",
                                     "EnableLogging",

@@ -235,18 +235,18 @@ namespace TNHFramework.Patches
                             // Last patrol point
                             if (patrolSquad.CurPatrolPointIndex + 1 >= patrolSquad.PatrolPoints.Count && patrolSquad.IsPatrollingUp)
                             {
-                                //TNHTweakerLogger.Log($"{time}Patrol {squadIndex + 1} reached last patrol point ({patrolSquad.CurPatrolPointIndex})! Going back down", TNHTweakerLogger.LogType.TNH);
+                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached last patrol point ({patrolSquad.CurPatrolPointIndex})! Going back down", TNHFrameworkLogger.LogType.TNH);
                                 patrolSquad.IsPatrollingUp = false;
                             }
                             // First patrol point
                             else if (patrolSquad.CurPatrolPointIndex == 0 && !patrolSquad.IsPatrollingUp)
                             {
-                                //TNHTweakerLogger.Log($"{time}Patrol {squadIndex + 1} reached first patrol point ({patrolSquad.CurPatrolPointIndex})! Going back up", TNHTweakerLogger.LogType.TNH);
+                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached first patrol point ({patrolSquad.CurPatrolPointIndex})! Going back up", TNHFrameworkLogger.LogType.TNH);
                                 patrolSquad.IsPatrollingUp = true;
                             }
                             else
                             {
-                                //TNHTweakerLogger.Log($"{time}Patrol {squadIndex + 1} reached patrol point ({patrolSquad.CurPatrolPointIndex})! Continuing patrol", TNHTweakerLogger.LogType.TNH);
+                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached patrol point ({patrolSquad.CurPatrolPointIndex})! Continuing patrol", TNHFrameworkLogger.LogType.TNH);
                             }
 
                             // Go back and forth between patrol points
@@ -785,7 +785,7 @@ namespace TNHFramework.Patches
             weapon.SetAutoDestroy(true);
             weapon.O.SpawnLockable = false;
 
-            //TNHTweakerLogger.Log("Equipping sosig weapon: " + weapon.gameObject.name, TNHTweakerLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Equipping sosig weapon: " + weapon.gameObject.name, TNHFrameworkLogger.LogType.TNH);
 
             // Equip the sosig weapon to the sosig
             sosig.ForceEquip(weapon);

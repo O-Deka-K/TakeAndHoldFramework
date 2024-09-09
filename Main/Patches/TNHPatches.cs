@@ -39,14 +39,14 @@ namespace TNHFramework.Patches
                 __instance.CharDB.Characters = TNHMenuInitializer.SavedCharacters;
 
                 /*
-                TNHTweakerLogger.Log("Delayed Init!", TNHTweakerLogger.LogType.General);
-                TNHTweakerLogger.Log("Last Played Character: " + ((TNH_Char)GM.TNHOptions.LastPlayedChar).ToString(), TNHTweakerLogger.LogType.General);
-                TNHTweakerLogger.Log("Is CharDB null? " + (__instance.CharDB == null), TNHTweakerLogger.LogType.General);
-                TNHTweakerLogger.Log("Is character null? " + (__instance.CharDB.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar) == null), TNHTweakerLogger.LogType.General);
+                TNHFrameworkLogger.Log("Delayed Init!", TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Last Played Character: " + ((TNH_Char)GM.TNHOptions.LastPlayedChar).ToString(), TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Is CharDB null? " + (__instance.CharDB == null), TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Is character null? " + (__instance.CharDB.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar) == null), TNHFrameworkLogger.LogType.General);
 
                 TNH_CharacterDef C = __instance.CharDB.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar);
-                TNHTweakerLogger.Log("Is progression null? " + (C.Progressions == null), TNHTweakerLogger.LogType.General);
-                TNHTweakerLogger.Log("Is endless progression null? " + (C.Progressions_Endless == null), TNHTweakerLogger.LogType.General);
+                TNHFrameworkLogger.Log("Is progression null? " + (C.Progressions == null), TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Is endless progression null? " + (C.Progressions_Endless == null), TNHFrameworkLogger.LogType.General);
                 */
             }
 
@@ -171,7 +171,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool SetCategoryUIPatch(TNH_UIManager __instance, int cat)
         {
-            //TNHTweakerLogger.Log("Category number " + cat + ", offset " + OffsetCat + ", max is " + __instance.Categories.Count, TNHTweakerLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Category number " + cat + ", offset " + OffsetCat + ", max is " + __instance.Categories.Count, TNHFrameworkLogger.LogType.TNH);
 
             __instance.m_selectedCategory = cat + OffsetCat;
             OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
@@ -195,7 +195,7 @@ namespace TNHFramework.Patches
                 adjust = Math.Min(2, __instance.Categories.Count - OffsetCat - 8);
             }
 
-            //TNHTweakerLogger.Log("Adjust is " + adjust, TNHTweakerLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Adjust is " + adjust, TNHFrameworkLogger.LogType.TNH);
 
             OffsetCat += adjust;
             //buttonSet.SetSelectedButton(buttonSet.selectedButton + (adjust * -1)); // uhh?
@@ -205,7 +205,7 @@ namespace TNHFramework.Patches
 
             for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
             {
-                //TNHTweakerLogger.Log("Category iterator is " + i, TNHTweakerLogger.LogType.TNH);
+                //TNHFrameworkLogger.Log("Category iterator is " + i, TNHFrameworkLogger.LogType.TNH);
 
                 if (i + OffsetCat < __instance.Categories.Count)
                 {
@@ -233,7 +233,7 @@ namespace TNHFramework.Patches
         // I WILL SACRIFICE AN F2000 FOR YOU TO CHANGE THIS.
         public static bool SetCharacterUIPatch(TNH_UIManager __instance, int i)
         {
-            //TNHTweakerLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[__instance.m_selectedCategory].Characters.Count, TNHTweakerLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[__instance.m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
 
             __instance.m_selectedCharacter = i + OffsetChar;
             OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
@@ -256,7 +256,7 @@ namespace TNHFramework.Patches
                 adjust = Math.Min(2, __instance.Categories[__instance.m_selectedCategory].Characters.Count - OffsetChar - 12);
             }
 
-            //TNHTweakerLogger.Log("Adjust is " + adjust, TNHTweakerLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Adjust is " + adjust, TNHFrameworkLogger.LogType.TNH);
 
             OffsetChar += adjust;
             //buttonSet.SetSelectedButton(buttonSet.selectedButton + (adjust * -1));  // uhh?
@@ -270,7 +270,7 @@ namespace TNHFramework.Patches
             // ...either that or i'm probably dead.
             for (int j = 0; j < __instance.LBL_CharacterName.Count; j++)
             {
-                //TNHTweakerLogger.Log("Char iterator is " + j, TNHTweakerLogger.LogType.TNH);
+                //TNHFrameworkLogger.Log("Char iterator is " + j, TNHFrameworkLogger.LogType.TNH);
 
                 if (j + OffsetChar < __instance.Categories[__instance.m_selectedCategory].Characters.Count)
                 {

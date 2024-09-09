@@ -927,7 +927,7 @@ namespace TNHFramework.ObjectTemplates
                 {
                     if (!SubGroups[i].DelayedInit(globalObjectBlacklist))
                     {
-                        //TNHTweakerLogger.Log("Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
+                        //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
                         i -= 1;
                     }
@@ -936,7 +936,7 @@ namespace TNHFramework.ObjectTemplates
 
             if (Rarity <= 0)
             {
-                //TNHTweakerLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
+                //TNHFrameworkLogger.Log("Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHFrameworkLogger.LogType.Character);
                 Rarity = 1;
             }
 
