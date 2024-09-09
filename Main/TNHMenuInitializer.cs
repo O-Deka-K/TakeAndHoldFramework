@@ -164,6 +164,11 @@ namespace TNHFramework
                     {
                         TNHFramework.SpeedloaderDictionary.Add(item.Value.RoundType, []);
                     }
+
+                    //Metadata fix
+                    if (item.Value.ItemID == "Speedloader12gauge_5Shot")
+                        item.Value.MagazineCapacity = 5;
+
                     TNHFramework.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
                 }
             }
@@ -230,6 +235,14 @@ namespace TNHFramework
                 if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
                     firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver)
                 {
+                    if (firearmComp == null)
+                    {
+                        GameObject gameObject = firearm.GetGameObject();
+
+                        if (gameObject != null)
+                            firearmComp = gameObject.GetComponent<FVRFireArm>();
+                    }
+
                     if (firearmComp != null)
                     {
                         roundType = firearmComp.RoundType;
