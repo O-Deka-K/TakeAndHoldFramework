@@ -1157,7 +1157,7 @@ namespace TNHFramework.Patches
 
                 // Adjust spawn cadence depending on ammo mode
                 float ammoMult = (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo ? 1.35f : 1f);
-                float randomMult = (__instance.M.Seed >= 0) ? 0.9f : UnityEngine.Random.Range(0.9f, 1.1f);
+                float randomMult = (GM.TNHOptions.TNHSeed >= 0) ? 0.9f : UnityEngine.Random.Range(0.9f, 1.1f);
                 __instance.m_tickDownToNextGroupSpawn = __instance.m_curPhase.SpawnCadence * randomMult * ammoMult;
             }
 

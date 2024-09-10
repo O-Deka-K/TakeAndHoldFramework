@@ -24,7 +24,7 @@ namespace TNHFramework.Patches
         {
             // Create a pool of valid patrols
             // This allows us to generate one patrol of each type before generating more
-            if (TNHFramework.PatrolIndexPool.Count == 0)
+            if (TNHFramework.PatrolIndexPool == null || TNHFramework.PatrolIndexPool.Count == 0)
             {
                 for (int i = 0; i < patrols.Count; i++)
                 {
@@ -379,7 +379,7 @@ namespace TNHFramework.Patches
                 TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(curHoldIndex, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, curHoldIndex, curSupplyPoint, curHoldIndex, curHoldIndex), patrolIndex);
                 __instance.m_patrolSquads.Add(squad);
 
-                for (int i = 1; i < Math.Min(__instance.m_activeSupplyPointIndicies[i], maxPatrols); i++)
+                for (int i = 1; i < Math.Min(__instance.m_activeSupplyPointIndicies.Count, maxPatrols); i++)
                 {
                     patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
 
@@ -399,7 +399,7 @@ namespace TNHFramework.Patches
                 TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(curHoldIndex, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.Hold, curHoldIndex, lastHoldIndex, lastHoldIndex, lastHoldIndex), patrolIndex);
                 __instance.m_patrolSquads.Add(squad);
 
-                for (int i = 1; i < Math.Min(__instance.m_activeSupplyPointIndicies[i], maxPatrols); i++)
+                for (int i = 1; i < Math.Min(__instance.m_activeSupplyPointIndicies.Count, maxPatrols); i++)
                 {
                     patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
 

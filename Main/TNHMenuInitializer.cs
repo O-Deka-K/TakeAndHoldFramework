@@ -36,105 +36,6 @@ namespace TNHFramework
                 TNHFrameworkLogger.LogWarning("OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
             }
 
-            try
-            {
-                PokeMagPatcher();
-                isMagPatcherLoaded = true;
-                TNHFrameworkLogger.LogWarning("MagazinePatcher is detected.");
-            }
-            catch
-            {
-                isMagPatcherLoaded = false;
-                TNHFrameworkLogger.LogWarning("MagazinePatcher not found.");
-            }
-
-            if (!isMagPatcherLoaded) // Honey, we have Magazine Patcher at home.
-            {
-                List<FVRObject> gunsToIterate = [];
-
-                // *violent screaming*
-                foreach (KeyValuePair<string, FVRObject> item in IM.OD)
-                {
-                    if (item.Value.Category == FVRObject.ObjectCategory.Firearm)
-                    {
-                        gunsToIterate.Add(item.Value);
-                    }
-                    else if (item.Value.Category == FVRObject.ObjectCategory.Cartridge)
-                    {
-                        if (!TNHFramework.CartridgeDictionary.ContainsKey(item.Value.RoundType))
-                        {
-                            TNHFramework.CartridgeDictionary.Add(item.Value.RoundType, []);
-                        }
-                        TNHFramework.CartridgeDictionary[item.Value.RoundType].Add(item.Value);
-
-                    }
-                    else if (item.Value.Category == FVRObject.ObjectCategory.Magazine)
-                    {
-                        if (!TNHFramework.MagazineDictionary.ContainsKey(item.Value.MagazineType))
-                        {
-                            TNHFramework.MagazineDictionary.Add(item.Value.MagazineType, []);
-                        }
-                        TNHFramework.MagazineDictionary[item.Value.MagazineType].Add(item.Value);
-                    }
-                    else if (item.Value.Category == FVRObject.ObjectCategory.Clip)
-                    {
-                        if (!TNHFramework.StripperDictionary.ContainsKey(item.Value.ClipType))
-                        {
-                            TNHFramework.StripperDictionary.Add(item.Value.ClipType, []);
-                        }
-                        TNHFramework.StripperDictionary[item.Value.ClipType].Add(item.Value);
-                    }
-                    else if (item.Value.Category == FVRObject.ObjectCategory.SpeedLoader)
-                    {
-                        if (!TNHFramework.SpeedloaderDictionary.ContainsKey(item.Value.RoundType))
-                        {
-                            TNHFramework.SpeedloaderDictionary.Add(item.Value.RoundType, []);
-                        }
-                        TNHFramework.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
-                    }
-                }
-
-                foreach (FVRObject firearm in gunsToIterate)
-                {
-                    if (ValidFireArm(firearm) && (firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
-                        TNHFramework.CartridgeDictionary.ContainsKey(firearm.RoundType))
-                    {
-                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new rounds of type " + firearm.RoundType, TNHFrameworkLogger.LogType.General);
-                        firearm.CompatibleSingleRounds = TNHFramework.CartridgeDictionary[firearm.RoundType];
-                    }
-
-                    if ((firearm.CompatibleMagazines == null || firearm.CompatibleMagazines.Count == 0) &&
-                        TNHFramework.MagazineDictionary.ContainsKey(firearm.MagazineType) &&
-                        firearm.MagazineType != FireArmMagazineType.mNone)
-                    {
-                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new magazines of type " + firearm.MagazineType, TNHFrameworkLogger.LogType.General);
-                        firearm.CompatibleMagazines = TNHFramework.MagazineDictionary[firearm.MagazineType];
-                    }
-
-                    if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
-                        TNHFramework.StripperDictionary.ContainsKey(firearm.ClipType) &&
-                        firearm.ClipType != FireArmClipType.None)
-                    {
-                        TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new clips of type " + firearm.ClipType, TNHFrameworkLogger.LogType.General);
-                        firearm.CompatibleClips = TNHFramework.StripperDictionary[firearm.ClipType];
-                    }
-
-                    if (ValidFireArm(firearm) && (firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
-                        TNHFramework.SpeedloaderDictionary.ContainsKey(firearm.RoundType) &&
-                        firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver)
-                    {
-                        foreach (FVRObject speedloader in TNHFramework.SpeedloaderDictionary[firearm.RoundType])
-                        {
-                            if (speedloader.MagazineCapacity == firearm.MagazineCapacity)
-                            {
-                                TNHFrameworkLogger.Log("Given firearm " + firearm.DisplayName + " new speedloader of type " + firearm.RoundType, TNHFrameworkLogger.LogType.General);
-                                firearm.CompatibleSpeedLoaders.Add(speedloader);
-                            }
-                        }
-                    }
-                }
-            }
-
             // First thing we want to do is wait for all asset bundles to be loaded in
             float itemLoadProgress = 0;
             do
@@ -147,10 +48,22 @@ namespace TNHFramework
                     itemLoadProgress = Mathf.Min(itemLoadProgress, GetOtherLoaderProgress());
                     itemsText.text = GetLoadingItems();
                 }
-                
+
                 progressText.text = $"LOADING ITEMS : {itemLoadProgress * 100:0.0}%";
             }
             while (itemLoadProgress < 1);
+
+            try
+            {
+                PokeMagPatcher();
+                isMagPatcherLoaded = true;
+                TNHFrameworkLogger.LogWarning("MagazinePatcher is detected.");
+            }
+            catch
+            {
+                isMagPatcherLoaded = false;
+                TNHFrameworkLogger.LogWarning("MagazinePatcher not found.");
+            }
 
             // Now we wait for magazine caching to be done
             if (isMagPatcherLoaded)
@@ -160,20 +73,17 @@ namespace TNHFramework
                 {
                     yield return null;
 
-                    cachingProgress = PokeMagPatcher();// PatcherStatus.PatcherProgress;
-                    itemsText.text = GetMagPatcherCacheLog();// PatcherStatus.CacheLog;
+                    cachingProgress = PokeMagPatcher();
+                    itemsText.text = GetMagPatcherCacheLog();
                     progressText.text = $"CACHING ITEMS : {cachingProgress * 100:0.0}%";
-
-                    /*
-                    if (PatcherStatus.CachingFailed)
-                    {
-                        MagazineCacheFailed = true;
-                        progressText.text = "CACHING FAILED! SEE ABOVE";
-                        throw new Exception("Magazine Caching Failed!");
-                    }
-                    */
                 }
                 while (cachingProgress < 1);
+            }
+            else if (TNHFramework.InternalMagPatcher.Value) // Honey, we have Magazine Patcher at home.
+            {
+                TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher started!", TNHFrameworkLogger.LogType.General);
+                InternalMagPatcher();
+                TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher finished!", TNHFrameworkLogger.LogType.General);
             }
 
             // Now perform final steps of loading characters
@@ -196,10 +106,149 @@ namespace TNHFramework
 
 
 
-        public static bool ValidFireArm(FVRObject firearm)
+        public static void InternalMagPatcher()
         {
-            // If all of these values are zero, then it's probably not valid data
-            return firearm.RoundType != FireArmRoundType.a22_LR || firearm.MagazineType != FireArmMagazineType.mNone || firearm.MagazineCapacity != 0 || firearm.ClipType != FireArmClipType.None;
+            List<FVRObject> gunsToIterate = [];
+
+            // *violent screaming*
+            foreach (KeyValuePair<string, FVRObject> item in IM.OD)
+            {
+                if (item.Value.Category == FVRObject.ObjectCategory.Firearm)
+                {
+                    gunsToIterate.Add(item.Value);
+                }
+                else if (item.Value.Category == FVRObject.ObjectCategory.Cartridge)
+                {
+                    if (!TNHFramework.CartridgeDictionary.ContainsKey(item.Value.RoundType))
+                        TNHFramework.CartridgeDictionary.Add(item.Value.RoundType, []);
+
+                    TNHFramework.CartridgeDictionary[item.Value.RoundType].Add(item.Value);
+                }
+                else if (item.Value.Category == FVRObject.ObjectCategory.Magazine)
+                {
+                    if (!TNHFramework.MagazineDictionary.ContainsKey(item.Value.MagazineType))
+                        TNHFramework.MagazineDictionary.Add(item.Value.MagazineType, []);
+
+                    TNHFramework.MagazineDictionary[item.Value.MagazineType].Add(item.Value);
+                }
+                else if (item.Value.Category == FVRObject.ObjectCategory.Clip)
+                {
+                    if (!TNHFramework.StripperDictionary.ContainsKey(item.Value.ClipType))
+                        TNHFramework.StripperDictionary.Add(item.Value.ClipType, []);
+
+                    TNHFramework.StripperDictionary[item.Value.ClipType].Add(item.Value);
+                }
+                else if (item.Value.Category == FVRObject.ObjectCategory.SpeedLoader)
+                {
+                    if (!TNHFramework.SpeedloaderDictionary.ContainsKey(item.Value.RoundType))
+                        TNHFramework.SpeedloaderDictionary.Add(item.Value.RoundType, []);
+
+                    // Metadata fix
+                    if (item.Value.ItemID == "Speedloader12gauge_5Shot")
+                        item.Value.MagazineCapacity = 5;
+
+                    TNHFramework.SpeedloaderDictionary[item.Value.RoundType].Add(item.Value);
+                }
+            }
+
+            foreach (FVRObject firearm in gunsToIterate)
+            {
+                FVRFireArm firearmComp = null;
+                FireArmClipType clipType = firearm.ClipType;
+                FireArmRoundType roundType = firearm.RoundType;
+                FireArmMagazineType magazineType = firearm.MagazineType;
+                int magazineCapacity = firearm.MagazineCapacity;
+
+                // If the data is mostly zeroes, get the FVRFireArm component
+                if (!ValidFireArm(roundType, clipType, magazineType, 0))
+                {
+                    // Some muzzle loaded vanilla guns should be skipped
+                    if (!firearm.IsModContent && firearm.TagFirearmAction == FVRObject.OTagFirearmAction.OpenBreach && firearm.TagFirearmFeedOption.Contains(FVRObject.OTagFirearmFeedOption.BreachLoad))
+                        continue;
+
+                    TNHFrameworkLogger.Log($"Loading firearm {firearm.DisplayName} [Mod = {firearm.IsModContent}]", TNHFrameworkLogger.LogType.General);
+
+                    GameObject gameObject = firearm.GetGameObject();
+                    if (gameObject != null)
+                        firearmComp = gameObject.GetComponent<FVRFireArm>();
+
+                    if (firearmComp != null)
+                    {
+                        roundType = firearmComp.RoundType;
+                        magazineType = firearmComp.MagazineType;
+                        clipType = firearmComp.ClipType;
+                    }
+                }
+
+                // If it's still mostly zeroes, skip it, otherwise stuff like the Graviton Beamer gets .22LR ammo
+                if (!ValidFireArm(roundType, clipType, magazineType, magazineCapacity))
+                {
+                    TNHFrameworkLogger.Log($"Firearm {firearm.DisplayName} skipped!", TNHFrameworkLogger.LogType.General);
+                    continue;
+                }
+
+                if ((firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
+                    TNHFramework.CartridgeDictionary.ContainsKey(roundType))
+                {
+                    TNHFrameworkLogger.Log($"Giving firearm {firearm.DisplayName} new rounds of type {roundType}", TNHFrameworkLogger.LogType.General);
+                    firearm.CompatibleSingleRounds = TNHFramework.CartridgeDictionary[roundType];
+                }
+
+                if ((firearm.CompatibleMagazines == null || firearm.CompatibleMagazines.Count == 0) &&
+                    TNHFramework.MagazineDictionary.ContainsKey(magazineType) &&
+                    magazineType != FireArmMagazineType.mNone)
+                {
+                    TNHFrameworkLogger.Log($"Giving firearm {firearm.DisplayName} new magazines of type {magazineType}", TNHFrameworkLogger.LogType.General);
+                    firearm.CompatibleMagazines = TNHFramework.MagazineDictionary[magazineType];
+                }
+
+                if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
+                    TNHFramework.StripperDictionary.ContainsKey(clipType) &&
+                    clipType != FireArmClipType.None)
+                {
+                    TNHFrameworkLogger.Log($"Giving firearm {firearm.DisplayName} new clips of type {clipType}", TNHFrameworkLogger.LogType.General);
+                    firearm.CompatibleClips = TNHFramework.StripperDictionary[clipType];
+                }
+
+                if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
+                    firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver)
+                {
+                    if (firearmComp == null)
+                    {
+                        GameObject gameObject = firearm.GetGameObject();
+
+                        if (gameObject != null)
+                            firearmComp = gameObject.GetComponent<FVRFireArm>();
+                    }
+
+                    if (firearmComp != null)
+                    {
+                        roundType = firearmComp.RoundType;
+
+                        // The Revolver component has the real chamber capacity
+                        Revolver revolverComp = firearmComp.gameObject.GetComponent<Revolver>();
+                        if (revolverComp != null)
+                            magazineCapacity = revolverComp.Chambers.Length;
+                    }
+
+                    if (TNHFramework.SpeedloaderDictionary.ContainsKey(roundType))
+                    {
+                        foreach (FVRObject speedloader in TNHFramework.SpeedloaderDictionary[roundType])
+                        {
+                            if (speedloader.MagazineCapacity == magazineCapacity)
+                            {
+                                TNHFrameworkLogger.Log($"Giving firearm {firearm.DisplayName} new speedloader of type {roundType}", TNHFrameworkLogger.LogType.General);
+                                firearm.CompatibleSpeedLoaders.Add(speedloader);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static bool ValidFireArm(FireArmRoundType roundType, FireArmClipType clipType, FireArmMagazineType magazineType, int magazineCapacity)
+        {
+            return roundType != FireArmRoundType.a22_LR || magazineType != FireArmMagazineType.mNone || magazineCapacity != 0 || clipType != FireArmClipType.None;
         }
 
         public static void PokeOtherloader()
