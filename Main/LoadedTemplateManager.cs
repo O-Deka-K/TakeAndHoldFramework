@@ -28,6 +28,7 @@ namespace TNHFramework
         // Takes a custom SosigTemplate object, and adds it to the necessary dictionaries. This method assumes that you are sending a template for a custom sosig, and that it should be given a new the SosigEnemyID
         public static void AddSosigTemplate(SosigTemplate template)
         {
+            template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
             // Since this template is for a custom sosig, we should give it a brand new SosigEnemyID

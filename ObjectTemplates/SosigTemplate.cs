@@ -56,7 +56,20 @@ namespace TNHFramework.ObjectTemplates
 			this.template = template;
 		}
 
-		public SosigEnemyTemplate GetSosigEnemyTemplate()
+		public void Validate()
+		{
+            // Fix any null values that came from the JSON file
+            SosigPrefabs ??= [];
+            Configs ??= [];
+            ConfigsEasy ??= [];
+            OutfitConfigs ??= [];
+            WeaponOptions ??= [];
+            WeaponOptionsSecondary ??= [];
+            WeaponOptionsTertiary ??= [];
+            DroppedObjectPool ??= new();
+        }
+
+        public SosigEnemyTemplate GetSosigEnemyTemplate()
         {
 			if(template == null)
             {

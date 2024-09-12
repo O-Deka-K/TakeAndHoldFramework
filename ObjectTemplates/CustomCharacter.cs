@@ -150,11 +150,11 @@ namespace TNHFramework.ObjectTemplates
             ForceDisableOutfitFunctionality = character.ForceDisableOutfitFunctionality;
             UsesPurchasePriceIncrement = character.UsesPurchasePriceIncrement;
             DisableCleanupSosigDrops = character.DisableCleanupSosigDrops;
-            ValidAmmoEras = character.ValidAmmoEras;
-            ValidAmmoSets = character.ValidAmmoSets;
-            GlobalObjectBlacklist = [];
-            GlobalAmmoBlacklist = character.GlobalAmmoBlacklist;
-            MagazineBlacklist = character.MagazineBlacklist;
+            ValidAmmoEras = character.ValidAmmoEras ?? [];
+            ValidAmmoSets = character.ValidAmmoSets ?? [];
+            GlobalObjectBlacklist = character.GlobalObjectBlacklist ?? [];
+            GlobalAmmoBlacklist = character.GlobalAmmoBlacklist ?? [];
+            MagazineBlacklist = character.MagazineBlacklist ?? [];
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
             PrimaryWeapon = new LoadoutEntry(character.PrimaryWeapon);
@@ -183,6 +183,27 @@ namespace TNHFramework.ObjectTemplates
             {
                 LevelsEndless.Add(new Level(oldLevel));
             }
+        }
+
+        public void Validate()
+        {
+            // Fix any null values that came from the JSON file
+            ValidAmmoEras ??= [];
+            ValidAmmoSets ??= [];
+            GlobalObjectBlacklist ??= [];
+            GlobalAmmoBlacklist ??= [];
+            MagazineBlacklist ??= [];
+            RequireSightTable ??= new EquipmentGroup();
+            PrimaryWeapon ??= new LoadoutEntry();
+            SecondaryWeapon ??= new LoadoutEntry();
+            TertiaryWeapon ??= new LoadoutEntry();
+            PrimaryItem ??= new LoadoutEntry();
+            SecondaryItem ??= new LoadoutEntry();
+            TertiaryItem ??= new LoadoutEntry();
+            Shield ??= new LoadoutEntry();
+            EquipmentPools ??= [];
+            Levels ??= [];
+            LevelsEndless ??= [];
         }
 
         public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
@@ -536,10 +557,15 @@ namespace TNHFramework.ObjectTemplates
 
         public EquipmentPool()
         {
+            PrimaryGroup = new EquipmentGroup();
+            BackupGroup = new EquipmentGroup();
         }
 
-        public EquipmentPool(V1.EquipmentPool oldPool)
+        public EquipmentPool(V1.EquipmentPool oldPool) : this()
         {
+            if (oldPool == null)
+                return;
+
             Type = oldPool.Type;
             IconName = oldPool.IconName;
             TokenCost = oldPool.TokenCost;
@@ -703,10 +729,16 @@ namespace TNHFramework.ObjectTemplates
 
         public EquipmentGroup()
         {
+            IDOverride = [];
+            Tags = new();
+            SubGroups = [];
         }
 
-        public EquipmentGroup(V1.EquipmentGroup thing)
+        public EquipmentGroup(V1.EquipmentGroup thing) : this()
         {
+            if (thing == null)
+                return;
+
             Category = thing.Category;
             Rarity = thing.Rarity;
             ItemsToSpawn = thing.ItemsToSpawn;
@@ -720,24 +752,24 @@ namespace TNHFramework.ObjectTemplates
             IsCompatibleMagazine = thing.IsCompatibleMagazine;
             AutoPopulateGroup = thing.AutoPopulateGroup;
             ForceSpawnAllSubPools = thing.ForceSpawnAllSubPools;
-            IDOverride = thing.IDOverride;
+            IDOverride = thing.IDOverride ?? [];
             Tags = new()
             {
-                Eras = thing.Eras,
-                Sets = thing.Sets,
-                Sizes = thing.Sizes,
-                Actions = thing.Actions,
-                Modes = thing.Modes,
-                ExcludedModes = thing.ExcludedModes,
-                FeedOptions = thing.FeedOptions,
-                MountsAvailable = thing.MountsAvailable,
-                RoundPowers = thing.RoundPowers,
-                Features = thing.Features,
-                MeleeStyles = thing.MeleeStyles,
-                MeleeHandedness = thing.MeleeHandedness,
-                MountTypes = thing.MountTypes,
-                ThrownTypes = thing.ThrownTypes,
-                ThrownDamageTypes = thing.ThrownDamageTypes
+                Eras = thing.Eras ?? [],
+                Sets = thing.Sets ?? [],
+                Sizes = thing.Sizes ?? [],
+                Actions = thing.Actions ?? [],
+                Modes = thing.Modes ?? [],
+                ExcludedModes = thing.ExcludedModes ?? [],
+                FeedOptions = thing.FeedOptions ?? [],
+                MountsAvailable = thing.MountsAvailable ?? [],
+                RoundPowers = thing.RoundPowers ?? [],
+                Features = thing.Features ?? [],
+                MeleeStyles = thing.MeleeStyles ?? [],
+                MeleeHandedness = thing.MeleeHandedness ?? [],
+                MountTypes = thing.MountTypes ?? [],
+                ThrownTypes = thing.ThrownTypes ?? [],
+                ThrownDamageTypes = thing.ThrownDamageTypes ?? []
             };
             SubGroups = [];
             foreach (V1.EquipmentGroup subGroup in thing.SubGroups)
@@ -911,7 +943,11 @@ namespace TNHFramework.ObjectTemplates
             // Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
-                objects.AddRange(IDOverride);
+                foreach (var objectID in IDOverride)
+                {
+                    if (!globalObjectBlacklist.Contains(objectID))
+                        objects.Add(objectID);
+                }
             }
 
             // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
@@ -1170,8 +1206,11 @@ namespace TNHFramework.ObjectTemplates
             BackupGroup = new EquipmentGroup();
         }
 
-        public LoadoutEntry(V1.LoadoutEntry oldEntry)
+        public LoadoutEntry(V1.LoadoutEntry oldEntry) : this()
         {
+            if (oldEntry == null)
+                return;
+
             PrimaryGroup = new EquipmentGroup(oldEntry.PrimaryGroup);
             BackupGroup = new EquipmentGroup(oldEntry.BackupGroup);
         }
@@ -1342,8 +1381,11 @@ namespace TNHFramework.ObjectTemplates
             Patrols = [];
         }
 
-        public Level(V1.Level oldLevel)
+        public Level(V1.Level oldLevel) : this()
         {
+            if (oldLevel == null)
+                return;
+
             NumOverrideTokensForHold = oldLevel.NumOverrideTokensForHold;
             MinSupplyPoints = oldLevel.MinSupplyPoints;
             MaxSupplyPoints = oldLevel.MaxSupplyPoints;
@@ -1357,7 +1399,7 @@ namespace TNHFramework.ObjectTemplates
             MaxTokensPerSupply = oldLevel.MaxTokensPerSupply;
             BoxTokenChance = oldLevel.BoxTokenChance;
             BoxHealthChance = oldLevel.BoxHealthChance;
-            PossiblePanelTypes = oldLevel.PossiblePanelTypes;
+            PossiblePanelTypes = oldLevel.PossiblePanelTypes ?? [];
             TakeChallenge = new(oldLevel.TakeChallenge);
             HoldPhases = [];
 
@@ -1601,12 +1643,12 @@ namespace TNHFramework.ObjectTemplates
 
         public Phase(V1.Phase oldPhase)
         {
-            Encryptions = oldPhase.Encryptions;
+            Encryptions = oldPhase.Encryptions ?? [];
             MinTargets = oldPhase.MinTargets;
             MaxTargets = oldPhase.MaxTargets;
             MinTargetsLimited = oldPhase.MinTargetsLimited;
             MaxTargetsLimited = oldPhase.MaxTargetsLimited;
-            EnemyType = oldPhase.EnemyType;
+            EnemyType = oldPhase.EnemyType ?? [];
             LeaderType = oldPhase.LeaderType;
             MinEnemies = oldPhase.MinEnemies;
             MaxEnemies = oldPhase.MaxEnemies;
@@ -1729,7 +1771,7 @@ namespace TNHFramework.ObjectTemplates
 
         public Patrol(V1.Patrol oldPatrol)
         {
-            EnemyType = oldPatrol.EnemyType;
+            EnemyType = oldPatrol.EnemyType ?? [];
             LeaderType = oldPatrol.LeaderType;
             PatrolSize = oldPatrol.PatrolSize;
             MaxPatrols = oldPatrol.MaxPatrols;
