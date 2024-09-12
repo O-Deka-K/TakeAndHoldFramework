@@ -9,6 +9,7 @@ namespace TNHFramework
 {
     public class SosigLinkLootWrapper : MonoBehaviour
     {
+        public TNH_Manager M;
         public CustomCharacter character;
         public EquipmentGroup group;
         public bool dontDrop = false;
@@ -72,12 +73,13 @@ namespace TNHFramework
                     {
                         TNHFrameworkLogger.Log($"Spawning legacy vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
                         AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
-                            transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation));
+                            transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation, M));
                     }
                     else
                     {
                         TNHFrameworkLogger.Log($"Spawning item {selectedItem}", TNHFrameworkLogger.LogType.TNH);
-                        Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation);
+                        GameObject gameObject = Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation);
+                        M.AddObjectToTrackedList(gameObject);
                     }
 
                     spawnedItems += 1;

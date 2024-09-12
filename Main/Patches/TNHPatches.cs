@@ -657,7 +657,7 @@ namespace TNHFramework.Patches
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
 
-                    if (TNHFramework.AlwaysMagUpgrader.Value)  // ODK
+                    if (TNHFramework.AlwaysMagUpgrader.Value)  // ODK - Added new option
                         panel.AddComponent(typeof(MagazinePanel));
                 }
                 else if (panelType == PanelType.MagUpgrader || panelType == PanelType.MagPurchase)
@@ -714,7 +714,7 @@ namespace TNHFramework.Patches
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M.AI_Difficulty, level.SupplyChallenge.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 point.m_activeSosigs.Add(enemy);
             }
@@ -899,7 +899,7 @@ namespace TNHFramework.Patches
                 Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M.AI_Difficulty, __instance.T.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
 
                 __instance.m_activeSosigs.Add(enemy);
             }
@@ -923,7 +923,7 @@ namespace TNHFramework.Patches
                 //Debug.Log("Take challenge sosig ID : " + __instance.T.GID);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M.AI_Difficulty, __instance.T.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
 
                 __instance.m_activeSosigs.Add(enemy);
                 __instance.M.RegisterGuard(enemy);
@@ -1107,7 +1107,7 @@ namespace TNHFramework.Patches
                     targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
                 }
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(enemyTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(enemyTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M, curPhase.IFFUsed, true, targetVector, true);
 
                 ActiveSosigs.Add(enemy);
 
@@ -1234,7 +1234,7 @@ namespace TNHFramework.Patches
             __instance.m_displayedType = t;
             __instance.m_displayedClasses.Clear();
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];  // ODK
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
 
             for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
             {
@@ -1242,7 +1242,6 @@ namespace TNHFramework.Patches
 
                 if (__instance.m_validEras.Contains(objectID.TagEra) && __instance.m_validSets.Contains(objectID.TagSet))
                 {
-                    // ODK
                     if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))
                     {
                         __instance.m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
@@ -1563,13 +1562,15 @@ namespace TNHFramework.Patches
                         // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
                         if (vaultFile != null)
                         {
-                            SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero);
+                            VaultSystem.ReturnObjectListDelegate del = new((objs) => TrackVaultObjects(constructor.M, objs));
+                            SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero, del, false);
                             TNHFrameworkLogger.Log("Vaulted gun spawned", TNHFrameworkLogger.LogType.TNH);
                         }
                         // If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         else if (vaultFileLegacy != null)
                         {
-                            AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation));
+                            AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation, constructor.M));
+                            // SpawnFirearm adds the objects to the tracked objects list
                             TNHFrameworkLogger.Log("Legacy vaulted gun spawned", TNHFrameworkLogger.LogType.TNH);
                         }
                         else
@@ -1577,7 +1578,8 @@ namespace TNHFramework.Patches
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
 
-                            GameObject spawnedObject = UnityEngine.Object.Instantiate(gameObjectCallback.Result, primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
+                            GameObject spawnedObject = UnityEngine.Object.Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
+                            constructor.M.AddObjectToTrackedList(spawnedObject);
                             TNHFrameworkLogger.Log("Normal item spawned", TNHFrameworkLogger.LogType.TNH);
                         }
 
@@ -1594,10 +1596,12 @@ namespace TNHFramework.Patches
                                 }
 
                                 TNHFrameworkLogger.Log("Spawning Required item", TNHFrameworkLogger.LogType.TNH);
-                                gameObjectCallback = mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                                FVRObject requiredObject = mainObject.RequiredSecondaryPieces[j];
+                                gameObjectCallback = requiredObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
 
-                                GameObject requiredItem = UnityEngine.Object.Instantiate(gameObjectCallback.Result, requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
+                                GameObject requiredItem = UnityEngine.Object.Instantiate(requiredObject.GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
+                                constructor.M.AddObjectToTrackedList(requiredItem);
                                 requiredSpawnCount += 1;
                             }
                         }
@@ -1611,7 +1615,7 @@ namespace TNHFramework.Patches
                             if (blacklist.ContainsKey(mainObject.ItemID)) blacklistEntry = blacklist[mainObject.ItemID];
 
                             // Get lists of ammo objects for this firearm with filters and blacklists applied
-                            List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, character.GlobalAmmoBlacklist, blacklistEntry);
+                            List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleRounds(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleClips = mainObject.CompatibleClips;
 
@@ -1631,7 +1635,8 @@ namespace TNHFramework.Patches
                                 gameObjectCallback = magazineObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
 
-                                GameObject spawnedMag = UnityEngine.Object.Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                GameObject spawnedMag = UnityEngine.Object.Instantiate(magazineObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                constructor.M.AddObjectToTrackedList(spawnedMag);
                                 ammoSpawnCount += 1;
 
                                 gameObjectCallback = clipObject.GetGameObjectAsync();
@@ -1639,7 +1644,8 @@ namespace TNHFramework.Patches
 
                                 for (int i = 0; i < group.NumClipsSpawned; i++)
                                 {
-                                    GameObject spawnedClip = UnityEngine.Object.Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    GameObject spawnedClip = UnityEngine.Object.Instantiate(clipObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    constructor.M.AddObjectToTrackedList(spawnedClip);
                                     ammoSpawnCount += 1;
                                 }
                             }
@@ -1681,7 +1687,8 @@ namespace TNHFramework.Patches
 
                                 for (int i = 0; i < numSpawned; i++)
                                 {
-                                    GameObject spawned = UnityEngine.Object.Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    GameObject spawned = UnityEngine.Object.Instantiate(ammoObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    constructor.M.AddObjectToTrackedList(spawned);
                                     ammoSpawnCount += 1;
                                 }
                             }
@@ -1697,15 +1704,18 @@ namespace TNHFramework.Patches
                             gameObjectCallback = sight.GetGameObjectAsync();
                             yield return gameObjectCallback;
 
-                            GameObject spawnedSight = UnityEngine.Object.Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            GameObject spawnedSight = UnityEngine.Object.Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            constructor.M.AddObjectToTrackedList(spawnedSight);
                             TNHFrameworkLogger.Log("Required sight spawned", TNHFrameworkLogger.LogType.TNH);
 
                             for (int j = 0; j < sight.RequiredSecondaryPieces.Count; j++)
                             {
-                                gameObjectCallback = sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                                FVRObject objectRequired = sight.RequiredSecondaryPieces[j];
+                                gameObjectCallback = objectRequired.GetGameObjectAsync();
                                 yield return gameObjectCallback;
 
-                                GameObject spawnedRequired = UnityEngine.Object.Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
+                                GameObject spawnedRequired = UnityEngine.Object.Instantiate(objectRequired.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
+                                constructor.M.AddObjectToTrackedList(spawnedRequired);
                                 TNHFrameworkLogger.Log("Required item for sight spawned", TNHFrameworkLogger.LogType.TNH);
                             }
 
@@ -1718,7 +1728,8 @@ namespace TNHFramework.Patches
                             gameObjectCallback = bespoke.GetGameObjectAsync();
                             yield return gameObjectCallback;
 
-                            GameObject bespokeObject = UnityEngine.Object.Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            GameObject bespokeObject = UnityEngine.Object.Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            constructor.M.AddObjectToTrackedList(bespokeObject);
                             objectSpawnCount += 1;
 
                             TNHFrameworkLogger.Log("Bespoke item spawned", TNHFrameworkLogger.LogType.TNH);
@@ -1729,6 +1740,19 @@ namespace TNHFramework.Patches
 
             constructor.allowEntry = true;
             yield break;
+        }
+
+        /// <summary>
+        /// Delegate for tracking all GameObjects created by a vault gun spawn
+        /// </summary>
+        /// <param name="objs"></param>
+        private static void TrackVaultObjects(TNH_Manager M, List<FVRPhysicalObject> objs)
+        {
+            foreach (FVRPhysicalObject obj in objs)
+            {
+                if (obj != null)
+                    M.AddObjectToTrackedList(obj.GameObject);
+            }
         }
 
 

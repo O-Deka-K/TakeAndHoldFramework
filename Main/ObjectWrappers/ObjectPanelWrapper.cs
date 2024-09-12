@@ -176,12 +176,12 @@ namespace TNHFramework
                 if (detectedMag != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedMag.ObjectWrapper.DisplayName}");
-                    FirearmUtils.SpawnDuplicateMagazine(detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                    FirearmUtils.SpawnDuplicateMagazine(original.M, detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
                 else
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedSpeedLoader.ObjectWrapper.DisplayName}");
-                    FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                    FirearmUtils.SpawnDuplicateSpeedloader(original.M, detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
                 ClearSelection();
@@ -505,17 +505,17 @@ namespace TNHFramework
 
                 FVRObject compatibleRound = FirearmUtils.GetCompatibleRounds(detectedFirearm.ObjectWrapper, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry).GetRandom();
 
-                AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
+                AnvilManager.Run(SpawnRounds(original.M, compatibleRound, numSpawned));
 
                 ClearSelection();
                 UpdateIcons();
             }
         }
 
-        public IEnumerator SpawnRounds(FVRObject bullet, int count)
+        public IEnumerator SpawnRounds(TNH_Manager M, FVRObject bullet, int count)
         {
             GameObject bulletObject = bullet.GetGameObject();
-            return TNHFrameworkUtils.InstantiateMultiple(bulletObject, original.Spawnpoint_Mag.position, count);;
+            return TNHFrameworkUtils.InstantiateMultiple(M, bulletObject, original.Spawnpoint_Mag.position, count);
         }
 
         public int GetRoundsToSpawn(FVRObject.OTagFirearmRoundPower roundPower)

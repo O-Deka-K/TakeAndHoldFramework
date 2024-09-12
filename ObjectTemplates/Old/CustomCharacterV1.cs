@@ -40,6 +40,7 @@ namespace TNHFramework.ObjectTemplates.V1
         public List<TagEra> ValidAmmoEras;
         public List<TagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
+        public List<string> GlobalObjectBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
 
         public EquipmentGroup RequireSightTable;
@@ -69,6 +70,7 @@ namespace TNHFramework.ObjectTemplates.V1
             ValidAmmoEras = new List<TagEra>();
             ValidAmmoSets = new List<TagSet>();
             GlobalAmmoBlacklist = new List<string>();
+            GlobalObjectBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             RequireSightTable = new EquipmentGroup();
             PrimaryWeapon = new LoadoutEntry();
@@ -102,6 +104,7 @@ namespace TNHFramework.ObjectTemplates.V1
             ValidAmmoEras = character.ValidAmmoEras.Select(o => (TagEra)o).ToList();
             ValidAmmoSets = character.ValidAmmoSets.Select(o => (TagSet)o).ToList();
             GlobalAmmoBlacklist = new List<string>();
+            GlobalObjectBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);

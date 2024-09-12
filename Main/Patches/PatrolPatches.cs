@@ -63,6 +63,16 @@ namespace TNHFramework.Patches
         }
 
 
+        [HarmonyPatch(typeof(TNH_Manager), "GetRandomSafeSupplyIndexFromHoldPoint")]
+        [HarmonyPrefix]
+        private static bool GetRandomSafeSupplyIndexFromHoldPoint_BugFix(TNH_Manager __instance, out int __result, int index)
+        {
+            // Anton pls fix - Wrong list used (DicSafeHoldIndiciesForHoldPoint)
+            __result = __instance.DicSafeSupplyIndiciesForHoldPoint[index][UnityEngine.Random.Range(0, __instance.DicSafeSupplyIndiciesForHoldPoint[index].Count)];
+            return false;
+        }
+
+
         [HarmonyPatch(typeof(TNH_Manager), "UpdatePatrols")]
         [HarmonyPrefix]
         public static bool UpdatePatrolsReplacement(TNH_Manager __instance)
@@ -90,7 +100,7 @@ namespace TNHFramework.Patches
             {
                 Vector3 playerPos = GM.CurrentPlayerBody.Head.position;
 
-                // Find next nearby supply point
+                // Check if player is in a supply point
                 int supplyIndex = -1;
                 for (int i = 0; i < __instance.SupplyPoints.Count; i++)
                 {
@@ -101,7 +111,7 @@ namespace TNHFramework.Patches
                     }
                 }
 
-                // Find next nearby hold point
+                // Check if player is in a hold point
                 int holdIndex = -1;
                 for (int i = 0; i < __instance.HoldPoints.Count; i++)
                 {
@@ -112,7 +122,7 @@ namespace TNHFramework.Patches
                     }
                 }
 
-                // We found a nearby supply
+                // Player is in a supply point
                 if (supplyIndex > -1)
                 {
                     if (__instance.UsesClassicPatrolBehavior)
@@ -121,18 +131,23 @@ namespace TNHFramework.Patches
                     }
                     else if (currLevel.Patrols.Count > 0)
                     {
-                        int nextPoint;
+                        TNHFrameworkLogger.Log($"Player is in Supply {holdIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
+
+                        int firstPoint;
+                        TNH_Manager.SentryPatrolPointType firstSpawnPointType;
                         TNH_Manager.SentryPatrolPointType firstPatrolPointType;
 
                         // Choose supply or hold to generate sentry patrol from
                         if (UnityEngine.Random.value >= 0.5f)
                         {
-                            nextPoint = __instance.GetRandomSafeHoldIndexFromSupplyPoint(supplyIndex);
+                            firstPoint = __instance.GetRandomSafeHoldIndexFromSupplyPoint(supplyIndex);
+                            firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Hold;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSHold;
                         }
                         else
                         {
-                            nextPoint = __instance.GetRandomSafeSupplyIndexFromSupplyPoint(supplyIndex);
+                            firstPoint = __instance.GetRandomSafeSupplyIndexFromSupplyPoint(supplyIndex);
+                            firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Supply;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSSupply;
                         }
 
@@ -141,31 +156,38 @@ namespace TNHFramework.Patches
                         if (patrolIndex > -1)
                         {
                             Patrol patrol = currLevel.Patrols[patrolIndex];
+
+                            // Anton pls fix - GetSpawnPoints() can use wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, supplyIndex, supplyIndex, __instance.m_curHoldIndex));
-                            TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, supplyIndex, supplyIndex, __instance.m_curHoldIndex), patrolIndex);
+                            TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(firstPoint, firstSpawnPointType), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, firstPoint, supplyIndex, supplyIndex, __instance.m_curHoldIndex), patrolIndex);
                             __instance.m_patrolSquads.Add(squad);
 
                             SetTimeTilPatrolCanSpawn(__instance, patrol);
                         }
                     }
                 }
-                // We found a nearby hold instead
+                // Player is in a hold point
                 else if (holdIndex > -1)
                 {
                     if (!__instance.UsesClassicPatrolBehavior && currLevel.Patrols.Count > 0)
                     {
-                        int nextPoint;
+                        TNHFrameworkLogger.Log($"Player is in Hold {holdIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
+
+                        int firstPoint;
+                        TNH_Manager.SentryPatrolPointType firstSpawnPointType;
                         TNH_Manager.SentryPatrolPointType firstPatrolPointType;
 
                         // Choose supply or hold to generate sentry patrol from
                         if (UnityEngine.Random.value >= 0.5f)
                         {
-                            nextPoint = __instance.GetRandomSafeHoldIndexFromHoldPoint(holdIndex);
+                            firstPoint = __instance.GetRandomSafeHoldIndexFromHoldPoint(holdIndex);
+                            firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Hold;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSHold;
                         }
                         else
                         {
-                            nextPoint = __instance.GetRandomSafeSupplyIndexFromHoldPoint(holdIndex);
+                            firstPoint = __instance.GetRandomSafeSupplyIndexFromHoldPoint(holdIndex);
+                            firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Supply;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSSupply;
                         }
 
@@ -174,8 +196,10 @@ namespace TNHFramework.Patches
                         if (patrolIndex > -1)
                         {
                             Patrol patrol = currLevel.Patrols[patrolIndex];
+
+                            // Anton pls fix - GetSpawnPoints() can use wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, holdIndex, holdIndex, __instance.m_curHoldIndex));
-                            TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, holdIndex, holdIndex, __instance.m_curHoldIndex), patrolIndex);
+                            TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(firstPoint, firstSpawnPointType), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, firstPoint, holdIndex, holdIndex, __instance.m_curHoldIndex), patrolIndex);
                             __instance.m_patrolSquads.Add(squad);
 
                             SetTimeTilPatrolCanSpawn(__instance, patrol);
@@ -184,7 +208,7 @@ namespace TNHFramework.Patches
                 }
                 else
                 {
-                    // Reset global patrol spawn timer
+                    // Try again later
                     __instance.m_timeTilPatrolCanSpawn = 6f;
                 }
             }
@@ -223,30 +247,31 @@ namespace TNHFramework.Patches
                                 reached++;
                         }
 
-                        if (reached == total)
                         //if (total - reached <= 1 && reached >= 1)
                         //if (total - reached <= total / 2 && reached >= 1)  // ODK - Adjusting patrol algorithm
+                        if (reached == total)
                             hasReachedPatrolPoint = true;
 
                         if (hasReachedPatrolPoint)
                         {
-                            //string time = $"[{DateTime.Now:HH:mm:ss}] ";  // Add timestamp
+                            SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[patrolSquad.ID_Leader];
+                            SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
                             // Last patrol point
                             if (patrolSquad.CurPatrolPointIndex + 1 >= patrolSquad.PatrolPoints.Count && patrolSquad.IsPatrollingUp)
                             {
-                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached last patrol point ({patrolSquad.CurPatrolPointIndex})! Going back down", TNHFrameworkLogger.LogType.TNH);
+                                TNHFrameworkLogger.Log($"Patrol {squadIndex + 1} [{customTemplate.SosigEnemyID}] reached last patrol point ({patrolSquad.CurPatrolPointIndex})! Going back down", TNHFrameworkLogger.LogType.TNH);
                                 patrolSquad.IsPatrollingUp = false;
                             }
                             // First patrol point
                             else if (patrolSquad.CurPatrolPointIndex == 0 && !patrolSquad.IsPatrollingUp)
                             {
-                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached first patrol point ({patrolSquad.CurPatrolPointIndex})! Going back up", TNHFrameworkLogger.LogType.TNH);
+                                TNHFrameworkLogger.Log($"Patrol {squadIndex + 1} [{customTemplate.SosigEnemyID}] reached first patrol point ({patrolSquad.CurPatrolPointIndex})! Going back up", TNHFrameworkLogger.LogType.TNH);
                                 patrolSquad.IsPatrollingUp = true;
                             }
                             else
                             {
-                                //TNHFrameworkLogger.Log($"{time}Patrol {squadIndex + 1} reached patrol point ({patrolSquad.CurPatrolPointIndex})! Continuing patrol", TNHFrameworkLogger.LogType.TNH);
+                                TNHFrameworkLogger.Log($"Patrol {squadIndex + 1} [{customTemplate.SosigEnemyID}] reached patrol point ({patrolSquad.CurPatrolPointIndex})! Continuing patrol", TNHFrameworkLogger.LogType.TNH);
                             }
 
                             // Go back and forth between patrol points
@@ -300,29 +325,31 @@ namespace TNHFramework.Patches
                         Patrol patrol = currLevel.Patrols[patrolIndex];
 
                         // Choose leader or regular sosig type
+                        SosigEnemyID sosigID;
                         SosigEnemyTemplate template;
                         bool allowAllWeapons;
 
                         if (patrolSquad.IndexOfNextSpawn == 0)
                         {
-                            TNHFrameworkLogger.Log($"Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1}", TNHFrameworkLogger.LogType.TNH);
-
-                            template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType]];
+                            sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
                             allowAllWeapons = true;
+
+                            TNHFrameworkLogger.Log($"Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigID}]", TNHFrameworkLogger.LogType.TNH);
                         }
                         else
                         {
-                            template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()]];
+                            sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()];
                             allowAllWeapons = false;
                         }
 
+                        template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
                         Vector3 spawnPos = patrolSquad.SpawnPoints[patrolSquad.IndexOfNextSpawn];
                         Quaternion lookRot = Quaternion.LookRotation(patrolSquad.ForwardVectors[patrolSquad.IndexOfNextSpawn], Vector3.up);
                         Vector3 pointOfInterest = patrolSquad.PatrolPoints[0];
 
                         // Spawn the sosig
                         //Sosig sosig = __instance.SpawnEnemy(template, spawnPos, lookRot, patrolSquad.IFF, true, pointOfInterest, allowAllWeapons);
-                        Sosig sosig = PatrolPatches.SpawnEnemy(template, character, spawnPos, lookRot, __instance.AI_Difficulty, patrolSquad.IFF, true, pointOfInterest, allowAllWeapons);
+                        Sosig sosig = PatrolPatches.SpawnEnemy(template, character, spawnPos, lookRot, __instance, patrolSquad.IFF, true, pointOfInterest, allowAllWeapons);
 
                         // Add random health pickup to leader
                         if (patrolSquad.IndexOfNextSpawn == 0 && (float)UnityEngine.Random.Range(0f, 1f) > 0.65f)
@@ -510,7 +537,7 @@ namespace TNHFramework.Patches
             {
                 PatrolPoints.Add(instance.HoldPoints[list[i]].SpawnPoints_Sosigs_Defense.GetRandom<Transform>().position);
             }
-            TNHFrameworkLogger.Log($"Patrol path is: {string.Join(", ", PatrolPoints.Select(x => x.ToString()).ToArray())}", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log($"Patrol path is: {string.Join(", ", list.GetRange(0, Math.Min(list.Count, 6)).Select(x => x.ToString()).ToArray())}", TNHFrameworkLogger.LogType.TNH);
 
             List<Vector3> SpawnPoints = [];
             List<Vector3> ForwardVectors = [];
@@ -538,8 +565,8 @@ namespace TNHFramework.Patches
             {
                 PatrolPoints = new List<Vector3>(PatrolPoints),
                 IsPatrollingUp = true,
-                ID_Leader = SosigEnemyID.None,  // We get these from the patrol index later
-                ID_Regular = SosigEnemyID.None,
+                ID_Leader = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType],
+                ID_Regular = (patrol.EnemyType.Count > 0) ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None,
                 HoldPointStart = patrolIndex,  // Commandeering this to hold patrolIndex because it's not used anywhere
                 IFF = patrol.IFFUsed,
                 IndexOfNextSpawn = 0,
@@ -588,12 +615,12 @@ namespace TNHFramework.Patches
             }
         }
 
-        public static Sosig SpawnEnemy(SosigEnemyTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
+        public static Sosig SpawnEnemy(SosigEnemyTemplate template, CustomCharacter character, Transform spawnLocation, TNH_Manager M, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
         {
-            return SpawnEnemy(template, character, spawnLocation.position, spawnLocation.rotation, difficulty, IFF, isAssault, pointOfInterest, allowAllWeapons);
+            return SpawnEnemy(template, character, spawnLocation.position, spawnLocation.rotation, M, IFF, isAssault, pointOfInterest, allowAllWeapons);
         }
 
-        public static Sosig SpawnEnemy(SosigEnemyTemplate template, CustomCharacter character, Vector3 spawnLocation, Quaternion spawnRotation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
+        public static Sosig SpawnEnemy(SosigEnemyTemplate template, CustomCharacter character, Vector3 spawnLocation, Quaternion spawnRotation, TNH_Manager M, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
         {
             SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
@@ -602,7 +629,7 @@ namespace TNHFramework.Patches
             // Fill out the sosig config based on the difficulty
             SosigConfig config;
 
-            if (difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
+            if (M.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
             {
                 config = customTemplate.ConfigsEasy.GetRandom<SosigConfig>();
             }
@@ -632,7 +659,7 @@ namespace TNHFramework.Patches
             if (customTemplate.WeaponOptions.Count > 0)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptions.GetRandom<string>()].GetGameObject();
-                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+                EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
             }
 
             if (character.ForceAllAgentWeapons)
@@ -641,13 +668,13 @@ namespace TNHFramework.Patches
             if (customTemplate.WeaponOptionsSecondary.Count > 0 && allowAllWeapons && customTemplate.SecondaryChance >= UnityEngine.Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsSecondary.GetRandom<string>()].GetGameObject();
-                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+                EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
             }
 
             if (customTemplate.WeaponOptionsTertiary.Count > 0 && allowAllWeapons && customTemplate.TertiaryChance >= UnityEngine.Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsTertiary.GetRandom<string>()].GetGameObject();
-                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+                EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
             }
 
             // Equip clothing to the sosig
@@ -706,9 +733,10 @@ namespace TNHFramework.Patches
             sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
 
             // Handle sosig dropping custom loot
-            if (UnityEngine.Random.value < customTemplate.DroppedLootChance && customTemplate.DroppedObjectPool != null)
+            if (customTemplate.DroppedObjectPool != null && UnityEngine.Random.value < customTemplate.DroppedLootChance)
             {
                 SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
+                component.M = M;
                 component.character = character;
                 component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
                 component.group = new(customTemplate.DroppedObjectPool);

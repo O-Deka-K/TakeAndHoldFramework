@@ -470,10 +470,12 @@ namespace TNHFramework.Utilities
         }
 		*/
 
-		public static FVRFireArmMagazine SpawnDuplicateMagazine(FVRFireArmMagazine magazine, Vector3 position, Quaternion rotation)
+		public static FVRFireArmMagazine SpawnDuplicateMagazine(TNH_Manager M, FVRFireArmMagazine magazine, Vector3 position, Quaternion rotation)
         {
             FVRObject objectWrapper = magazine.ObjectWrapper;
 			GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+			M.AddObjectToTrackedList(gameObject);
+
 			FVRFireArmMagazine component = gameObject.GetComponent<FVRFireArmMagazine>();
 			for (int i = 0; i < Mathf.Min(magazine.LoadedRounds.Length, component.LoadedRounds.Length); i++)
 			{
@@ -492,10 +494,12 @@ namespace TNHFramework.Utilities
 		}
 
 
-		public static Speedloader SpawnDuplicateSpeedloader(Speedloader speedloader, Vector3 position, Quaternion rotation)
+		public static Speedloader SpawnDuplicateSpeedloader(TNH_Manager manager, Speedloader speedloader, Vector3 position, Quaternion rotation)
 		{
 			FVRObject objectWrapper = speedloader.ObjectWrapper;
 			GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+            manager.AddObjectToTrackedList(gameObject);
+            
 			Speedloader component = gameObject.GetComponent<Speedloader>();
 			for (int i = 0; i < speedloader.Chambers.Count; i++)
 			{

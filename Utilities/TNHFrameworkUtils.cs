@@ -702,7 +702,7 @@ namespace TNHFramework.Utilities
 
 
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation)
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
         {
             List<GameObject> toDealWith = [];
             List<GameObject> toMoveToTrays = [];
@@ -716,17 +716,19 @@ namespace TNHFramework.Utilities
 
             for (int i = 0; i < gun.Components.Count; i++)
             {
-                AnvilCallback<GameObject> gameObjectCallback = IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync();
+                FVRObject compObject = IM.OD[gun.Components[i].ObjectID];
+                AnvilCallback<GameObject> gameObjectCallback = compObject.GetGameObjectAsync();
                 TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
 
                 yield return gameObjectCallback;
 
-                gameObjects.Add(gameObjectCallback.Result);
+                gameObjects.Add(compObject.GetGameObject());
             }
 
             for (int j = 0; j < gun.Components.Count; j++)
             {
                 GameObject gameObject = UnityEngine.Object.Instantiate(gameObjects[j]);
+                M.AddObjectToTrackedList(gameObject);
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
@@ -853,7 +855,7 @@ namespace TNHFramework.Utilities
 
 
         // Used to spawn more than one, same objects at a position
-        public static IEnumerator InstantiateMultiple(GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
+        public static IEnumerator InstantiateMultiple(TNH_Manager M, GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
         {
             float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
 
@@ -862,6 +864,7 @@ namespace TNHFramework.Utilities
                 float current = index * heightNeeded;
 
                 UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
+                M.AddObjectToTrackedList(gameObject);
                 yield return null;
             }
         }
@@ -883,12 +886,13 @@ namespace TNHFramework.Utilities
                         yield return objectCallback;
 
                         // Next calculate the height needed for this item
-                        GameObject gameObject = objectCallback.Result;
+                        GameObject gameObject = selectedFVR.GetGameObject();
                         float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
                         currentHeight += heightNeeded;
 
                         // Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+                        // ODK - This is added to the tracked object list after we return
 
                         callback?.Invoke(spawnedObject);
                         yield return null;
