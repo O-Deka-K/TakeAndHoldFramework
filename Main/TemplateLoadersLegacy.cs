@@ -65,6 +65,7 @@ namespace TNHFramework
             {
                 CustomCharacter character = null;
                 Sprite thumbnail = null;
+                List<string> errors = [];
 
                 foreach (IFileHandle file in dir.GetFiles())
                 {
@@ -73,9 +74,20 @@ namespace TNHFramework
                         string charString = stage.ImmediateReaders.Get<string>()(file);
                         JsonSerializerSettings settings = new()
                         {
-                            NullValueHandling = NullValueHandling.Ignore
+                            NullValueHandling = NullValueHandling.Ignore,
+                            Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            {
+                                errors.Add(args.ErrorContext.Error.Message);
+                                args.ErrorContext.Handled = true;
+                            }
                         };
+                        
                         character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
+
+                        foreach (string error in errors)
+                        {
+                            TNHFrameworkLogger.LogError(error);
+                        }
                     }
                     else if (file.Path.EndsWith("thumb.png"))
                     {
@@ -134,7 +146,6 @@ namespace TNHFramework
             {
                 ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
 
-                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
                 TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);

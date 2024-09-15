@@ -1,5 +1,4 @@
 ﻿using FistVR;
-// using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +34,7 @@ namespace TNHFramework
         /// <param name="template">A template for a custom sosig (Loaded at runtime)</param>
         public static void AddSosigTemplate(SosigTemplate template)
         {
+            template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
             //Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
@@ -64,7 +64,7 @@ namespace TNHFramework
         {
             SosigTemplate template = new SosigTemplate(realTemplate);
 
-            //This template is from a sogig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+            //This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
