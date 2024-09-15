@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace TNHFramework.Patches
 {
     public class TNHPatches
     {
-        static readonly List<string> BaseCharStrings =
+        public static readonly List<string> BaseCharStrings =
         [
             "DD_C00",
             "DD_C01",
@@ -331,7 +332,7 @@ namespace TNHFramework.Patches
                         TNHFrameworkLogger.Log($"{selectedItem.CompatibleMagazines}", TNHFrameworkLogger.LogType.TNH);
                     }
 
-                    GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                    GameObject weaponCase = SpawnWeaponCase(__instance.M, selectedGroup.BespokeAttachmentChance, __instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     __instance.m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
                 }
@@ -352,7 +353,7 @@ namespace TNHFramework.Patches
                         TNHFrameworkLogger.Log($"{selectedItem.CompatibleMagazines}", TNHFrameworkLogger.LogType.TNH);
                     }
 
-                    GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall.position, __instance.SpawnPoint_CaseSmall.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                    GameObject weaponCase = SpawnWeaponCase(__instance.M, selectedGroup.BespokeAttachmentChance, __instance.M.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall.position, __instance.SpawnPoint_CaseSmall.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     __instance.m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
                 }
@@ -1176,7 +1177,7 @@ namespace TNHFramework.Patches
         //////////////////////////////////////////////
 
 
-        // This is a patch for using a characters global ammo blacklist in an ammo reloader
+        // This is a patch for using a character's global ammo blacklist in an ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
         [HarmonyPrefix]
         public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, ref FireArmRoundClass __result, FireArmRoundType t)
@@ -1212,6 +1213,7 @@ namespace TNHFramework.Patches
         }
 
 
+        // This is a patch for using a character's global ammo blacklist in the new ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "RefreshDisplayWithType")]
         [HarmonyPrefix]
         public static bool RefreshDisplayWithTypeBlacklist(TNH_AmmoReloader2 __instance, FireArmRoundType t, int selectedEntry, bool confirmPurchase)
@@ -1301,6 +1303,58 @@ namespace TNHFramework.Patches
 
             __instance.UpdateTokenDisplay(__instance.M.GetNumTokens());
             return false;
+        }
+
+
+        // Anton pls fix - Wrong sound plays when purchasing a clip at the new ammo reloader panel
+        [HarmonyPatch(typeof(TNH_AmmoReloader2), "Button_SpawnClip")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+
+            // Find the insertion index
+            int insertIndex = -1;
+            for (int i = 0; i < code.Count - 2; i++)
+            {
+                // Search for "if (obj.CompatibleClips.Count > 0)"
+                if (code[i].opcode == OpCodes.Ldfld &&
+                    code[i + 1].opcode == OpCodes.Ldc_I4_0 &&
+                    code[i + 2].opcode == OpCodes.Ble)
+                {
+                    insertIndex = i + 3;
+                    break;
+                }
+            }
+
+            // If that failed, then just look for the first branch instruction
+            if (insertIndex == -1)
+            {
+                for (int i = 0; i < code.Count; i++)
+                {
+                    // Search for ble
+                    if (code[i].opcode == OpCodes.Ble)
+                    {
+                        insertIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+
+            // Set flag = true so that AudEvent_Spawn is played instead of AudEvent_Fail
+            var codeToInsert = new List<CodeInstruction>
+            {
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Stloc_0),
+            };
+
+            // Insert the code
+            if (insertIndex > -1)
+            {
+                code.InsertRange(insertIndex, codeToInsert);
+            }
+
+            return code;
         }
 
 
@@ -1448,7 +1502,7 @@ namespace TNHFramework.Patches
 
                 FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
                 TNHFramework.HoldActions[constructor.M.m_level].Add($"Purchased {item.DisplayName}");
-                GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
+                GameObject itemCase = SpawnWeaponCase(constructor.M, selectedGroups[0].BespokeAttachmentChance, caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 constructor.m_spawnedCase = itemCase;
                 itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
@@ -1695,7 +1749,7 @@ namespace TNHFramework.Patches
                         }
 
 
-                        // If this object equires picatinny sights, we should try to spawn one
+                        // If this object requires picatinny sights, we should try to spawn one
                         if (mainObject.RequiresPicatinnySight && character.RequireSightTable != null)
                         {
                             TNHFrameworkLogger.Log("Spawning required sights", TNHFrameworkLogger.LogType.TNH);
@@ -1753,6 +1807,43 @@ namespace TNHFramework.Patches
                 if (obj != null)
                     M.AddObjectToTrackedList(obj.GameObject);
             }
+        }
+
+        public static GameObject SpawnWeaponCase(TNH_Manager M, float bespokeAttachmentChance, GameObject caseFab, Vector3 position, Vector3 forward, FVRObject weapon, int numMag, int numRound, int minAmmo, int maxAmmo, FVRObject ammoObjOverride = null)
+        {
+            GameObject caseObj = UnityEngine.Object.Instantiate<GameObject>(caseFab, position, Quaternion.LookRotation(forward, Vector3.up));
+            M.m_weaponCases.Add(caseObj);
+
+            TNH_WeaponCrate createComp = caseObj.GetComponent<TNH_WeaponCrate>();
+
+            FVRObject ammoObj = ammoObjOverride ?? weapon.GetRandomAmmoObject(weapon, M.C.ValidAmmoEras, minAmmo, maxAmmo, M.C.ValidAmmoSets);
+            int numClipSpeedLoaderRound = (ammoObj != null && ammoObj.Category == FVRObject.ObjectCategory.Cartridge) ? numRound : numMag;
+
+            FVRObject sightObj = null;
+            FVRObject requiredAttachment_B = null;
+            if (weapon.RequiresPicatinnySight)
+            {
+                sightObj = M.GetObjectTable(M.C.RequireSightTable).GetRandomObject();
+
+                if (sightObj.RequiredSecondaryPieces.Count > 0)
+                {
+                    requiredAttachment_B = sightObj.RequiredSecondaryPieces[0];
+                }
+            }
+            // Check the bespoke attachment chance here
+            // In vanilla TNH, it ALWAYS spawns a bespoke attachment if there is one
+            else if (weapon.BespokeAttachments.Count > 0 && UnityEngine.Random.value < bespokeAttachmentChance)
+            {
+                sightObj = weapon.BespokeAttachments[UnityEngine.Random.Range(0, weapon.BespokeAttachments.Count)];
+            }
+
+            if (weapon.RequiredSecondaryPieces.Count > 0)
+            {
+                requiredAttachment_B = weapon.RequiredSecondaryPieces[0];
+            }
+
+            createComp.PlaceWeaponInContainer(weapon, sightObj, requiredAttachment_B, ammoObj, numClipSpeedLoaderRound);
+            return caseObj;
         }
 
 
