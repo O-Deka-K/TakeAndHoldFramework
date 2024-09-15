@@ -1266,6 +1266,58 @@ namespace TNHFramework.Patches
         }
 
 
+        // Anton pls fix - Wrong sound plays when purchasing a clip at the new ammo reloader panel
+        [HarmonyPatch(typeof(TNH_AmmoReloader2), "Button_SpawnClip")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+
+            // Find the insertion index
+            int insertIndex = -1;
+            for (int i = 0; i < code.Count - 2; i++)
+            {
+                // Search for "if (obj.CompatibleClips.Count > 0)"
+                if (code[i].opcode == OpCodes.Ldfld &&
+                    code[i + 1].opcode == OpCodes.Ldc_I4_0 &&
+                    code[i + 2].opcode == OpCodes.Ble)
+                {
+                    insertIndex = i + 3;
+                    break;
+                }
+            }
+
+            // If that failed, then just look for the first branch instruction
+            if (insertIndex == -1)
+            {
+                for (int i = 0; i < code.Count; i++)
+                {
+                    // Search for ble
+                    if (code[i].opcode == OpCodes.Ble)
+                    {
+                        insertIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+
+            // Set flag = true so that AudEvent_Spawn is played instead of AudEvent_Fail
+            var codeToInsert = new List<CodeInstruction>
+            {
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Stloc_0),
+            };
+
+            // Insert the code
+            if (insertIndex > -1)
+            {
+                code.InsertRange(insertIndex, codeToInsert);
+            }
+
+            return code;
+        }
+
+
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]
         [HarmonyPrefix]
         public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
