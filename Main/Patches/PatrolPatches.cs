@@ -89,8 +89,10 @@ namespace TNHFramework.Patches
             int maxPatrols = (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ?
                 currLevel.Patrols[0].MaxPatrols : currLevel.Patrols[0].MaxPatrolsLimited;
 
+            bool isCustomCharacter = !TNHPatches.BaseCharStrings.Contains(__instance.C.TableID);
+
             // Adjust max patrols for new patrol behavior
-            if (!__instance.UsesClassicPatrolBehavior)
+            if (!__instance.UsesClassicPatrolBehavior && !isCustomCharacter)
             {
                 maxPatrols += (__instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo) ? 1 : 2;
             }
@@ -325,24 +327,25 @@ namespace TNHFramework.Patches
                         Patrol patrol = currLevel.Patrols[patrolIndex];
 
                         // Choose leader or regular sosig type
-                        SosigEnemyID sosigID;
                         SosigEnemyTemplate template;
                         bool allowAllWeapons;
 
                         if (patrolSquad.IndexOfNextSpawn == 0)
                         {
-                            sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
+                            SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
+                            template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
+                            string sosigName = LoadedTemplateManager.LoadedSosigsDict[template].SosigEnemyID;
                             allowAllWeapons = true;
 
-                            TNHFrameworkLogger.Log($"Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigID}]", TNHFrameworkLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigName}]", TNHFrameworkLogger.LogType.TNH);
                         }
                         else
                         {
-                            sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()];
+                            SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()];
+                            template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
                             allowAllWeapons = false;
                         }
 
-                        template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
                         Vector3 spawnPos = patrolSquad.SpawnPoints[patrolSquad.IndexOfNextSpawn];
                         Quaternion lookRot = Quaternion.LookRotation(patrolSquad.ForwardVectors[patrolSquad.IndexOfNextSpawn], Vector3.up);
                         Vector3 pointOfInterest = patrolSquad.PatrolPoints[0];
