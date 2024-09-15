@@ -372,7 +372,9 @@ namespace TNHFramework.ObjectTemplates.V1
     }
 
 
-    // An equipment pool is an entry that can spawn at a constructor panel
+    /// <summary>
+    /// An equipment pool is an entry that can spawn at a constructor panel
+    /// </summary>
     public class EquipmentPool
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
@@ -480,6 +482,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
             }
+
             else if (BackupGroup != null)
             {
                 return BackupGroup.GetSpawnedEquipmentGroups();
@@ -674,6 +677,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 result.Add(this);
                 return result;
             }
+
             else if (ForceSpawnAllSubPools)
             {
                 result = new List<EquipmentGroup>();
@@ -690,6 +694,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 return result;
             }
+
             else
             {
                 float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
@@ -726,10 +731,13 @@ namespace TNHFramework.ObjectTemplates.V1
 
 
 
-        // Fills out the object table and removes any unloaded items
+        /// <summary>
+        /// Fills out the object table and removes any unloaded items
+        /// </summary>
+        /// <returns> Returns true if valid, and false if empty </returns>
         public bool DelayedInit(List<string> completedQuests = null)
         {
-            // Start off by checking if this pool is even unlocked from a quest
+            //Start off by checking if this pool is even unlocked from a quest
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
                 if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
@@ -738,18 +746,18 @@ namespace TNHFramework.ObjectTemplates.V1
                 }
             }
 
-            // Before we add anything from the IDOverride list, remove anything that isn't loaded
+            //Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
 
-            // Every item in IDOverride gets added to the list of spawnable objects
+            //Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
                 objects.AddRange(IDOverride);
             }
 
 
-            // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
                 ObjectTable objectTable = new ObjectTable();
@@ -761,7 +769,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
 
-            // Perform delayed init on all subgroups. If they are empty, we remove them
+            //Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
                 for (int i = 0; i < SubGroups.Count; i++)
@@ -781,7 +789,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 Rarity = 1;
             }
 
-            // The table is valid if it has items in it, or is a compatible magazine
+            //The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
 
@@ -797,6 +805,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 output += prefix + "Compatible Magazine";
             }
+
             else
             {
                 foreach (string item in objects)
@@ -840,6 +849,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 loadout.TableDefs = new List<ObjectTableDef>();
                 loadout.ListOverride = new List<FVRObject>();
             }
+
             else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
             {
                 PrimaryGroup = new EquipmentGroup();
@@ -852,9 +862,10 @@ namespace TNHFramework.ObjectTemplates.V1
                 PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
                 PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
             }
+
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
-                // If we have just one pool, then the primary pool becomes that pool
+                //If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
                 {
                     PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0]);
@@ -863,6 +874,7 @@ namespace TNHFramework.ObjectTemplates.V1
                     PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
                     PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
                 }
+
                 else
                 {
                     PrimaryGroup = new EquipmentGroup();
@@ -1016,14 +1028,12 @@ namespace TNHFramework.ObjectTemplates.V1
         {
             if (level == null)
             {
-                level = new TNH_Progression.Level
-                {
-                    NumOverrideTokensForHold = NumOverrideTokensForHold,
-                    TakeChallenge = TakeChallenge.GetTakeChallenge(),
-                    HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
-                };
-                level.HoldChallenge.Phases = [];
+                level = new TNH_Progression.Level();
+                level.NumOverrideTokensForHold = NumOverrideTokensForHold;
+                level.TakeChallenge = TakeChallenge.GetTakeChallenge();
 
+                level.HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge));
+                level.HoldChallenge.Phases = new List<TNH_HoldChallenge.Phase>();
                 foreach (Phase phase in HoldPhases)
                 {
                     level.HoldChallenge.Phases.Add(phase.GetPhase());
@@ -1051,7 +1061,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
         public void DelayedInit(bool isCustom, int levelIndex)
         {
-            // If this is a level for a default character, we should try to replicate the vanilla layout
+            //If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
@@ -1070,6 +1080,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 return true;
             }
+
             else if (SupplyChallenge.EnemyType == id)
             {
                 return true;
@@ -1145,7 +1156,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                 {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
@@ -1237,7 +1248,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
@@ -1324,7 +1335,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];

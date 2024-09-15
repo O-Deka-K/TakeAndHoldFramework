@@ -538,7 +538,9 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    // An equipment pool is an entry that can spawn at a constructor panel
+    /// <summary>
+    /// An equipment pool is an entry that can spawn at a constructor panel
+    /// </summary>
     public class EquipmentPool
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
@@ -587,10 +589,8 @@ namespace TNHFramework.ObjectTemplates
             TokenCostLimited = pool.TokenCost_Limited;
             MinLevelAppears = pool.MinLevelAppears;
             MaxLevelAppears = pool.MaxLevelAppears;
-            PrimaryGroup = new EquipmentGroup(pool.TableDef)
-            {
-                Rarity = pool.Rarity
-            };
+            PrimaryGroup = new EquipmentGroup(pool.TableDef);
+            PrimaryGroup.Rarity = pool.Rarity;
             SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
             SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
             BackupGroup = new EquipmentGroup();
@@ -602,14 +602,12 @@ namespace TNHFramework.ObjectTemplates
         {
             if (pool == null)
             {
-                pool = new EquipmentPoolDef.PoolEntry
-                {
-                    Type = Type,
-                    TokenCost = TokenCost,
-                    TokenCost_Limited = TokenCostLimited,
-                    MinLevelAppears = MinLevelAppears,
-                    MaxLevelAppears = MaxLevelAppears
-                };
+                pool = new EquipmentPoolDef.PoolEntry();
+                pool.Type = Type;
+                pool.TokenCost = TokenCost;
+                pool.TokenCost_Limited = TokenCostLimited;
+                pool.MinLevelAppears = MinLevelAppears;
+                pool.MaxLevelAppears = MaxLevelAppears;
 
                 if (PrimaryGroup != null)
                 {
@@ -671,6 +669,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
             }
+
             else if (BackupGroup != null)
             {
                 return BackupGroup.GetSpawnedEquipmentGroups();
@@ -934,13 +933,17 @@ namespace TNHFramework.ObjectTemplates
 
 
 
-        // Fills out the object table and removes any unloaded items
+        /// <summary>
+        /// Fills out the object table and removes any unloaded items
+        /// </summary>
+        /// <returns> Returns true if valid, and false if empty </returns>
         public bool DelayedInit(List<string> globalObjectBlacklist)
         {
-            // Before we add anything from the IDOverride list, remove anything that isn't loaded
+            //Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
-            // Every item in IDOverride gets added to the list of spawnable objects
+
+            //Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
                 foreach (var objectID in IDOverride)
@@ -950,13 +953,15 @@ namespace TNHFramework.ObjectTemplates
                 }
             }
 
-            // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+
+            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
                 Initialise(globalObjectBlacklist);
             }
 
-            // Perform delayed init on all subgroups. If they are empty, we remove them
+
+            //Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
                 for (int i = 0; i < SubGroups.Count; i++)
@@ -976,7 +981,7 @@ namespace TNHFramework.ObjectTemplates
                 Rarity = 1;
             }
 
-            // The table is valid if it has items in it, or is a compatible magazine
+            //The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
 
@@ -1149,6 +1154,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 output += prefix + "Compatible Magazine";
             }
+
             else
             {
                 foreach (string item in objects)
@@ -1219,12 +1225,11 @@ namespace TNHFramework.ObjectTemplates
         {
             if (loadout == null)
             {
-                loadout = new TNH_CharacterDef.LoadoutEntry
-                {
-                    TableDefs = [],
-                    ListOverride = []
-                };
+                loadout = new TNH_CharacterDef.LoadoutEntry();
+                loadout.TableDefs = [];
+                loadout.ListOverride = [];
             }
+
             else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
             {
                 PrimaryGroup = new EquipmentGroup
@@ -1239,9 +1244,10 @@ namespace TNHFramework.ObjectTemplates
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
             }
+
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
-                // If we have just one pool, then the primary pool becomes that pool
+                //If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
                 {
                     PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0])
@@ -1252,6 +1258,7 @@ namespace TNHFramework.ObjectTemplates
                         NumRoundsSpawned = loadout.Num_Rounds
                     };
                 }
+
                 else
                 {
                     PrimaryGroup = new EquipmentGroup
@@ -1261,13 +1268,11 @@ namespace TNHFramework.ObjectTemplates
                     };
                     foreach (ObjectTableDef table in loadout.TableDefs)
                     {
-                        EquipmentGroup group = new(table)
-                        {
-                            Rarity = 1,
-                            NumMagsSpawned = loadout.Num_Mags_SL_Clips,
-                            NumClipsSpawned = loadout.Num_Mags_SL_Clips,
-                            NumRoundsSpawned = loadout.Num_Rounds
-                        };
+                        EquipmentGroup group = new(table);
+                        group.Rarity = 1;
+                        group.NumMagsSpawned = loadout.Num_Mags_SL_Clips;
+                        group.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
+                        group.NumRoundsSpawned = loadout.Num_Rounds;
                         PrimaryGroup.SubGroups.Add(group);
                     }
                 }
@@ -1280,11 +1285,9 @@ namespace TNHFramework.ObjectTemplates
         {
             if (loadout == null)
             {
-                loadout = new TNH_CharacterDef.LoadoutEntry
-                {
-                    Num_Mags_SL_Clips = 3,
-                    Num_Rounds = 9
-                };
+                loadout = new TNH_CharacterDef.LoadoutEntry();
+                loadout.Num_Mags_SL_Clips = 3;
+                loadout.Num_Rounds = 9;
 
                 if (PrimaryGroup != null)
                 {
@@ -1314,8 +1317,7 @@ namespace TNHFramework.ObjectTemplates
                 {
                     if (!BackupGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        if (PrimaryGroup == null)
-                            TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
 
                         BackupGroup = null;
                     }
@@ -1450,15 +1452,12 @@ namespace TNHFramework.ObjectTemplates
         {
             if (level == null)
             {
-                level = new()
-                {
-                    NumOverrideTokensForHold = NumOverrideTokensForHold,
-                    TakeChallenge = TakeChallenge.GetTakeChallenge(),
+                level = new();
+                level.NumOverrideTokensForHold = NumOverrideTokensForHold;
+                level.TakeChallenge = TakeChallenge.GetTakeChallenge();
 
-                    HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
-                };
+                level.HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge));
                 level.HoldChallenge.Phases = [];
-
                 foreach (Phase phase in HoldPhases)
                 {
                     level.HoldChallenge.Phases.Add(phase.GetPhase());
@@ -1486,7 +1485,7 @@ namespace TNHFramework.ObjectTemplates
 
         public void DelayedInit(bool isCustom, int levelIndex)
         {
-            // If this is a level for a default character, we should try to replicate the vanilla layout
+            //If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
@@ -1505,6 +1504,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 return true;
             }
+
             else if (SupplyChallenge.EnemyType == id)
             {
                 return true;
@@ -1590,7 +1590,7 @@ namespace TNHFramework.ObjectTemplates
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                 {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
@@ -1708,7 +1708,7 @@ namespace TNHFramework.ObjectTemplates
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
@@ -1811,7 +1811,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
 
-                // Try to get the necessary SosigEnemyIDs
+                //Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];

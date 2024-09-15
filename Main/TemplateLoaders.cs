@@ -165,6 +165,7 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load custom character! No character.json file found");
                     return new Empty();
                 }
+
                 else if (thumbnail == null)
                 {
                     TNHFrameworkLogger.LogError("Failed to load custom character! No thumb.png file found");

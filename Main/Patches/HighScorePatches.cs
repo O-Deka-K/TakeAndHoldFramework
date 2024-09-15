@@ -25,7 +25,7 @@ namespace TNHFramework.Patches
         {
             if (!__instance.m_hasInit && __instance.AIManager.HasInit)
             {
-                // Clear all entries from the tracked stats
+                //Clear all entries from the tracked stats
                 TNHFramework.HoldActions.Clear();
                 TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
             }
@@ -132,7 +132,6 @@ namespace TNHFramework.Patches
                     TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
                     TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
-
                 __instance.m_hasBeenVisited = true;
             }
 

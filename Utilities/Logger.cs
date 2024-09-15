@@ -16,6 +16,7 @@ namespace TNHFramework.Utilities
         public static bool LogFile = false;
         public static bool LogTNH = false;
 
+
         public enum LogType
         {
             General,

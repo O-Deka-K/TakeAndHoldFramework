@@ -43,7 +43,7 @@ namespace TNHFramework
         public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
         public static Dictionary<FireArmRoundType, List<FVRObject>> SpeedloaderDictionary = [];
 
-        // Variables used by various patches
+        //Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
         public static List<int> PatrolIndexPool = [];
@@ -59,7 +59,9 @@ namespace TNHFramework
         public static int GunsRecycled;
         public static int ShotsFired;
 
-        // First method that gets called
+        /// <summary>
+        /// First method that gets called
+        /// </summary>
         private void Awake()
         {
             InfoPath = Path.GetDirectoryName(Info.Location);
@@ -102,7 +104,9 @@ namespace TNHFramework
 
 
 
-        // Loads the sprites used in secondary panels in TNH
+        /// <summary>
+        /// Loads the sprites used in secondary panels in TNH
+        /// </summary>
         private void LoadPanelSprites()
         {
             DirectoryInfo pluginDirectory = new(Path.GetDirectoryName(Info.Location));
@@ -135,7 +139,9 @@ namespace TNHFramework
 
 
 
-        // Loads the BepInEx config file, and applies those settings
+        /// <summary>
+        /// Loads the BepInEx config file, and applies those settings
+        /// </summary>
         private void LoadConfigFile()
         {
             TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
@@ -205,7 +211,9 @@ namespace TNHFramework
         }
 
 
-        // Creates the main TNH Tweaker file folder
+        /// <summary>
+        /// Creates the main TNH Tweaker file folder
+        /// </summary>
         private void SetupOutputDirectory()
         {
             OutputFilePath = Path.Combine(Path.GetDirectoryName(Info.Location), "CharFiles");
@@ -218,7 +226,7 @@ namespace TNHFramework
 
 
 
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
@@ -229,7 +237,7 @@ namespace TNHFramework
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
 
-            // Draw local scores
+            //Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
 
             GM.Omni.SaveToFile();
@@ -250,7 +258,10 @@ namespace TNHFramework
             Stages.Setup += DeliOnSetup;
         }
 
-        // Performs initial setup for TNH Tweaker
+        /// <summary>
+        /// Performs initial setup for TNH Tweaker
+        /// </summary>
+        /// <param name="stage"></param>
         private void DeliOnSetup(SetupStage stage)
         {
             stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoaderDeli().LoadAsset;

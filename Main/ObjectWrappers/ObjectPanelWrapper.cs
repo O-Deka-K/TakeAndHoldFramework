@@ -102,6 +102,7 @@ namespace TNHFramework
             buttonTransform_2.position = iconTransform_2.position;
 
             Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
+
             backgroundImage.sprite = background;
 
             DupeIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
@@ -130,9 +131,10 @@ namespace TNHFramework
             priceText_2.text = "x" + PurchaseCost;
         }
 
+
         private Text AddPriceText(Transform iconTransform, Vector3 localPosition)
         {
-            GameObject canvas = new("PriceCanvas");
+            GameObject canvas = new GameObject("PriceCanvas");
             canvas.transform.SetParent(iconTransform.parent);
             canvas.transform.rotation = iconTransform.rotation;
             canvas.transform.localPosition = localPosition;
@@ -142,7 +144,7 @@ namespace TNHFramework
             canvasComp.renderMode = RenderMode.WorldSpace;
             rect.sizeDelta = new Vector2(1, 1);
 
-            GameObject text = new("Text");
+            GameObject text = new GameObject("Text");
             text.transform.SetParent(canvas.transform);
             text.transform.rotation = canvas.transform.rotation;
             text.transform.localPosition = Vector3.zero;
@@ -168,6 +170,7 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -178,6 +181,7 @@ namespace TNHFramework
                     TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedMag.ObjectWrapper.DisplayName}");
                     FirearmUtils.SpawnDuplicateMagazine(original.M, detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
+
                 else
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedSpeedLoader.ObjectWrapper.DisplayName}");
@@ -195,6 +199,7 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -216,6 +221,7 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -229,6 +235,7 @@ namespace TNHFramework
                 UpdateIcons();
             }
         }
+
 
         private void Update()
         {
@@ -413,6 +420,8 @@ namespace TNHFramework
     }
 
 
+
+
     public class AmmoPurchasePanel : MonoBehaviour
     {
         public TNH_MagDuplicator original;
@@ -482,6 +491,7 @@ namespace TNHFramework
             button_0.onClick.AddListener(() => { PurchaseAmmoButton(); });
         }
 
+
         public void PurchaseAmmoButton()
         {
             if (detectedFirearm == null || original.M.GetNumTokens() < PanelCost)
@@ -489,6 +499,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -731,6 +742,7 @@ namespace TNHFramework
             button_0.onClick.AddListener(() => { AddFullAutoButton(); });
         }
 
+
         public void AddFullAutoButton()
         {
             if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || PanelCost > original.M.GetNumTokens())
@@ -739,6 +751,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
+
             else
             {
                 //Debug.Log("Adding full auto!");
@@ -751,12 +764,14 @@ namespace TNHFramework
                     AddFullAutoToHandgun(detectedHandgun);
                     ClearSelection();
                 }
+
                 else if (detectedClosedBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedClosedBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToClosedBolt(detectedClosedBolt);
                     ClearSelection();
                 }
+
                 else if(detectedOpenBolt != null)
                 {
                     TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedOpenBolt.ObjectWrapper.DisplayName}");
@@ -766,13 +781,12 @@ namespace TNHFramework
             }
         }
 
+
         private void AddFullAutoToHandgun(Handgun gun)
         {
-            Handgun.FireSelectorMode fullAuto = new()
-            {
-                SelectorPosition = 0,
-                ModeType = Handgun.FireSelectorModeType.FullAuto
-            };
+            Handgun.FireSelectorMode fullAuto = new Handgun.FireSelectorMode();
+            fullAuto.SelectorPosition = 0;
+            fullAuto.ModeType = Handgun.FireSelectorModeType.FullAuto;
 
             if (gun.FireSelectorModes != null)
             {
@@ -787,11 +801,9 @@ namespace TNHFramework
             {
                 //Debug.Log("Handgun did not have any fire selector modes, so we're adding defaults");
 
-                Handgun.FireSelectorMode single = new()
-                {
-                    SelectorPosition = 0,
-                    ModeType = Handgun.FireSelectorModeType.Single
-                };
+                Handgun.FireSelectorMode single = new Handgun.FireSelectorMode();
+                single.SelectorPosition = 0;
+                single.ModeType = Handgun.FireSelectorModeType.Single;
 
                 gun.FireSelectorModes = [single, fullAuto];
             }
@@ -802,7 +814,7 @@ namespace TNHFramework
                 {
                     fullAuto
                 };
-                gun.FireSelectorModes = [.. modes];
+                gun.FireSelectorModes = modes.ToArray();
 
                 //Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
             }
@@ -821,6 +833,7 @@ namespace TNHFramework
                     gun.FireSelectorInterpStyle = gun.Safety_Interp;
                     gun.FireSelector = gun.Safety;
                 }
+
                 else if (gun.FireSelector == null)
                 {
                     //Debug.Log("Creating dummy game object for fire selector");
@@ -838,23 +851,20 @@ namespace TNHFramework
             }
         }
 
+
         private void AddFullAutoToClosedBolt(ClosedBoltWeapon gun)
         {
-            ClosedBoltWeapon.FireSelectorMode fullAuto = new()
-            {
-                ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto,
-                SelectorPosition = 0
-            };
+            ClosedBoltWeapon.FireSelectorMode fullAuto = new ClosedBoltWeapon.FireSelectorMode();
+            fullAuto.ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto;
+            fullAuto.SelectorPosition = 0;
 
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
                 //Debug.Log("Gun did not have fire selector, adding full");
 
-                ClosedBoltWeapon.FireSelectorMode single = new()
-                {
-                    ModeType = ClosedBoltWeapon.FireSelectorModeType.Single,
-                    SelectorPosition = 0
-                };
+                ClosedBoltWeapon.FireSelectorMode single = new ClosedBoltWeapon.FireSelectorMode();
+                single.ModeType = ClosedBoltWeapon.FireSelectorModeType.Single;
+                single.SelectorPosition = 0;
 
                 gun.FireSelector_Modes = [single, fullAuto];
             }
@@ -865,27 +875,23 @@ namespace TNHFramework
                 {
                     fullAuto
                 };
-                gun.FireSelector_Modes = [.. modes];
+                gun.FireSelector_Modes = modes.ToArray();
             }
         }
 
         private void AddFullAutoToOpenBolt(OpenBoltReceiver gun)
         {
-            OpenBoltReceiver.FireSelectorMode fullAuto = new()
-            {
-                ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto,
-                SelectorPosition = 0
-            };
+            OpenBoltReceiver.FireSelectorMode fullAuto = new OpenBoltReceiver.FireSelectorMode();
+            fullAuto.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
+            fullAuto.SelectorPosition = 0;
 
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
                 //Debug.Log("Gun did not have fire selector, adding full");
 
-                OpenBoltReceiver.FireSelectorMode single = new()
-                {
-                    ModeType = OpenBoltReceiver.FireSelectorModeType.Single,
-                    SelectorPosition = 0
-                };
+                OpenBoltReceiver.FireSelectorMode single = new OpenBoltReceiver.FireSelectorMode();
+                single.ModeType = OpenBoltReceiver.FireSelectorModeType.Single;
+                single.SelectorPosition = 0;
 
                 gun.FireSelector_Modes = [single, fullAuto];
             }
@@ -899,6 +905,7 @@ namespace TNHFramework
                 gun.FireSelector_Modes = modes.ToArray();
             }
         }
+
 
         private void Update()
         {
@@ -1144,6 +1151,7 @@ namespace TNHFramework
             button_1.onClick.AddListener(() => { IncreaseFireRateButton(); });
         }
 
+
         public void IncreaseFireRateButton()
         {
             if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || PanelCost > original.M.GetNumTokens())
@@ -1151,6 +1159,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -1168,6 +1177,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
+
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -1177,6 +1187,7 @@ namespace TNHFramework
                 ClearSelection();
             }
         }
+
 
         public void IncreaseFireRate()
         {
@@ -1188,6 +1199,7 @@ namespace TNHFramework
                 detectedHandgun.Slide.Speed_Forward *= fireRateMultiplier;
                 return;
             }
+
             else if (detectedClosedBolt != null)
             {
                 TNHFramework.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
@@ -1196,6 +1208,7 @@ namespace TNHFramework
                 detectedClosedBolt.Bolt.Speed_Rearward *= fireRateMultiplier;
                 return;
             }
+
             else
             {
                 TNHFramework.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
@@ -1204,6 +1217,8 @@ namespace TNHFramework
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= fireRateMultiplier;
                 return;
             }
+
+
         }
 
         public void DecreaseFireRate()
@@ -1216,6 +1231,7 @@ namespace TNHFramework
                 detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
                 return;
             }
+
             else if(detectedClosedBolt != null)
             {
                 TNHFramework.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
@@ -1224,6 +1240,7 @@ namespace TNHFramework
                 detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
                 return;
             }
+
             else
             {
                 TNHFramework.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
@@ -1233,6 +1250,7 @@ namespace TNHFramework
                 return;
             }
         }
+
 
         private void Update()
         {
