@@ -101,9 +101,13 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_GunRecycler), "Button_Recycler")]
         [HarmonyPrefix]
-        public static bool TrackRecyclePatch()
+        public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
             TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
+            if (__instance.m_selectedObject != null)
+            {
+                TNHFramework.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
+            }
 
             return true;
         }
