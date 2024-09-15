@@ -84,20 +84,6 @@ namespace TNHFramework
 
             if (EnableDebugText.Value)
                 Harmony.CreateAndPatchAll(typeof(DebugPatches));
-
-            /*
-            if (Chainloader.PluginInfos.ContainsKey("Deli"))
-            {
-                DeliAwake();
-            }
-            else
-            {
-                foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
-                {
-                    TNHFrameworkLogger.Log($"Plugin loaded: {item.Key}", TNHFrameworkLogger.LogType.General);
-                }
-            }
-            */
         }
 
         public override void OnSetup(IStageContext<Empty> ctx)
