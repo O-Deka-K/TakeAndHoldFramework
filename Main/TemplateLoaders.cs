@@ -1,7 +1,7 @@
 ﻿using ADepIn;
 using BepInEx;
-using Valve.Newtonsoft.Json;
-using Valve.Newtonsoft.Json.Linq;
+using Deli.Newtonsoft.Json;
+using Deli.Newtonsoft.Json.Linq;
 using FistVR;
 using System;
 using System.Collections;
@@ -27,6 +27,7 @@ namespace TNHFramework
             try
             {
                 SosigTemplate sosig = null;
+                List<string> errors = [];
 
                 if (file.Name.EndsWith(".yaml"))
                 {
@@ -41,10 +42,20 @@ namespace TNHFramework
                 {
                     JsonSerializerSettings settings = new()
                     {
-                        NullValueHandling = NullValueHandling.Ignore
+                        NullValueHandling = NullValueHandling.Ignore,
+                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        {
+                            errors.Add(args.ErrorContext.Error.Message);
+                            args.ErrorContext.Handled = true;
+                        }
                     };
 
                     sosig = JsonConvert.DeserializeObject<SosigTemplate>(File.ReadAllText(file.FullName));
+
+                    foreach (string error in errors)
+                    {
+                        TNHFrameworkLogger.LogError(error);
+                    }
 
                     TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
 
@@ -83,6 +94,7 @@ namespace TNHFramework
             {
                 CustomCharacter character = null;
                 Sprite thumbnail = null;
+                List<string> errors = [];
 
                 foreach (FileInfo file in folder.GetFiles())
                 {
@@ -103,10 +115,20 @@ namespace TNHFramework
                     {
                         JsonSerializerSettings settings = new()
                         {
-                            NullValueHandling = NullValueHandling.Ignore
+                            NullValueHandling = NullValueHandling.Ignore,
+                            Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            {
+                                errors.Add(args.ErrorContext.Error.Message);
+                                args.ErrorContext.Handled = true;
+                            }
                         };
                         // Convert old JSON character files to the newer YAML format.
                         character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
+
+                        foreach (string error in errors)
+                        {
+                            TNHFrameworkLogger.LogError(error);
+                        }
 
                         if (TNHFramework.ConvertFilesToYAML.Value)
                         {
@@ -182,6 +204,7 @@ namespace TNHFramework
             try
             {
                 VaultFile savedGun = null;
+                List<string> errors = [];
 
                 if (file.Name.EndsWith(".yaml"))
                 {
@@ -196,10 +219,20 @@ namespace TNHFramework
                 {
                     JsonSerializerSettings settings = new()
                     {
-                        NullValueHandling = NullValueHandling.Ignore
+                        NullValueHandling = NullValueHandling.Ignore,
+                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        {
+                            errors.Add(args.ErrorContext.Error.Message);
+                            args.ErrorContext.Handled = true;
+                        }
                     };
 
                     savedGun = JsonConvert.DeserializeObject<VaultFile>(File.ReadAllText(file.FullName));
+
+                    foreach (string error in errors)
+                    {
+                        TNHFrameworkLogger.LogError(error);
+                    }
 
                     TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 
