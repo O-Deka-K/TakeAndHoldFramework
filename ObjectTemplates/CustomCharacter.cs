@@ -1001,11 +1001,13 @@ namespace TNHFramework.ObjectTemplates
                 }
                 else if (MinAmmoCapacity > -1 && fvrobject.MaxCapacityRelated < MinAmmoCapacity)
                 {
-                    continue;
+                    if (Category != ObjectCategory.MeleeWeapon)
+                        continue;
                 }
                 else if (MaxAmmoCapacity > -1 && fvrobject.MinCapacityRelated > MaxAmmoCapacity)
                 {
-                    continue;
+                    if (Category != ObjectCategory.MeleeWeapon)  // Fix for Meat Fortress melee weapons
+                        continue;
                 }
                 // ????
                 // anton, why?
