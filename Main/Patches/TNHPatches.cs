@@ -1479,7 +1479,7 @@ namespace TNHFramework.Patches
 
                     if (__instance.M.GetNumTokens() >= cost)
                     {
-                        if ((!__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInSmallCase && !__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInSmallCase) || __instance.m_spawnedCase == null)
+                        if ((!__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInSmallCase && !__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInLargeCase) || __instance.m_spawnedCase == null)
                         {
                             AnvilManager.Run(SpawnObjectAtConstructor(__instance.m_poolEntries[__instance.m_selectedEntry], __instance));
                             __instance.m_numTokensSelected = 0;

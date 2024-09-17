@@ -354,6 +354,28 @@ namespace TNHFramework.Utilities
                         sw.Close();
                     }
                 }
+
+                var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
+                string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
+
+                string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
+                vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
+                vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+
+                foreach (string vaultFileName in vaultFileList)
+                {
+                    string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+
+                    try
+                    {
+                        File.Copy(Path.Combine(vaultPath, filename), Path.Combine(path, filename), true);
+                    }
+
+                    catch (Exception ex)
+                    {
+                        TNHFrameworkLogger.LogError($"Vault File {filename} could not be copied: {ex}");
+                    }
+                }
             }
 
             catch (Exception ex)
