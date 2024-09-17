@@ -492,12 +492,10 @@ namespace TNHFramework.Patches
 
             // For default characters, only a single supply point spawns in each level of Institution
             // We will allow multiple supply points for custom characters
-            // TODO: Create a custom character setting to allow single supply points on Institution
             bool isCustomCharacter = !BaseCharStrings.Contains(__instance.C.TableID);
             bool allowExplicitSingleSupplyPoints = !isCustomCharacter;
 
             // Now spawn and set up all of the supply points
-            // TODO: This is one of the main code blocks for this method that requires it to be a full copy of the original method. This would be better fit as a transpiler patch
             int panelIndex = 0;
             if (allowExplicitSingleSupplyPoints && __instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level < 5)
             {
@@ -506,7 +504,7 @@ namespace TNHFramework.Patches
                 int supplyPointIndex = __instance.m_curPointSequence.SupplyPoints[__instance.m_level];
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
                 //supplyPoint.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
-                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
+                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
                 __instance.m_activeSupplyPointIndicies.Add(supplyPointIndex);
@@ -520,7 +518,7 @@ namespace TNHFramework.Patches
 
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
                 //supplyPoint.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
-                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
+                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
                 __instance.m_activeSupplyPointIndicies.Add(supplyPointIndex);
@@ -536,12 +534,14 @@ namespace TNHFramework.Patches
 
                 TNHFrameworkLogger.Log($"Spawning {numSupplyPoints} supply points", TNHFrameworkLogger.LogType.TNH);
 
+                bool spawnToken = true;
                 for (int i = 0; i < numSupplyPoints; i++)
                 {
                     TNHFrameworkLogger.Log($"Configuring supply point : {i}", TNHFrameworkLogger.LogType.TNH);
 
                     TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
-                    ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
+                    ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 1, 2, spawnToken);
+                    spawnToken = false;
                     TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                     supplyPoint.SetContact(contact);
                     __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
@@ -590,7 +590,7 @@ namespace TNHFramework.Patches
             return false;
         }
 
-        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, ref int panelIndex)
+        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, ref int panelIndex, int minBoxPiles, int maxBoxPiles, bool spawnToken)
         {
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
@@ -606,7 +606,7 @@ namespace TNHFramework.Patches
 
             SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, ref panelIndex);
 
-            SpawnSupplyBoxes(supplyPoint, level);
+            SpawnSupplyBoxes(supplyPoint, level, minBoxPiles, maxBoxPiles, spawnToken);
 
             supplyPoint.m_hasBeenVisited = false;
         }
@@ -752,11 +752,28 @@ namespace TNHFramework.Patches
         }
 
 
-        public static void SpawnSupplyBoxes(TNH_SupplyPoint point, Level level)
+        public static void SpawnSupplyBoxes(TNH_SupplyPoint point, Level level, int minBoxPiles, int maxBoxPiles, bool spawnToken)
         {
             point.SpawnPoints_Boxes.Shuffle();
 
-            int boxesToSpawn = UnityEngine.Random.Range(level.MinBoxesSpawned, level.MaxBoxesSpawned + 1);
+            // Vanilla character behavior:
+            // - Only one box per Take phase has a token
+            // - Hallways has 1-2 boxes per supply point, large maps have only 1 supply point with 2-3 boxes
+
+            int minTokens = (spawnToken ? 1 : 0);
+            int maxTokens = (spawnToken ? 1 : 0);
+
+            bool isCustomCharacter = !BaseCharStrings.Contains(point.M.C.TableID);
+            if (isCustomCharacter)
+            {
+                minBoxPiles = level.MinBoxesSpawned;
+                maxBoxPiles = level.MaxBoxesSpawned;
+
+                minTokens = level.MinTokensPerSupply;
+                maxTokens = level.MaxTokensPerSupply;
+            }
+
+            int boxesToSpawn = UnityEngine.Random.Range(minBoxPiles, maxBoxPiles + 1);
 
             TNHFrameworkLogger.Log("Going to spawn " + boxesToSpawn + " boxes at this point -- Min (" + level.MinBoxesSpawned + "), Max (" + level.MaxBoxesSpawned + ")", TNHFrameworkLogger.LogType.TNH);
 
@@ -777,13 +794,13 @@ namespace TNHFramework.Patches
                 foreach (GameObject boxObj in point.m_spawnBoxes)
                 {
 
-                    if (tokensSpawned < level.MinTokensPerSupply)
+                    if (tokensSpawned < minTokens)
                     {
                         boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
                         tokensSpawned += 1;
                     }
 
-                    else if (tokensSpawned < level.MaxTokensPerSupply && UnityEngine.Random.value < level.BoxTokenChance)
+                    else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
                     {
                         boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
                         tokensSpawned += 1;
@@ -801,7 +818,7 @@ namespace TNHFramework.Patches
                 for (int k = 0; k < point.m_spawnBoxes.Count; k++)
                 {
                     UberShatterable component = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
-                    if (tokensSpawned < level.MinTokensPerSupply)
+                    if (tokensSpawned < minTokens)
                     {
                         component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
                         component.SpawnOnShatterPoints.Add(component.transform);
@@ -811,7 +828,7 @@ namespace TNHFramework.Patches
                         component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
                         tokensSpawned += 1;
                     }
-                    else if (tokensSpawned < level.MaxTokensPerSupply && UnityEngine.Random.value < level.BoxTokenChance)
+                    else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
                     {
                         component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
                         component.SpawnOnShatterPoints.Add(component.transform);
@@ -1701,10 +1718,6 @@ namespace TNHFramework.Patches
                             List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleRounds(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleClips = mainObject.CompatibleClips;
-
-                            TNHFrameworkLogger.Log("Compatible Mags: " + string.Join(",", compatibleMagazines.Select(o => o.ItemID).ToArray()), TNHFrameworkLogger.LogType.TNH);
-                            TNHFrameworkLogger.Log("Compatible Clips: " + string.Join(",", compatibleClips.Select(o => o.ItemID).ToArray()), TNHFrameworkLogger.LogType.TNH);
-                            TNHFrameworkLogger.Log("Compatible Rounds: " + string.Join(",", compatibleRounds.Select(o => o.ItemID).ToArray()), TNHFrameworkLogger.LogType.TNH);
 
                             //If we are supposed to spawn magazines and clips, perform special logic for that
                             if (group.SpawnMagAndClip && compatibleMagazines.Count > 0 && compatibleClips.Count > 0 && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
