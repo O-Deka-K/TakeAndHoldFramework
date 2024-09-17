@@ -36,7 +36,7 @@ namespace TNHFramework
             try
             {
                 ObjectTemplates.SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SosigTemplate>();
-                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
@@ -75,7 +75,7 @@ namespace TNHFramework
                         JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore,
-                            Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 errors.Add(args.ErrorContext.Error.Message);
                                 args.ErrorContext.Handled = true;
@@ -119,7 +119,7 @@ namespace TNHFramework
                     }
                 }
 
-                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
@@ -146,7 +146,7 @@ namespace TNHFramework
             {
                 ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
 
-                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }

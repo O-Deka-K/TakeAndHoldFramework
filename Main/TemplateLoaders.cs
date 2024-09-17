@@ -43,7 +43,7 @@ namespace TNHFramework
                     JsonSerializerSettings settings = new()
                     {
                         NullValueHandling = NullValueHandling.Ignore,
-                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                         {
                             errors.Add(args.ErrorContext.Error.Message);
                             args.ErrorContext.Handled = true;
@@ -116,7 +116,7 @@ namespace TNHFramework
                         JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore,
-                            Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 errors.Add(args.ErrorContext.Error.Message);
                                 args.ErrorContext.Handled = true;
@@ -172,7 +172,7 @@ namespace TNHFramework
                     return new Empty();
                 }
 
-                //Now we want to load the icons for each pool
+                // Now we want to load the icons for each pool
                 foreach (FileInfo iconFile in folder.GetFiles())
                 {
                     foreach (EquipmentPool pool in character.EquipmentPools)
@@ -221,7 +221,7 @@ namespace TNHFramework
                     JsonSerializerSettings settings = new()
                     {
                         NullValueHandling = NullValueHandling.Ignore,
-                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                         {
                             errors.Add(args.ErrorContext.Error.Message);
                             args.ErrorContext.Handled = true;
