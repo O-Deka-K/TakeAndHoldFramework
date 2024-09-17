@@ -1,7 +1,7 @@
 ﻿using ADepIn;
 using BepInEx;
-using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Linq;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Linq;
 using FistVR;
 using System;
 using System.Collections;
@@ -43,7 +43,7 @@ namespace TNHFramework
                     JsonSerializerSettings settings = new()
                     {
                         NullValueHandling = NullValueHandling.Ignore,
-                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                         {
                             errors.Add(args.ErrorContext.Error.Message);
                             args.ErrorContext.Handled = true;
@@ -116,7 +116,7 @@ namespace TNHFramework
                         JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore,
-                            Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                            Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                             {
                                 errors.Add(args.ErrorContext.Error.Message);
                                 args.ErrorContext.Handled = true;
@@ -221,7 +221,7 @@ namespace TNHFramework
                     JsonSerializerSettings settings = new()
                     {
                         NullValueHandling = NullValueHandling.Ignore,
-                        Error = delegate (object sender, Deli.Newtonsoft.Json.Serialization.ErrorEventArgs args)
+                        Error = delegate (object sender, Valve.Newtonsoft.Json.Serialization.ErrorEventArgs args)
                         {
                             errors.Add(args.ErrorContext.Error.Message);
                             args.ErrorContext.Handled = true;

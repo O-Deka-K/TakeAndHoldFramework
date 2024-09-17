@@ -6,8 +6,8 @@ using Deli.Runtime;
 using Deli.Runtime.Yielding;
 using Deli.Setup;
 using Deli.VFS;
-using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Linq;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Linq;
 using FistVR;
 using System;
 using System.Collections;
@@ -36,7 +36,7 @@ namespace TNHFramework
             try
             {
                 ObjectTemplates.SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SosigTemplate>();
-                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
