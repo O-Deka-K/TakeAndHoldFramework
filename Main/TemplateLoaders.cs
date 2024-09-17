@@ -1,7 +1,7 @@
 ﻿using ADepIn;
 using BepInEx;
-using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Linq;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Linq;
 using FistVR;
 using System;
 using System.Collections;
