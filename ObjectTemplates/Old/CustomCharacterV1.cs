@@ -125,6 +125,63 @@ namespace TNHFramework.ObjectTemplates.V1
             this.character = character;
         }
 
+        public void Validate()
+        {
+            // Fix any null values that came from the JSON file
+            ValidAmmoEras ??= [];
+            ValidAmmoSets ??= [];
+            GlobalObjectBlacklist ??= [];
+            GlobalAmmoBlacklist ??= [];
+
+            MagazineBlacklist ??= [];
+            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+            {
+                entry.Validate();
+            }
+
+            RequireSightTable ??= new();
+            RequireSightTable.Validate();
+
+            PrimaryWeapon ??= new();
+            PrimaryWeapon.Validate();
+
+            SecondaryWeapon ??= new();
+            SecondaryWeapon.Validate();
+
+            TertiaryWeapon ??= new();
+            TertiaryWeapon.Validate();
+
+            PrimaryItem ??= new();
+            PrimaryItem.Validate();
+
+            SecondaryItem ??= new();
+            SecondaryItem.Validate();
+
+            TertiaryItem ??= new();
+            TertiaryItem.Validate();
+
+            Shield ??= new();
+            Shield.Validate();
+
+            EquipmentPools ??= [];
+            foreach (EquipmentPool pool in EquipmentPools)
+            {
+                pool.Validate();
+            }
+
+            Levels ??= [];
+            foreach (Level level in Levels)
+            {
+                level.Validate();
+            }
+
+            LevelsEndless ??= [];
+            foreach (Level level in LevelsEndless)
+            {
+                level.Validate();
+            }
+        }
+
         public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
         {
             if (character == null)
@@ -415,6 +472,15 @@ namespace TNHFramework.ObjectTemplates.V1
             this.pool = pool;
         }
 
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
+
+            BackupGroup ??= new();
+            BackupGroup.Validate();
+        }
+
         public EquipmentPoolDef.PoolEntry GetPoolEntry()
         {
             if (pool == null)
@@ -609,6 +675,33 @@ namespace TNHFramework.ObjectTemplates.V1
             ThrownDamageTypes = objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o).ToList();
 
             this.objectTableDef = objectTableDef;
+        }
+
+        public void Validate()
+        {
+            IDOverride ??= [];
+            Eras ??= [];
+            Sets ??= [];
+            Sizes ??= [];
+            Actions ??= [];
+            Modes ??= [];
+            ExcludedModes ??= [];
+            FeedOptions ??= [];
+            MountsAvailable ??= [];
+            RoundPowers ??= [];
+            Features ??= [];
+            MeleeStyles ??= [];
+            MeleeHandedness ??= [];
+            MountTypes ??= [];
+            PowerupTypes ??= [];
+            ThrownTypes ??= [];
+            ThrownDamageTypes ??= [];
+
+            SubGroups ??= [];
+            foreach (EquipmentGroup group in SubGroups)
+            {
+                group.Validate();
+            }
         }
 
         public ObjectTableDef GetObjectTableDef()
@@ -913,7 +1006,14 @@ namespace TNHFramework.ObjectTemplates.V1
             return loadout;
         }
 
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
 
+            BackupGroup ??= new();
+            BackupGroup.Validate();
+        }
 
         public bool DelayedInit(List<string> completedQuests)
         {
@@ -1022,6 +1122,26 @@ namespace TNHFramework.ObjectTemplates.V1
             BoxHealthChance = 0.5f;
 
             this.level = level;
+        }
+
+        public void Validate()
+        {
+            PossiblePanelTypes ??= [];
+            TakeChallenge ??= new();
+
+            HoldPhases ??= [];
+            foreach (Phase holdPhase in HoldPhases)
+            {
+                holdPhase.Validate();
+            }
+
+            SupplyChallenge ??= new();
+
+            Patrols ??= [];
+            foreach (Patrol patrol in Patrols)
+            {
+                patrol.Validate();
+            }
         }
 
         public TNH_Progression.Level GetLevel()
@@ -1231,6 +1351,12 @@ namespace TNHFramework.ObjectTemplates.V1
             this.phase = phase;
         }
 
+        public void Validate()
+        {
+            Encryptions ??= [];
+            EnemyType ??= [];
+        }
+
         public TNH_HoldChallenge.Phase GetPhase()
         {
             if (phase == null)
@@ -1327,6 +1453,11 @@ namespace TNHFramework.ObjectTemplates.V1
             IsBoss = false;
 
             this.patrol = patrol;
+        }
+
+        public void Validate()
+        {
+            EnemyType ??= [];
         }
 
         public TNH_PatrolChallenge.Patrol GetPatrol()

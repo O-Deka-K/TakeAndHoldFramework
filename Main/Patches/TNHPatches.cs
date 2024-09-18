@@ -1080,11 +1080,11 @@ namespace TNHFramework.Patches
             }
         }
 
-        public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
+        public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int phaseIndex)
         {
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
             Level currLevel = character.GetCurrentLevel(M.m_curLevel);
-            Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
+            Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             float grenadeChance = currPhase.GrenadeChance;
             string grenadeType = currPhase.GrenadeType;
@@ -1093,15 +1093,30 @@ namespace TNHFramework.Patches
             {
                 TNHFrameworkLogger.Log("Throwing grenade ", TNHFrameworkLogger.LogType.TNH);
 
+                if (AttackVectors == null || AttackVectors.Count == 0)
+                {
+                    // ODK - DEBUG
+                    TNHFrameworkLogger.Log("No attack vectors for grenade!", TNHFrameworkLogger.LogType.TNH);
+                    return;
+                }
+
                 //Get a random grenade vector to spawn a grenade at
                 TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
 
                 //Instantiate the grenade object
-                GameObject grenadeObject = UnityEngine.Object.Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
+                if (IM.OD.ContainsKey(grenadeType))
+                {
+                    GameObject grenadeObject = UnityEngine.Object.Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
 
-                //Give the grenade an initial velocity based on the grenade vector
-                grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
-                grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
+                    //Give the grenade an initial velocity based on the grenade vector
+                    grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
+                    grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
+                }
+                else
+                {
+                    // ODK - DEBUG
+                    TNHFrameworkLogger.Log($"Grenade type '{grenadeType}' does not exist!", TNHFrameworkLogger.LogType.TNH);
+                }
             }
         }
 

@@ -3,6 +3,7 @@ using FistVR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TNHFramework.ObjectTemplates.V1;
 using TNHFramework.Utilities;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
@@ -21,11 +22,11 @@ namespace TNHFramework.ObjectTemplates
         public bool ForceDisableOutfitFunctionality;
         public bool UsesPurchasePriceIncrement;
         public bool DisableCleanupSosigDrops;
-        public List<TagEra> ValidAmmoEras;
-        public List<TagSet> ValidAmmoSets;
-        public List<string> GlobalObjectBlacklist;
-        public List<string> GlobalAmmoBlacklist;
-        public List<MagazineBlacklistEntry> MagazineBlacklist;
+        public List<TagEra> ValidAmmoEras = [];
+        public List<TagSet> ValidAmmoSets = [];
+        public List<string> GlobalObjectBlacklist = [];
+        public List<string> GlobalAmmoBlacklist = [];
+        public List<MagazineBlacklistEntry> MagazineBlacklist = [];
 
         public EquipmentGroup RequireSightTable;
         public LoadoutEntry PrimaryWeapon;
@@ -35,9 +36,9 @@ namespace TNHFramework.ObjectTemplates
         public LoadoutEntry SecondaryItem;
         public LoadoutEntry TertiaryItem;
         public LoadoutEntry Shield;
-        public List<EquipmentPool> EquipmentPools;
-        public List<Level> Levels;
-        public List<Level> LevelsEndless;
+        public List<EquipmentPool> EquipmentPools = [];
+        public List<Level> Levels = [];
+        public List<Level> LevelsEndless = [];
 
         [JsonIgnore]
         private TNH_CharacterDef character;
@@ -192,18 +193,54 @@ namespace TNHFramework.ObjectTemplates
             ValidAmmoSets ??= [];
             GlobalObjectBlacklist ??= [];
             GlobalAmmoBlacklist ??= [];
+
             MagazineBlacklist ??= [];
-            RequireSightTable ??= new EquipmentGroup();
-            PrimaryWeapon ??= new LoadoutEntry();
-            SecondaryWeapon ??= new LoadoutEntry();
-            TertiaryWeapon ??= new LoadoutEntry();
-            PrimaryItem ??= new LoadoutEntry();
-            SecondaryItem ??= new LoadoutEntry();
-            TertiaryItem ??= new LoadoutEntry();
-            Shield ??= new LoadoutEntry();
+            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+            {
+                entry.Validate();
+            }
+
+            RequireSightTable ??= new();
+            RequireSightTable.Validate();
+
+            PrimaryWeapon ??= new();
+            PrimaryWeapon.Validate();
+
+            SecondaryWeapon ??= new();
+            SecondaryWeapon.Validate();
+
+            TertiaryWeapon ??= new();
+            TertiaryWeapon.Validate();
+
+            PrimaryItem ??= new();
+            PrimaryItem.Validate();
+
+            SecondaryItem ??= new();
+            SecondaryItem.Validate();
+
+            TertiaryItem ??= new();
+            TertiaryItem.Validate();
+
+            Shield ??= new();
+            Shield.Validate();
+
             EquipmentPools ??= [];
+            foreach (EquipmentPool pool in EquipmentPools)
+            {
+                pool.Validate();
+            }
+
             Levels ??= [];
+            foreach (Level level in Levels)
+            {
+                level.Validate();
+            }
+
             LevelsEndless ??= [];
+            foreach (Level level in LevelsEndless)
+            {
+                level.Validate();
+            }
         }
 
         public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
@@ -472,6 +509,18 @@ namespace TNHFramework.ObjectTemplates
 
         public List<string> RoundWhitelist = [];
 
+        public void Validate()
+        {
+            MagazineBlacklist ??= [];
+            MagazineWhitelist ??= [];
+            ClipBlacklist ??= [];
+            ClipWhitelist ??= [];
+            SpeedLoaderBlacklist ??= [];
+            SpeedLoaderWhitelist ??= [];
+            RoundBlacklist ??= [];
+            RoundWhitelist ??= [];
+        }
+
         public bool IsItemBlacklisted(string itemID)
         {
             return MagazineBlacklist.Contains(itemID) || ClipBlacklist.Contains(itemID) || RoundBlacklist.Contains(itemID) || SpeedLoaderBlacklist.Contains(itemID);
@@ -596,6 +645,15 @@ namespace TNHFramework.ObjectTemplates
             BackupGroup = new EquipmentGroup();
 
             this.pool = pool;
+        }
+
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
+
+            BackupGroup ??= new();
+            BackupGroup.Validate();
         }
 
         public EquipmentPoolDef.PoolEntry GetPoolEntry()
@@ -774,6 +832,16 @@ namespace TNHFramework.ObjectTemplates
             foreach (V1.EquipmentGroup subGroup in thing.SubGroups)
             {
                 SubGroups.Add(new EquipmentGroup(subGroup));
+            }
+        }
+
+        public void Validate()
+        {
+            IDOverride ??= [];
+            SubGroups ??= [];
+            foreach (EquipmentGroup subGroup in SubGroups)
+            {
+                subGroup.Validate();
             }
         }
 
@@ -1283,6 +1351,15 @@ namespace TNHFramework.ObjectTemplates
             this.loadout = loadout;
         }
 
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
+
+            BackupGroup ??= new();
+            BackupGroup.Validate();
+        }
+
         public TNH_CharacterDef.LoadoutEntry GetLoadoutEntry()
         {
             if (loadout == null)
@@ -1448,6 +1525,26 @@ namespace TNHFramework.ObjectTemplates
             BoxHealthChance = 0.5f;
 
             this.level = level;
+        }
+
+        public void Validate()
+        {
+            PossiblePanelTypes ??= [];
+            TakeChallenge ??= new();
+
+            HoldPhases ??= [];
+            foreach (Phase holdPhase in HoldPhases)
+            {
+                holdPhase.Validate();
+            }
+
+            SupplyChallenge ??= new();
+
+            Patrols ??= [];
+            foreach (Patrol patrol in Patrols)
+            {
+                patrol.Validate();
+            }
         }
 
         public TNH_Progression.Level GetLevel()
@@ -1693,6 +1790,12 @@ namespace TNHFramework.ObjectTemplates
             this.phase = phase;
         }
 
+        public void Validate()
+        {
+            Encryptions ??= [];
+            EnemyType ??= [];
+        }
+
         public TNH_HoldChallenge.Phase GetPhase()
         {
             if (phase == null)
@@ -1805,6 +1908,11 @@ namespace TNHFramework.ObjectTemplates
             IsBoss = false;
 
             this.patrol = patrol;
+        }
+
+        public void Validate()
+        {
+            EnemyType ??= [];
         }
 
         public TNH_PatrolChallenge.Patrol GetPatrol()

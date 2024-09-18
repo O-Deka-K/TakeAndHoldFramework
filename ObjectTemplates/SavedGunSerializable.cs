@@ -43,6 +43,20 @@ namespace TNHFramework.ObjectTemplates
             this.gun = gun;
         }
 
+        public void Validate()
+        {
+            LoadedRoundsInMag ??= [];
+            LoadedRoundsInChambers ??= [];
+            SavedFlags ??= [];
+            FireSelectorModes ??= [];
+
+            Components ??= [];
+            foreach (SavedGunComponentSerializable component in Components)
+            {
+                component.Validate();
+            }
+        }
+
         public SavedGun GetSavedGun()
         {
             if(gun == null)
@@ -253,6 +267,11 @@ namespace TNHFramework.ObjectTemplates
             Flags = component.Flags;
 
             this.component = component;
+        }
+
+        public void Validate()
+        {
+            Flags ??= [];
         }
 
         public SavedGunComponent GetGunComponent()

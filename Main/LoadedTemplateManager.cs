@@ -85,6 +85,7 @@ namespace TNHFramework
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
+            template.Validate();
             CustomCharacters.Add(template);
             LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
 
