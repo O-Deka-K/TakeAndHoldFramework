@@ -157,7 +157,7 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = currLevel.Patrols[patrolIndex];
 
-                            // Anton pls fix - GetSpawnPoints() can use wrong type
+                            // Anton pls fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, supplyIndex, supplyIndex, __instance.m_curHoldIndex));
                             TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(firstPoint, firstSpawnPointType), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, firstPoint, supplyIndex, supplyIndex, __instance.m_curHoldIndex), patrolIndex);
                             __instance.m_patrolSquads.Add(squad);
@@ -197,7 +197,7 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = currLevel.Patrols[patrolIndex];
 
-                            // Anton pls fix - GetSpawnPoints() can use wrong type
+                            // Anton pls fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, holdIndex, holdIndex, __instance.m_curHoldIndex));
                             TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, __instance.GetSpawnPoints(firstPoint, firstSpawnPointType), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, firstPoint, holdIndex, holdIndex, __instance.m_curHoldIndex), patrolIndex);
                             __instance.m_patrolSquads.Add(squad);
@@ -217,18 +217,18 @@ namespace TNHFramework.Patches
             {
                 TNH_Manager.SosigPatrolSquad patrolSquad = __instance.m_patrolSquads[squadIndex];
 
+                // Remove dead sosigs from squad
+                for (int i = patrolSquad.Squad.Count - 1; i >= 0; i--)
+                {
+                    if (patrolSquad.Squad[i] == null)
+                        patrolSquad.Squad.RemoveAt(i);
+                }
+
                 if (patrolSquad.Squad.Count > 0)
                 {
-                    // Remove dead sosigs from squad
-                    for (int i = patrolSquad.Squad.Count - 1; i >= 0; i--)
+                    if (__instance.UsesAlertPatrolSystem && __instance.m_AlertTickDownTime > 0f)
                     {
-                        if (patrolSquad.Squad[i] == null)
-                            patrolSquad.Squad.RemoveAt(i);
-                    }
-
-                    if (__instance.m_AlertTickDownTime > 0f)
-                    {
-                        // Squad is on alert
+                        // Patrols are on alert
                         for (int i = 0; i < patrolSquad.Squad.Count; i++)
                         {
                             patrolSquad.Squad[i].UpdateAssaultPoint(__instance.m_lastAlertSpottedPoint);
@@ -303,9 +303,6 @@ namespace TNHFramework.Patches
                     }
                 }
             }
-
-            if (__instance.m_patrolSquads.Count < 1)
-                return false;
 
             for (int squadIndex = 0; squadIndex < __instance.m_patrolSquads.Count; squadIndex++)
             {
