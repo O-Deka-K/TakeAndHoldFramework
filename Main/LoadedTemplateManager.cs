@@ -128,6 +128,7 @@ namespace TNHFramework
 
         public static void AddVaultFile(SavedGunSerializable template)
         {
+            template.Validate();
             if (!LoadedLegacyVaultFiles.ContainsKey(template.FileName))
             {
                 LoadedLegacyVaultFiles.Add(template.FileName, template);
