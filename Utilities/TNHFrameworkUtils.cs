@@ -770,22 +770,19 @@ namespace TNHFramework.Utilities
             List<int> validIndexes = [];
             Dictionary<GameObject, SavedGunComponent> dicGO = [];
             Dictionary<int, GameObject> dicByIndex = [];
-            List<GameObject> gameObjects = [];
+            List<AnvilCallback<GameObject>> callbackList = [];
             SavedGun gun = savedGun.GetSavedGun();
 
             for (int i = 0; i < gun.Components.Count; i++)
             {
-                FVRObject compObject = IM.OD[gun.Components[i].ObjectID];
-                AnvilCallback<GameObject> gameObjectCallback = compObject.GetGameObjectAsync();
+                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
                 TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
-
-                yield return gameObjectCallback;
-                gameObjects.Add(compObject.GetGameObject());
             }
+            yield return callbackList;
 
             for (int j = 0; j < gun.Components.Count; j++)
             {
-                GameObject gameObject = UnityEngine.Object.Instantiate(gameObjects[j]);
+                GameObject gameObject = UnityEngine.Object.Instantiate(IM.OD[gun.Components[j].ObjectID].GetGameObject());
                 M.AddObjectToTrackedList(gameObject);
 
                 dicGO.Add(gameObject, gun.Components[j]);
