@@ -1,7 +1,5 @@
 Note: Holy cow I need to update this.
 
-[![Exampled Video](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/devyn_myers)
-
 
 # TakeAndHoldTweaker
 An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters, as well as global tweaks to spice things up.
