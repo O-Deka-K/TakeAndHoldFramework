@@ -756,106 +756,218 @@ namespace TNHFramework.Patches
         {
             point.SpawnPoints_Boxes.Shuffle();
 
-            // Vanilla character behavior:
-            // - Only one box per Take phase has a token
-            // - Hallways has 1-2 boxes per supply point, large maps have only 1 supply point with 2-3 boxes
-
-            int minTokens = (spawnToken ? 1 : 0);
-            int maxTokens = (spawnToken ? 1 : 0);
-
             bool isCustomCharacter = !BaseCharStrings.Contains(point.M.C.TableID);
+
+            // Custom Character behavior:
+            // - Every supply point has the same min and max number of boxes
+            // - Every supply point has the same min and max number of tokens
+            // - Every box that doesn't have a token has the same probability of having health
             if (isCustomCharacter)
             {
-                minBoxPiles = level.MinBoxesSpawned;
-                maxBoxPiles = level.MaxBoxesSpawned;
+                int minTokens = level.MinTokensPerSupply;
+                int maxTokens = level.MaxTokensPerSupply;
 
-                minTokens = level.MinTokensPerSupply;
-                maxTokens = level.MaxTokensPerSupply;
-            }
+                int minBoxes = level.MinBoxesSpawned;
+                int maxBoxes = level.MaxBoxesSpawned;
+                int boxesToSpawn = UnityEngine.Random.Range(minBoxes, maxBoxes + 1);
 
-            int boxesToSpawn = UnityEngine.Random.Range(minBoxPiles, maxBoxPiles + 1);
+                TNHFrameworkLogger.Log($"Going to spawn {boxesToSpawn} boxes at this point -- Min ({minBoxes}), Max ({maxBoxes})", TNHFrameworkLogger.LogType.TNH);
 
-            TNHFrameworkLogger.Log("Going to spawn " + boxesToSpawn + " boxes at this point -- Min (" + level.MinBoxesSpawned + "), Max (" + level.MaxBoxesSpawned + ")", TNHFrameworkLogger.LogType.TNH);
-
-            for (int i = 0; i < boxesToSpawn; i++)
-            {
-                Transform spawnTransform = point.SpawnPoints_Boxes[UnityEngine.Random.Range(0, point.SpawnPoints_Boxes.Count)];
-                Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f) + Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
-                Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
-                GameObject box = UnityEngine.Object.Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                point.m_spawnBoxes.Add(box);
-            }
-
-            int tokensSpawned = 0;
-
-            // J: If you're asking "why is this an if/elseif check if it's a boolean value?", I... I don't know. I don't know why Anton does this. It's not a big deal but I don't know why.
-            if (!point.M.UsesUberShatterableCrates)
-            {
-                foreach (GameObject boxObj in point.m_spawnBoxes)
+                for (int i = 0; i < boxesToSpawn; i++)
                 {
+                    Transform spawnTransform = point.SpawnPoints_Boxes[UnityEngine.Random.Range(0, point.SpawnPoints_Boxes.Count)];
+                    Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f) + Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
+                    Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
 
-                    if (tokensSpawned < minTokens)
+                    GameObject box = UnityEngine.Object.Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
+                    point.m_spawnBoxes.Add(box);
+                }
+
+                int tokensSpawned = 0;
+
+                // J: If you're asking "why is this an if/elseif check if it's a boolean value?", I... I don't know. I don't know why Anton does this. It's not a big deal but I don't know why.
+                if (!point.M.UsesUberShatterableCrates)
+                {
+                    foreach (GameObject boxObj in point.m_spawnBoxes)
                     {
-                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
-                        tokensSpawned += 1;
+
+                        if (tokensSpawned < minTokens)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                            tokensSpawned += 1;
+                        }
+
+                        else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                            tokensSpawned += 1;
+                        }
+
+                        else if (UnityEngine.Random.value < level.BoxHealthChance)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(point.M);
+                        }
                     }
+                }
 
-                    else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                else if (point.M.UsesUberShatterableCrates)
+                {
+                    for (int k = 0; k < point.m_spawnBoxes.Count; k++)
                     {
-                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
-                        tokensSpawned += 1;
-                    }
-
-                    else if (UnityEngine.Random.value < level.BoxHealthChance)
-                    {
-                        boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(point.M);
+                        UberShatterable boxComp = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
+                        if (tokensSpawned < minTokens)
+                        {
+                            spawnBoxWithToken(point, boxComp);
+                            tokensSpawned += 1;
+                        }
+                        else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                        {
+                            spawnBoxWithToken(point, boxComp);
+                            tokensSpawned += 1;
+                        }
+                        else if (UnityEngine.Random.value < level.BoxHealthChance)
+                        {
+                            spawnBoxWithHealth(point, boxComp);
+                        }
+                        else
+                        {
+                            spawnBoxEmpty(point, boxComp);
+                        }
                     }
                 }
             }
 
-            else if (point.M.UsesUberShatterableCrates)
+            // Vanilla character behavior:
+            // - Only one box per Take phase has a token (spawnToken is only true for one supply point)
+            // - Hallways has 1-2 piles of 1-3 boxes per supply point; large maps have only 1 supply point with 2-3 piles of 1-3 boxes
+            // - Each supply point has up to 3 health, and each of these has a different probability of spawning
+            else
             {
-                for (int k = 0; k < point.m_spawnBoxes.Count; k++)
+                bool spawnHealth1 = (UnityEngine.Random.Range(0f, 1f) > 0.1f);
+                bool spawnHealth2 = (UnityEngine.Random.Range(0f, 1f) > 0.4f);
+                bool spawnHealth3 = (UnityEngine.Random.Range(0f, 1f) > 0.8f);
+
+                point.SpawnPoints_Boxes.Shuffle<Transform>();
+
+                int boxPiles = UnityEngine.Random.Range(minBoxPiles, maxBoxPiles + 1);
+                if (boxPiles < 1)
+                    return;
+
+                for (int i = 0; i < boxPiles; i++)
                 {
-                    UberShatterable component = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
-                    if (tokensSpawned < minTokens)
+                    Transform transform = point.SpawnPoints_Boxes[i];
+
+                    int boxesPerPile = UnityEngine.Random.Range(1, 3);
+                    for (int j = 0; j < boxesPerPile; j++)
                     {
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
-                        tokensSpawned += 1;
+                        Vector3 position = transform.position + Vector3.up * 0.1f + Vector3.up * 0.85f * (float)j;
+                        Vector3 onUnitSphere = UnityEngine.Random.onUnitSphere;
+                        onUnitSphere.y = 0f;
+                        onUnitSphere.Normalize();
+                        Quaternion rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(onUnitSphere, Vector3.up), 0.1f);
+
+                        GameObject item = UnityEngine.Object.Instantiate<GameObject>(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
+                        point.m_spawnBoxes.Add(item);
                     }
-                    else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                }
+
+                point.m_spawnBoxes.Shuffle<GameObject>();
+
+                if (!point.M.UsesUberShatterableCrates)
+                {
+                    int spawnIndex = 0;
+                    TNH_ShatterableCrate boxComp;
+
+                    if (spawnToken && point.m_spawnBoxes.Count > spawnIndex)
                     {
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
-                        tokensSpawned += 1;
+                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingToken(point.M);
+                        spawnIndex++;
                     }
-                    else if (UnityEngine.Random.value < level.BoxHealthChance)
+
+                    if (spawnHealth1 && point.m_spawnBoxes.Count > spawnIndex)
                     {
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_HealthMinor);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(point.M);
+                        spawnIndex++;
                     }
-                    else
+
+                    if (spawnHealth2 && point.m_spawnBoxes.Count > spawnIndex)
                     {
-                        component.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Empty);
-                        component.SpawnOnShatterPoints.Add(component.transform);
-                        component.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(point.M);
+                        spawnIndex++;
+                    }
+
+                    if (spawnHealth3 && point.m_spawnBoxes.Count > spawnIndex)
+                    {
+                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(point.M);
+                        //spawnIndex++;
+                    }
+                }
+                else
+                {
+                    for (int k = 0; k < point.m_spawnBoxes.Count; k++)
+                    {
+                        UberShatterable boxComp = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
+
+                        if (spawnToken)
+                        {
+                            spawnToken = false;
+                            spawnBoxWithToken(point, boxComp);
+                        }
+                        else if (spawnHealth1)
+                        {
+                            spawnHealth1 = false;
+                            spawnBoxWithHealth(point, boxComp);
+                        }
+                        else if (spawnHealth2)
+                        {
+                            spawnHealth2 = false;
+                            spawnBoxWithHealth(point, boxComp);
+                        }
+                        else if (spawnHealth3)
+                        {
+                            spawnHealth3 = false;
+                            spawnBoxWithHealth(point, boxComp);
+                        }
+                        else
+                        {
+                            spawnBoxEmpty(point, boxComp);
+                        }
                     }
                 }
             }
         }
+
+        private static void spawnBoxWithToken(TNH_SupplyPoint point, UberShatterable boxComp)
+        {
+            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
+            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
+            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+        }
+
+        private static void spawnBoxWithHealth(TNH_SupplyPoint point, UberShatterable boxComp)
+        {
+            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
+            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_HealthMinor);
+            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+        }
+
+        private static void spawnBoxEmpty(TNH_SupplyPoint point, UberShatterable boxComp)
+        {
+            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Empty);
+            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
+        }
+
 
         public static int GetNextHoldPointIndex(TNH_Manager M, TNH_PointSequence pointSequence, int currLevel, int currHoldIndex)
         {
@@ -1091,14 +1203,7 @@ namespace TNHFramework.Patches
 
             if (grenadeChance >= UnityEngine.Random.Range(0f, 1f))
             {
-                TNHFrameworkLogger.Log("Throwing grenade ", TNHFrameworkLogger.LogType.TNH);
-
-                if (AttackVectors == null || AttackVectors.Count == 0)
-                {
-                    // ODK - DEBUG
-                    TNHFrameworkLogger.Log("No attack vectors for grenade!", TNHFrameworkLogger.LogType.TNH);
-                    return;
-                }
+                TNHFrameworkLogger.Log($"Throwing grenade [{grenadeType}]", TNHFrameworkLogger.LogType.TNH);
 
                 //Get a random grenade vector to spawn a grenade at
                 AttackVectors.Shuffle();
@@ -1112,11 +1217,6 @@ namespace TNHFramework.Patches
                     //Give the grenade an initial velocity based on the grenade vector
                     grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
                     grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
-                }
-                else
-                {
-                    // ODK - DEBUG
-                    TNHFrameworkLogger.Log($"Grenade type '{grenadeType}' does not exist!", TNHFrameworkLogger.LogType.TNH);
                 }
             }
         }
@@ -1198,7 +1298,10 @@ namespace TNHFramework.Patches
 
             if (!__instance.m_hasThrownNadesInWave && __instance.m_tickDownToNextGroupSpawn <= 5f && !__instance.m_isFirstWave)
             {
-                SpawnGrenades(__instance.AttackVectors, __instance.M, __instance.m_phaseIndex);
+                // Check if grenade vectors exist before throwing grenades
+                if (__instance.AttackVectors[0].GrenadeVector != null)
+                    SpawnGrenades(__instance.AttackVectors, __instance.M, __instance.m_phaseIndex);
+                
                 __instance.m_hasThrownNadesInWave = true;
             }
 
@@ -1369,9 +1472,9 @@ namespace TNHFramework.Patches
         // Anton pls fix - Wrong sound plays when purchasing a clip at the new ammo reloader panel
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "Button_SpawnClip")]
         [HarmonyTranspiler]
-        static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
         {
-            var code = new List<CodeInstruction>(instructions);
+            List<CodeInstruction> code = new(instructions);
 
             // Find the insertion index
             int insertIndex = -1;
@@ -1402,11 +1505,11 @@ namespace TNHFramework.Patches
             }
 
             // Set flag = true so that AudEvent_Spawn is played instead of AudEvent_Fail
-            var codeToInsert = new List<CodeInstruction>
-            {
+            List<CodeInstruction> codeToInsert =
+            [
                 new(OpCodes.Ldc_I4_1),
                 new(OpCodes.Stloc_0),
-            };
+            ];
 
             // Insert the code
             if (insertIndex > -1)
@@ -1681,18 +1784,19 @@ namespace TNHFramework.Patches
                         if (vaultFile != null)
                         {
                             VaultSystem.ReturnObjectListDelegate del = new((objs) => TrackVaultObjects(constructor.M, objs));
+                            TNHFrameworkLogger.Log("Spawning vault gun", TNHFrameworkLogger.LogType.TNH);
                             SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero, del, false);
-                            TNHFrameworkLogger.Log("Vaulted gun spawned", TNHFrameworkLogger.LogType.TNH);
                         }
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         else if (vaultFileLegacy != null)
                         {
+                            TNHFrameworkLogger.Log("Spawning legacy vaulted gun", TNHFrameworkLogger.LogType.TNH);
                             AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation, constructor.M));
                             // SpawnFirearm adds the objects to the tracked objects list
-                            TNHFrameworkLogger.Log("Legacy vaulted gun spawned", TNHFrameworkLogger.LogType.TNH);
                         }
                         else
                         {
+                            TNHFrameworkLogger.Log("Spawning normal item", TNHFrameworkLogger.LogType.TNH);
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject spawnedObject = UnityEngine.Object.Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
@@ -1712,10 +1816,11 @@ namespace TNHFramework.Patches
                                     continue;
                                 }
 
-                                TNHFrameworkLogger.Log("Spawning Required item", TNHFrameworkLogger.LogType.TNH);
                                 FVRObject requiredObject = mainObject.RequiredSecondaryPieces[j];
                                 gameObjectCallback = requiredObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
+
+                                TNHFrameworkLogger.Log($"Spawning required secondary item ({requiredObject.ItemID})", TNHFrameworkLogger.LogType.TNH);
                                 GameObject requiredItem = UnityEngine.Object.Instantiate(requiredObject.GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
                                 constructor.M.AddObjectToTrackedList(requiredItem);
                                 requiredSpawnCount += 1;
@@ -1746,12 +1851,16 @@ namespace TNHFramework.Patches
 
                                 gameObjectCallback = magazineObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
+
+                                TNHFrameworkLogger.Log($"Spawning magazine ({magazineObject.ItemID})", TNHFrameworkLogger.LogType.TNH);
                                 GameObject spawnedMag = UnityEngine.Object.Instantiate(magazineObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
                                 constructor.M.AddObjectToTrackedList(spawnedMag);
                                 ammoSpawnCount += 1;
 
                                 gameObjectCallback = clipObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
+
+                                TNHFrameworkLogger.Log($"Spawning clip ({clipObject.ItemID}), Count = {group.NumClipsSpawned}", TNHFrameworkLogger.LogType.TNH);
                                 for (int i = 0; i < group.NumClipsSpawned; i++)
                                 {
                                     GameObject spawnedClip = UnityEngine.Object.Instantiate(clipObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
@@ -1790,7 +1899,7 @@ namespace TNHFramework.Patches
                                     ammoSpawn = constructor.SpawnPoint_Ammo;
                                 }
 
-                                TNHFrameworkLogger.Log("Spawning ammo object normally (" + ammoObject.ItemID + "), Count = " + numSpawned, TNHFrameworkLogger.LogType.TNH);
+                                TNHFrameworkLogger.Log($"Spawning ammo object normally ({ammoObject.ItemID}), Count = {numSpawned}", TNHFrameworkLogger.LogType.TNH);
 
                                 gameObjectCallback = ammoObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
@@ -1816,7 +1925,7 @@ namespace TNHFramework.Patches
                             GameObject spawnedSight = UnityEngine.Object.Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                             constructor.M.AddObjectToTrackedList(spawnedSight);
 
-                            TNHFrameworkLogger.Log("Required sight spawned", TNHFrameworkLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log($"Required sight spawned ({sight.ItemID})", TNHFrameworkLogger.LogType.TNH);
 
                             for (int j = 0; j < sight.RequiredSecondaryPieces.Count; j++)
                             {
@@ -1825,7 +1934,7 @@ namespace TNHFramework.Patches
                                 yield return gameObjectCallback;
                                 GameObject spawnedRequired = UnityEngine.Object.Instantiate(objectRequired.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
                                 constructor.M.AddObjectToTrackedList(spawnedRequired);
-                                TNHFrameworkLogger.Log("Required item for sight spawned", TNHFrameworkLogger.LogType.TNH);
+                                TNHFrameworkLogger.Log($"Required secondary item for sight spawned ({objectRequired.ItemID})", TNHFrameworkLogger.LogType.TNH);
                             }
 
                             objectSpawnCount += 1;
@@ -1834,6 +1943,7 @@ namespace TNHFramework.Patches
                         //If this object has bespoke attachments we'll try to spawn one
                         else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < group.BespokeAttachmentChance)
                         {
+                            TNHFrameworkLogger.Log("Spawning bespoke attachment", TNHFrameworkLogger.LogType.TNH);
                             FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
                             gameObjectCallback = bespoke.GetGameObjectAsync();
                             yield return gameObjectCallback;
@@ -1841,7 +1951,7 @@ namespace TNHFramework.Patches
                             constructor.M.AddObjectToTrackedList(bespokeObject);
                             objectSpawnCount += 1;
 
-                            TNHFrameworkLogger.Log("Bespoke item spawned", TNHFrameworkLogger.LogType.TNH);
+                            TNHFrameworkLogger.Log($"Bespoke item spawned ({bespoke.ItemID})", TNHFrameworkLogger.LogType.TNH);
                         }
                     }
                 }
