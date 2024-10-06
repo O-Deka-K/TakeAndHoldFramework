@@ -17,7 +17,11 @@ namespace TNHFramework.Patches
         /////////////////////////////
 
 
-        // Finds an index in the patrols list which can spawn, preventing bosses that have already spawned from spawning again
+        /// <summary>
+        /// Finds an index in the patrols list which can spawn, preventing bosses that have already spawned from spawning again
+        /// </summary>
+        /// <param name="patrols">List of patrols that can spawn</param>
+        /// <returns>Returns -1 if no valid index is found, otherwise returns a random index for a patrol </returns>
         private static int GetValidPatrolIndex(List<Patrol> patrols)
         {
             // Create a pool of valid patrols
@@ -131,7 +135,7 @@ namespace TNHFramework.Patches
                     }
                     else if (currLevel.Patrols.Count > 0)
                     {
-                        TNHFrameworkLogger.Log($"Player is in Supply {holdIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
+                        TNHFrameworkLogger.Log($"Player is in Supply {supplyIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
 
                         int firstPoint;
                         TNH_Manager.SentryPatrolPointType firstSpawnPointType;
@@ -247,9 +251,7 @@ namespace TNHFramework.Patches
                                 reached++;
                         }
 
-                        //if (total - reached <= 1 && reached >= 1)
-                        //if (total - reached <= total / 2 && reached >= 1)  // ODK - Adjusting patrol algorithm
-                        if (reached == total)
+                        if (total > 0 && reached == total)
                             hasReachedPatrolPoint = true;
 
                         if (hasReachedPatrolPoint)
