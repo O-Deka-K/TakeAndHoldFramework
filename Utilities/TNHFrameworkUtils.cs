@@ -455,7 +455,7 @@ namespace TNHFramework.Utilities
                 }
             }
 
-            catch (Exception ex)
+            catch
             {
                 //Debug.LogError(ex.ToString());
             }
