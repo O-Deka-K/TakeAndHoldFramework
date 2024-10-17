@@ -1,23 +1,18 @@
-﻿using System;
-using BepInEx;
-using UnityEngine;
+﻿using ADepIn;
+using Deli.VFS;
 using FistVR;
-using HarmonyLib;
-using System.Collections.Generic;
-using System.Reflection;
-using BepInEx.Configuration;
-using System.IO;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
-using UnityEngine.UI;
+using System.Xml.Linq;
 using TNHFramework.ObjectTemplates;
+using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
-using Deli.VFS;
-using UnityEngine.Networking;
-using System.Text;
 using YamlDotNet.Serialization;
-using Valve.VR;
 
 namespace TNHFramework.Utilities
 {
@@ -35,11 +30,14 @@ namespace TNHFramework.Utilities
                 // Create a new file     
                 using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
                 {
-                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    sw.WriteLine("DisplayName,ObjectID,Mod Content,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
+                            obj.DisplayName.Replace(",", ".") + "," +  // ODK - Added
                             obj.ItemID.Replace(",", ".") + "," + 
+                            obj.IsModContent.ToString() + "," +  // ODK - Added
                             obj.Category + "," +
                             obj.TagEra + "," +
                             obj.TagSet + "," +
@@ -82,9 +80,13 @@ namespace TNHFramework.Utilities
                 using (StreamWriter sw = File.CreateText(path + "/SosigIDs.txt"))
                 {
                     sw.WriteLine("#Available Sosig IDs for spawning");
-                    foreach (SosigEnemyID ID in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Keys)
+
+                    List<String> sosigList = [.. LoadedTemplateManager.SosigIDDict.Keys];
+                    sosigList.Sort();
+
+                    foreach (string ID in sosigList)
                     {
-                        sw.WriteLine(ID.ToString());
+                        sw.WriteLine(ID);
                     }
                     sw.Close();
                 }
@@ -331,7 +333,7 @@ namespace TNHFramework.Utilities
                             }
                         }
                     }
-                    catch(Exception e)
+                    catch
                     {
                         TNHFrameworkLogger.LogError("Vault File could not be loaded");
                     }
@@ -350,6 +352,28 @@ namespace TNHFramework.Utilities
                         string characterString = JsonConvert.SerializeObject(savedGun, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
                         sw.Close();
+                    }
+                }
+
+                var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
+                string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
+
+                string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
+                vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
+                vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+
+                foreach (string vaultFileName in vaultFileList)
+                {
+                    string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+
+                    try
+                    {
+                        File.Copy(Path.Combine(vaultPath, filename), Path.Combine(path, filename), true);
+                    }
+
+                    catch (Exception ex)
+                    {
+                        TNHFrameworkLogger.LogError($"Vault File {filename} could not be copied: {ex}");
                     }
                 }
             }
@@ -438,6 +462,30 @@ namespace TNHFramework.Utilities
         }
 
 
+        public static bool VaultFileComponentsLoaded(VaultFile template)
+        {
+            bool result = true;
+            List<string> missing = [];
+
+            foreach (VaultObject vaultObject in template.Objects)
+            {
+                foreach (VaultElement vaultElement in vaultObject.Elements)
+                {
+                    if (!IM.OD.ContainsKey(vaultElement.ObjectID))
+                    {
+                        missing.Add(vaultElement.ObjectID);
+                        result = false;
+                    }
+                }
+            }
+
+            if (!result)
+                TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID: {template.FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
+
+            return result;
+        }
+
+
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.IDOverride != null)
@@ -446,12 +494,32 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
+                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        {
+                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        //If this is not a vaulted gun, remove it
+                        else
+                        {
+                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i -= 1;
+                            i--;
                         }
                     }
                 }
@@ -468,12 +536,32 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this was not a vaulted gun, remove it
-                        if (!LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]) && !LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            TNHFrameworkLogger.LogWarning("Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
+                        {
+                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
+                            {
+                                group.IDOverride.RemoveAt(i);
+                                i--;
+                            }
+                        }
+
+                        // If this is not a vaulted gun, remove it
+                        else
+                        {
+                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i -= 1;
+                            i--;
                         }
                     }
                 }
@@ -673,7 +761,7 @@ namespace TNHFramework.Utilities
 
 
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation)
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
         {
             List<GameObject> toDealWith = [];
             List<GameObject> toMoveToTrays = [];
@@ -682,22 +770,20 @@ namespace TNHFramework.Utilities
             List<int> validIndexes = [];
             Dictionary<GameObject, SavedGunComponent> dicGO = [];
             Dictionary<int, GameObject> dicByIndex = [];
-            List<GameObject> gameObjects = [];
+            List<AnvilCallback<GameObject>> callbackList = [];
             SavedGun gun = savedGun.GetSavedGun();
 
             for (int i = 0; i < gun.Components.Count; i++)
             {
-                AnvilCallback<GameObject> gameObjectCallback = IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync();
-
+                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
                 TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
-
-                yield return gameObjectCallback;
-                gameObjects.Add(gameObjectCallback.Result);
             }
+            yield return callbackList;
 
             for (int j = 0; j < gun.Components.Count; j++)
             {
-                GameObject gameObject = UnityEngine.Object.Instantiate(gameObjects[j]);
+                GameObject gameObject = UnityEngine.Object.Instantiate(IM.OD[gun.Components[j].ObjectID].GetGameObject());
+                M.AddObjectToTrackedList(gameObject);
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
@@ -814,15 +900,15 @@ namespace TNHFramework.Utilities
         /// <param name="position"></param>
         /// <param name="count"></param>
         /// <param name="tolerance"></param>
-        public static IEnumerator InstantiateMultiple(GameObject gameObject, Vector3 position, int count,
-            float tolerance = 1.3f)
+        // Used to spawn more than one, same objects at a position
+        public static IEnumerator InstantiateMultiple(TNH_Manager M, GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
         {
             float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
             for (var index = 0; index < count; index++)
             {
                 float current = index * heightNeeded;
-                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current),
-                    new Quaternion());
+                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
+                M.AddObjectToTrackedList(gameObject);
                 yield return null;
             }
         }
@@ -845,20 +931,20 @@ namespace TNHFramework.Utilities
             {
                 for (int i = 0; i < group.ItemsToSpawn; i++)
                 {
-                    FVRObject selectedFVR;
-                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out selectedFVR))
+                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
                     {
                         //First, async get the game object to spawn
                         AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
                         yield return objectCallback;
-                        GameObject gameObject = objectCallback.Result;
 
                         //Next calculate the height needed for this item
+                        GameObject gameObject = selectedFVR.GetGameObject();
                         float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
                         currentHeight += heightNeeded;
 
                         //Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+                        // ODK - This is added to the tracked object list after we return
                         if(callback != null) callback.Invoke(spawnedObject);
                         yield return null;
                     }

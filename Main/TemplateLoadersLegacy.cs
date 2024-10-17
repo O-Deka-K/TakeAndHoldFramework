@@ -6,8 +6,8 @@ using Deli.Runtime;
 using Deli.Runtime.Yielding;
 using Deli.Setup;
 using Deli.VFS;
-using Deli.Newtonsoft.Json;
-using Deli.Newtonsoft.Json.Linq;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Linq;
 using FistVR;
 using System;
 using System.Collections;
@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using TNHFramework.ObjectTemplates.V1;
+using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
 using Stratum;
@@ -35,8 +35,14 @@ namespace TNHFramework
 
             try
             {
-                ObjectTemplates.SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SosigTemplate>();
-                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
+                string charString = stage.ImmediateReaders.Get<string>()(file);
+                JsonSerializerSettings settings = new()
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                };
+
+                SosigTemplate sosig = JsonConvert.DeserializeObject<SosigTemplate>(charString, settings);
+                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
@@ -63,7 +69,7 @@ namespace TNHFramework
 
             try
             {
-                CustomCharacter character = null;
+                ObjectTemplates.V1.CustomCharacter character = null;
                 Sprite thumbnail = null;
 
                 foreach (IFileHandle file in dir.GetFiles())
@@ -75,7 +81,8 @@ namespace TNHFramework
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         };
-                        character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
+                        
+                        character = JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(charString, settings);
                     }
                     else if (file.Path.EndsWith("thumb.png"))
                     {
@@ -98,7 +105,7 @@ namespace TNHFramework
                 //Now we want to load the icons for each pool
                 foreach (IFileHandle iconFile in dir.GetFiles())
                 {
-                    foreach (EquipmentPool pool in character.EquipmentPools)
+                    foreach (ObjectTemplates.V1.EquipmentPool pool in character.EquipmentPools)
                     {
                         if (iconFile.Path.Split('/').Last() == pool.IconName)
                         {
@@ -107,7 +114,7 @@ namespace TNHFramework
                     }
                 }
 
-                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
@@ -132,10 +139,14 @@ namespace TNHFramework
 
             try
             {
-                ObjectTemplates.SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<ObjectTemplates.SavedGunSerializable>();
+                string charString = stage.ImmediateReaders.Get<string>()(file);
+                JsonSerializerSettings settings = new()
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                };
 
-                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
-                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
+                SavedGunSerializable savedGun = JsonConvert.DeserializeObject<SavedGunSerializable>(charString, settings);
+                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }

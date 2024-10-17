@@ -1,32 +1,22 @@
-﻿using ADepIn;
+﻿using BepInEx;
 using BepInEx.Configuration;
-using Deli;
-using Deli.Immediate;
 using Deli.Setup;
-using Deli.VFS;
-using Deli.Runtime;
 using FistVR;
 using HarmonyLib;
+using Stratum;
+using Stratum.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using TNHFramework.ObjectTemplates;
+using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
-using UnityEngine.UI;
-using Deli.Runtime.Yielding;
-using Anvil;
-using TNHFramework.Patches;
-using Stratum;
-using BepInEx.Bootstrap;
-using BepInEx;
-using Stratum.Extensions;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.0.1")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.0")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -34,8 +24,10 @@ namespace TNHFramework
         private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
+        public static ConfigEntry<bool> InternalMagPatcher;
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> ConvertFilesToYAML;
+        public static ConfigEntry<bool> AlwaysMagUpgrader;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
@@ -54,6 +46,7 @@ namespace TNHFramework
         //Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
+        public static List<int> PatrolIndexPool = [];
         public static List<int> SupplyPointIFFList = [];
 
         public static List<GameObject> SpawnedConstructors = [];
@@ -89,24 +82,10 @@ namespace TNHFramework
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             Harmony.CreateAndPatchAll(typeof(HoldPatches));
+            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
 
-            if (EnableScoring.Value) Harmony.CreateAndPatchAll(typeof(HighScorePatches));
-
-            if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
-
-            /*
-            if (Chainloader.PluginInfos.ContainsKey("Deli"))
-            {
-                DeliAwake();
-            }
-            else
-            {
-                foreach (KeyValuePair<string, BepInEx.PluginInfo> item in Chainloader.PluginInfos)
-                {
-                    TNHFrameworkLogger.Log($"Plugin loaded: {item.Key}", TNHFrameworkLogger.LogType.General);
-                }
-            }
-            */
+            if (EnableDebugText.Value)
+                Harmony.CreateAndPatchAll(typeof(DebugPatches));
         }
 
         public override void OnSetup(IStageContext<Empty> ctx)
@@ -120,7 +99,6 @@ namespace TNHFramework
 
         public override IEnumerator OnRuntime(IStageContext<IEnumerator> ctx)
         {
-            // Do we... Need anything here?
             yield break;
         }
 
@@ -162,16 +140,27 @@ namespace TNHFramework
 
 
         /// <summary>
-        /// Loads the bepinex config file, and applys those settings
+        /// Loads the BepInEx config file, and applies those settings
         /// </summary>
         private void LoadConfigFile()
         {
             TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
 
+            InternalMagPatcher = Config.Bind("General",
+                                    "InternalMagPatcher",
+                                    true,
+                                    "If true and MagazinePatcher plugin is NOT used, run internal version. There may be a short delay in the TNH lobby");
+
             BuildCharacterFiles = Config.Bind("General",
                                     "BuildCharacterFiles",
                                     false,
                                     "If true, files useful for character creation will be generated in TNHTweaker folder");
+
+            AlwaysMagUpgrader = Config.Bind("General",
+                                    "AlwaysMagUpgrade",
+                                    true,
+                                    "If true, all Mag Duplicators become Mag Upgraders. This is default legacy TNHTweaker behavior.\n" +
+                                    "If false, Mag Duplicators and Mag Upgraders are different. Mag Upgraders allow you to buy a new mag for your current gun, while Mag Duplicators don't.");
 
             ConvertFilesToYAML = Config.Bind("General",
                                     "ConvertFilesToYAML",
@@ -181,7 +170,7 @@ namespace TNHFramework
             EnableScoring = Config.Bind("General",
                                     "EnableScoring",
                                     true,
-                                    "If true, TNH scores will be uploaded to the TNH Dashboard (https://devyndamonster.github.io/TNHDashboard/index.html)");
+                                    "Custom scoreboard is permanently offline, so this does nothing");
 
             allowLog = Config.Bind("Debug",
                                     "EnableLogging",
@@ -189,9 +178,9 @@ namespace TNHFramework
                                     "Set to true to enable logging");
 
             printCharacters = Config.Bind("Debug",
-                                         "LogCharacterInfo",
-                                         false,
-                                         "Decide if should print all character info");
+                                    "LogCharacterInfo",
+                                    false,
+                                    "Decide if should print all character info");
 
             logTNH = Config.Bind("Debug",
                                     "LogTNH",
@@ -241,17 +230,12 @@ namespace TNHFramework
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
-            TNHFrameworkLogger.Log("Preventing vanilla score submition", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
             GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
 
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
-
-            if (EnableScoring.Value)
-            {
-                AnvilManager.Instance.StartCoroutine(HighScorePatches.SendScore(score));
-            }
 
             //Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);

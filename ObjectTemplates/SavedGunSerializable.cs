@@ -43,6 +43,20 @@ namespace TNHFramework.ObjectTemplates
             this.gun = gun;
         }
 
+        public void Validate()
+        {
+            LoadedRoundsInMag ??= [];
+            LoadedRoundsInChambers ??= [];
+            SavedFlags ??= [];
+            FireSelectorModes ??= [];
+
+            Components ??= [];
+            foreach (SavedGunComponentSerializable component in Components)
+            {
+                component.Validate();
+            }
+        }
+
         public SavedGun GetSavedGun()
         {
             if(gun == null)
@@ -61,15 +75,22 @@ namespace TNHFramework.ObjectTemplates
 
         public bool AllComponentsLoaded()
         {
-            foreach(SavedGunComponentSerializable component in Components)
+            bool result = true;
+            List<string> missing = [];
+
+            foreach (SavedGunComponentSerializable component in Components)
             {
                 if (!IM.OD.ContainsKey(component.ObjectID))
                 {
-                    return false;
+                    missing.Add(component.ObjectID);
+                    result = false;
                 }
             }
 
-            return true;
+            if (!result)
+                TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID: {FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
+
+            return result;
         }
 
         public FVRObject GetGunObject()
@@ -246,6 +267,11 @@ namespace TNHFramework.ObjectTemplates
             Flags = component.Flags;
 
             this.component = component;
+        }
+
+        public void Validate()
+        {
+            Flags ??= [];
         }
 
         public SavedGunComponent GetGunComponent()

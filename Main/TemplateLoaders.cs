@@ -48,7 +48,7 @@ namespace TNHFramework
 
                     TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
 
-                    if (TNHFramework.ConvertFilesToYAML.Value == true)
+                    if (TNHFramework.ConvertFilesToYAML.Value)
                     {
                         using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                         {
@@ -108,7 +108,7 @@ namespace TNHFramework
                         // Convert old JSON character files to the newer YAML format.
                         character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
 
-                        if (TNHFramework.ConvertFilesToYAML.Value == true)
+                        if (TNHFramework.ConvertFilesToYAML.Value)
                         {
                             using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                             {
@@ -150,7 +150,7 @@ namespace TNHFramework
                     return new Empty();
                 }
 
-                //Now we want to load the icons for each pool
+                // Now we want to load the icons for each pool
                 foreach (FileInfo iconFile in folder.GetFiles())
                 {
                     foreach (EquipmentPool pool in character.EquipmentPools)
@@ -204,7 +204,7 @@ namespace TNHFramework
 
                     TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 
-                    if (TNHFramework.ConvertFilesToYAML.Value == true)
+                    if (TNHFramework.ConvertFilesToYAML.Value)
                     {
                         using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
                         {

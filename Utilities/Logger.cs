@@ -11,7 +11,7 @@ namespace TNHFramework.Utilities
     {
         public static ManualLogSource BepLog = null;
 
-        public static bool AllowLogging = false;
+        public static bool AllowLogging = true;
         public static bool LogCharacter = false;
         public static bool LogFile = false;
         public static bool LogTNH = false;
@@ -27,7 +27,7 @@ namespace TNHFramework.Utilities
 
         public static void Init()
         {
-            BepLog = BepInEx.Logging.Logger.CreateLogSource("TNHTweaker");
+            BepLog = BepInEx.Logging.Logger.CreateLogSource("TNHFramework");
         }
 
         public static void Log(string log, LogType type)
@@ -36,7 +36,9 @@ namespace TNHFramework.Utilities
 
             if (AllowLogging)
             {
-                if(type == LogType.General)
+                //log = $"[{DateTime.Now:HH:mm:ss}] {log}";  // Add timestamp
+
+                if (type == LogType.General)
                 {
                     BepLog.LogInfo(log);
                 }

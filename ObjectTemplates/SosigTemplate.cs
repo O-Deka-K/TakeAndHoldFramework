@@ -56,7 +56,38 @@ namespace TNHFramework.ObjectTemplates
 			this.template = template;
 		}
 
-		public SosigEnemyTemplate GetSosigEnemyTemplate()
+		public void Validate()
+		{
+            // Fix any null values that came from the JSON file
+            SosigPrefabs ??= [];
+
+            Configs ??= [];
+            foreach (SosigConfig config in Configs)
+            {
+                config.Validate();
+            }
+
+            ConfigsEasy ??= [];
+            foreach (SosigConfig config in Configs)
+            {
+                config.Validate();
+            }
+
+            OutfitConfigs ??= [];
+            foreach (OutfitConfig config in OutfitConfigs)
+            {
+                config.Validate();
+            }
+
+            WeaponOptions ??= [];
+            WeaponOptionsSecondary ??= [];
+            WeaponOptionsTertiary ??= [];
+            
+            DroppedObjectPool ??= new();
+            DroppedObjectPool.Validate();
+        }
+
+        public SosigEnemyTemplate GetSosigEnemyTemplate()
         {
 			if(template == null)
             {
@@ -113,7 +144,7 @@ namespace TNHFramework.ObjectTemplates
 					DroppedObjectPool.DelayedInit();
 				}
 				
-				//Add the new sosig template to the global dictionaries
+				// Add the new sosig template to the global dictionaries
 				ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(template.SosigEnemyID, template);
 				ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[template.SosigEnemyCategory].Add(template.SosigEnemyID);
 				ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[template.SosigEnemyCategory].Add(template);
@@ -253,6 +284,14 @@ namespace TNHFramework.ObjectTemplates
 			this.template = template;
         }
 
+        public void Validate()
+        {
+            LinkDamageMultipliers ??= [];
+            LinkStaggerMultipliers ??= [];
+            StartingLinkIntegrity ??= [];
+            StartingChanceBrokenJoint ??= [];
+        }
+
 		public SosigConfigTemplate GetConfigTemplate()
         {
 			if(template == null)
@@ -382,6 +421,17 @@ namespace TNHFramework.ObjectTemplates
 			Chance_Backpacks = template.Chance_Backpacks;
 
 			this.template = template;
+        }
+
+        public void Validate()
+        {
+            Headwear ??= [];
+            Eyewear ??= [];
+            Facewear ??= [];
+            Torsowear ??= [];
+            Pantswear ??= [];
+            Pantswear_Lower ??= [];
+            Backpacks ??= [];
         }
 
 		public SosigOutfitConfig GetOutfitConfig()

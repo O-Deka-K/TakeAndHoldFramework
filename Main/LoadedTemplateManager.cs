@@ -1,5 +1,4 @@
 ﻿using FistVR;
-// using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +34,7 @@ namespace TNHFramework
         /// <param name="template">A template for a custom sosig (Loaded at runtime)</param>
         public static void AddSosigTemplate(SosigTemplate template)
         {
+            template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
             //Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
@@ -62,9 +62,9 @@ namespace TNHFramework
 
         public static void AddSosigTemplate(SosigEnemyTemplate realTemplate)
         {
-            SosigTemplate template = new SosigTemplate(realTemplate);
+            SosigTemplate template = new(realTemplate);
 
-            //This template is from a sogig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+            //This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
@@ -85,6 +85,7 @@ namespace TNHFramework
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
+            template.Validate();
             CustomCharacters.Add(template);
             LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
 
@@ -121,33 +122,13 @@ namespace TNHFramework
         {
             if (!LoadedVaultFiles.ContainsKey(template.FileName))
             {
-                bool isFileBorked = false;
-                string culprit = "";
-                foreach (VaultObject vaultObject in template.Objects)
-                {
-                    foreach (VaultElement vaultElement in vaultObject.Elements)
-                    {
-                        if (!IM.OD.ContainsKey(vaultElement.ObjectID))
-                        {
-                            isFileBorked = true;
-                            culprit = vaultElement.ObjectID;
-                        }
-                    }
-                }
-
-                if (!isFileBorked)
-                {
-                    LoadedVaultFiles.Add(template.FileName, template);
-                }
-                else
-                {
-                    TNHFrameworkLogger.LogWarning("Failed to load vault file '" + template.FileName + "', culprit was: '" + culprit + "'");
-                }
+                LoadedVaultFiles.Add(template.FileName, template);
             }
         }
 
         public static void AddVaultFile(SavedGunSerializable template)
         {
+            template.Validate();
             if (!LoadedLegacyVaultFiles.ContainsKey(template.FileName))
             {
                 LoadedLegacyVaultFiles.Add(template.FileName, template);

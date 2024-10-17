@@ -1,6 +1,6 @@
 ﻿using ADepIn;
 using Deli.Immediate;
-using Deli.Newtonsoft.Json;
+using Valve.Newtonsoft.Json;
 using Deli.Setup;
 using Deli.VFS;
 using FistVR;
@@ -40,6 +40,7 @@ namespace TNHFramework.ObjectTemplates.V1
         public List<TagEra> ValidAmmoEras;
         public List<TagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
+        public List<string> GlobalObjectBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
 
         public EquipmentGroup RequireSightTable;
@@ -69,6 +70,7 @@ namespace TNHFramework.ObjectTemplates.V1
             ValidAmmoEras = new List<TagEra>();
             ValidAmmoSets = new List<TagSet>();
             GlobalAmmoBlacklist = new List<string>();
+            GlobalObjectBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             RequireSightTable = new EquipmentGroup();
             PrimaryWeapon = new LoadoutEntry();
@@ -102,6 +104,7 @@ namespace TNHFramework.ObjectTemplates.V1
             ValidAmmoEras = character.ValidAmmoEras.Select(o => (TagEra)o).ToList();
             ValidAmmoSets = character.ValidAmmoSets.Select(o => (TagSet)o).ToList();
             GlobalAmmoBlacklist = new List<string>();
+            GlobalObjectBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
@@ -120,6 +123,63 @@ namespace TNHFramework.ObjectTemplates.V1
             ForceDisableOutfitFunctionality = false;
 
             this.character = character;
+        }
+
+        public void Validate()
+        {
+            // Fix any null values that came from the JSON file
+            ValidAmmoEras ??= [];
+            ValidAmmoSets ??= [];
+            GlobalObjectBlacklist ??= [];
+            GlobalAmmoBlacklist ??= [];
+
+            MagazineBlacklist ??= [];
+            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+            {
+                entry.Validate();
+            }
+
+            RequireSightTable ??= new();
+            RequireSightTable.Validate();
+
+            PrimaryWeapon ??= new();
+            PrimaryWeapon.Validate();
+
+            SecondaryWeapon ??= new();
+            SecondaryWeapon.Validate();
+
+            TertiaryWeapon ??= new();
+            TertiaryWeapon.Validate();
+
+            PrimaryItem ??= new();
+            PrimaryItem.Validate();
+
+            SecondaryItem ??= new();
+            SecondaryItem.Validate();
+
+            TertiaryItem ??= new();
+            TertiaryItem.Validate();
+
+            Shield ??= new();
+            Shield.Validate();
+
+            EquipmentPools ??= [];
+            foreach (EquipmentPool pool in EquipmentPools)
+            {
+                pool.Validate();
+            }
+
+            Levels ??= [];
+            foreach (Level level in Levels)
+            {
+                level.Validate();
+            }
+
+            LevelsEndless ??= [];
+            foreach (Level level in LevelsEndless)
+            {
+                level.Validate();
+            }
         }
 
         public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
@@ -412,6 +472,15 @@ namespace TNHFramework.ObjectTemplates.V1
             this.pool = pool;
         }
 
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
+
+            BackupGroup ??= new();
+            BackupGroup.Validate();
+        }
+
         public EquipmentPoolDef.PoolEntry GetPoolEntry()
         {
             if (pool == null)
@@ -608,6 +677,33 @@ namespace TNHFramework.ObjectTemplates.V1
             this.objectTableDef = objectTableDef;
         }
 
+        public void Validate()
+        {
+            IDOverride ??= [];
+            Eras ??= [];
+            Sets ??= [];
+            Sizes ??= [];
+            Actions ??= [];
+            Modes ??= [];
+            ExcludedModes ??= [];
+            FeedOptions ??= [];
+            MountsAvailable ??= [];
+            RoundPowers ??= [];
+            Features ??= [];
+            MeleeStyles ??= [];
+            MeleeHandedness ??= [];
+            MountTypes ??= [];
+            PowerupTypes ??= [];
+            ThrownTypes ??= [];
+            ThrownDamageTypes ??= [];
+
+            SubGroups ??= [];
+            foreach (EquipmentGroup group in SubGroups)
+            {
+                group.Validate();
+            }
+        }
+
         public ObjectTableDef GetObjectTableDef()
         {
             if (objectTableDef == null)
@@ -694,7 +790,8 @@ namespace TNHFramework.ObjectTemplates.V1
 
             else
             {
-                float combinedRarity = objects.Count;
+                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
                     combinedRarity += group.Rarity;
@@ -702,16 +799,15 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
 
-                if (randomSelection < objects.Count)
+                if (randomSelection < thisRarity)
                 {
                     result = new List<EquipmentGroup>();
                     result.Add(this);
                     return result;
                 }
-
                 else
                 {
-                    float progress = objects.Count;
+                    float progress = thisRarity;
                     for (int i = 0; i < SubGroups.Count; i++)
                     {
                         progress += SubGroups[i].Rarity;
@@ -910,7 +1006,14 @@ namespace TNHFramework.ObjectTemplates.V1
             return loadout;
         }
 
+        public void Validate()
+        {
+            PrimaryGroup ??= new();
+            PrimaryGroup.Validate();
 
+            BackupGroup ??= new();
+            BackupGroup.Validate();
+        }
 
         public bool DelayedInit(List<string> completedQuests)
         {
@@ -1019,6 +1122,26 @@ namespace TNHFramework.ObjectTemplates.V1
             BoxHealthChance = 0.5f;
 
             this.level = level;
+        }
+
+        public void Validate()
+        {
+            PossiblePanelTypes ??= [];
+            TakeChallenge ??= new();
+
+            HoldPhases ??= [];
+            foreach (Phase holdPhase in HoldPhases)
+            {
+                holdPhase.Validate();
+            }
+
+            SupplyChallenge ??= new();
+
+            Patrols ??= [];
+            foreach (Patrol patrol in Patrols)
+            {
+                patrol.Validate();
+            }
         }
 
         public TNH_Progression.Level GetLevel()
@@ -1228,6 +1351,12 @@ namespace TNHFramework.ObjectTemplates.V1
             this.phase = phase;
         }
 
+        public void Validate()
+        {
+            Encryptions ??= [];
+            EnemyType ??= [];
+        }
+
         public TNH_HoldChallenge.Phase GetPhase()
         {
             if (phase == null)
@@ -1324,6 +1453,11 @@ namespace TNHFramework.ObjectTemplates.V1
             IsBoss = false;
 
             this.patrol = patrol;
+        }
+
+        public void Validate()
+        {
+            EnemyType ??= [];
         }
 
         public TNH_PatrolChallenge.Patrol GetPatrol()
