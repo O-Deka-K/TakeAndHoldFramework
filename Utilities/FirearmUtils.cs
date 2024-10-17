@@ -181,7 +181,15 @@ namespace TNHFramework.Utilities
             //Go through these containers and remove any that don't fit given criteria
             for (int i = compatibleRounds.Count - 1; i >= 0; i--)
             {
-                if (blacklist != null && !blacklist.IsRoundAllowed(compatibleRounds[i].ItemID))
+                if (compatibleRounds.Count <= 1)
+                    break;
+
+                if (!eras.Contains(compatibleRounds[i].TagEra) || !sets.Contains(compatibleRounds[i].TagSet))
+                {
+                    compatibleRounds.RemoveAt(i);
+                }
+
+                else if (blacklist != null && !blacklist.IsRoundAllowed(compatibleRounds[i].ItemID))
                 {
                     compatibleRounds.RemoveAt(i);
                 }
@@ -195,18 +203,19 @@ namespace TNHFramework.Utilities
                 {
                     compatibleRounds.RemoveAt(i);
                 }
-
-                else if (!eras.Contains(compatibleRounds[i].TagEra) || !sets.Contains(compatibleRounds[i].TagSet))
-                {
-                    compatibleRounds.RemoveAt(i);
-                }
             }
 
-            foreach (KeyValuePair<FireArmRoundClass, FVRFireArmRoundDisplayData.DisplayDataClass> dogshit in AM.STypeDic[firearm.RoundType])
+            //Get a list of ammo types that cost more than 0 and sort them in descending order by cost
+            var dogshit = AM.STypeDic[firearm.RoundType].Values
+                .Where(x => x.Cost > 0)
+                .OrderByDescending(x => x.Cost);
+
+            //Remove ammo types starting from highest cost. Don't remove if it's the last one left.
+            foreach (var round in dogshit)
             {
-                if (compatibleRounds.Contains(dogshit.Value.ObjectID) && dogshit.Value.Cost > 0)
+                if (compatibleRounds.Count > 1 && compatibleRounds.Contains(round.ObjectID))
                 {
-                    compatibleRounds.Remove(dogshit.Value.ObjectID);
+                    compatibleRounds.Remove(round.ObjectID);
                 }
             }
 
