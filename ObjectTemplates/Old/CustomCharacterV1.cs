@@ -59,9 +59,6 @@ namespace TNHFramework.ObjectTemplates.V1
         private TNH_CharacterDef character;
 
         [JsonIgnore]
-        private List<string> completedQuests;
-
-        [JsonIgnore]
         private Dictionary<string, MagazineBlacklistEntry> magazineBlacklistDict;
 
 
@@ -329,7 +326,7 @@ namespace TNHFramework.ObjectTemplates.V1
             TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
             TNHFrameworkLogger.Log("Init of Primary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(completedQuests))
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
@@ -337,7 +334,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Secondary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(completedQuests))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
@@ -345,7 +342,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Tertiary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(completedQuests))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
@@ -353,7 +350,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Primary Item", TNHFrameworkLogger.LogType.Character);
-            if (HasPrimaryItem && !PrimaryItem.DelayedInit(completedQuests))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
@@ -361,7 +358,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Secondary Item", TNHFrameworkLogger.LogType.Character);
-            if (HasSecondaryItem && !SecondaryItem.DelayedInit(completedQuests))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
@@ -369,7 +366,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Tertiary Item", TNHFrameworkLogger.LogType.Character);
-            if (HasTertiaryItem && !TertiaryItem.DelayedInit(completedQuests))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
@@ -377,7 +374,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of Shield", TNHFrameworkLogger.LogType.Character);
-            if (HasShield && !Shield.DelayedInit(completedQuests))
+            if (HasShield && !Shield.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
@@ -385,7 +382,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             TNHFrameworkLogger.Log("Init of required sights table", TNHFrameworkLogger.LogType.Character);
-            if (RequireSightTable != null && !RequireSightTable.DelayedInit(completedQuests))
+            if (RequireSightTable != null && !RequireSightTable.DelayedInit())
             {
                 TNHFrameworkLogger.LogWarning("Required sight table was empty, guns will not spawn with required sights");
                 RequireSightTable = null;
@@ -404,7 +401,7 @@ namespace TNHFramework.ObjectTemplates.V1
             for (int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if (!pool.DelayedInit(completedQuests))
+                if (!pool.DelayedInit())
                 {
                     TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
@@ -508,7 +505,7 @@ namespace TNHFramework.ObjectTemplates.V1
         }
 
 
-        public bool DelayedInit(List<string> completedQuests)
+        public bool DelayedInit()
         {
             if (pool != null)
             {
@@ -519,7 +516,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit(completedQuests))
+                    if (!PrimaryGroup.DelayedInit())
                     {
                         TNHFrameworkLogger.Log("Primary group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
@@ -528,7 +525,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit(completedQuests))
+                    if (!BackupGroup.DelayedInit())
                     {
                         if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         BackupGroup = null;
@@ -1015,13 +1012,13 @@ namespace TNHFramework.ObjectTemplates.V1
             BackupGroup.Validate();
         }
 
-        public bool DelayedInit(List<string> completedQuests)
+        public bool DelayedInit()
         {
             if (loadout != null)
             {
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit(completedQuests))
+                    if (!PrimaryGroup.DelayedInit())
                     {
                         TNHFrameworkLogger.Log("Primary group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
@@ -1030,7 +1027,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit(completedQuests))
+                    if (!BackupGroup.DelayedInit())
                     {
                         if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         BackupGroup = null;

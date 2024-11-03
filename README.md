@@ -1,38 +1,19 @@
-Note: Holy cow I need to update this.
+# Take & Hold Framework
+A BepInEx plugin for H3VR that allows for adding custom characters to the Take & Hold gamemode, as well as a few quality-of-life features.
 
-[![Exampled Video](https://az743702.vo.msecnd.net/cdn/kofi3.png?v=0)](https://ko-fi.com/devyn_myers)
-
-
-# TakeAndHoldTweaker
-An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters, as well as global tweaks to spice things up.
+## Features
+- Adds support for custom characters using YAML, with legacy support for TNH Tweaker/Deli-based custom characters.
+- Features a replacement for Magazine Patcher. No longer will you have crashes due to using too much RAM while loading.
+- Institution support.
+- Bugs I have yet to find.
 
 ## Installation
-0. **Make sure you uninstalled older versions of TNHTweaker before continuing**
-1. Install the [Deli Mod Loader](https://github.com/Deli-Counter/Deli)
-    - Deli requires the x64 version of BepInEx, you can find installation instructions for that [here](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html?tabs=tabid-win)
-    - By default the games root folder path is `C:\Program Files (x86)\Steam\steamapps\common\H3VR`
-2. Download and install [Magazine Patcher](https://github.com/devyndamonster/MagazinePatcher)
-3. Download the `Devyndamonster-TakeAndHoldTweaker.zip` from the [releases page](https://github.com/devyndamonster/TakeAndHoldTweaker/releases)
-4. Extract that zip file into your `BepInEx/plugins` folder
-5. Run H3VR once, and enter the Take &amp; Hold menu scene
-    - This may take a while, as it will have to generate a compatible magazines cache
-    - This will also generate a config file inside your `BepInEx/configs` folder
-6. Place any character files into the `BepInEx/plugins` folder
-
-## Current Custom Characters
-
-***NOTE:*** Custom characters have moved! You can find them on [Thunderstore!](https://h3vr.thunderstore.io/?q=&ordering=last-updated&included_categories=55)
-
-- **Comrade Kolbasa** \- A character which can only use russian and czech weaponry
-- **Time Travel Timmy** \- Progress through each age of weaponry, from wild west to modern
-- **PMC Pete** \- An Escape From Tarkov themed character
+Install via the [r2modman](https://thunderstore.io/c/h3vr/p/ebkr/r2modman/) mod manager.
 
 ## Character Creation
-Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
-
+[This guide](https://docs.google.com/document/d/1j92RENR0DX1t_81b4gsZzou_FpKNPUTj9CVgfmesqe0/edit?usp=sharing) should cover creating a custom character. Though hopefully this repository will have creating custom character information.
 
 ## Building
-
-Create a new folder inside of your main H3VR install, then place this repository's folder inside of that. Your file structure should look something like, say... `(Steam path)/common/H3VR/(Repos)/TakeAndHoldTweaker/TakeAndHoldTweaker.sln`.
+Create a new folder inside of your main H3VR install, then place this repository's folder inside of that. Your file structure should look something like, say... `(Steam path)/common/H3VR/(Repos)/TNHFramework/TNHFramework.sln`.
 Next, create a mod manager profile called 'Dev' and install the prerequisite mods.
 (to-do: create a mod profile file that allows people to import all necessary mods)
