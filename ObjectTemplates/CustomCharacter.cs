@@ -102,13 +102,13 @@ namespace TNHFramework.ObjectTemplates
             GlobalObjectBlacklist = [];
             GlobalAmmoBlacklist = [];
             MagazineBlacklist = [];
-            PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
-            SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
-            TertiaryWeapon = new LoadoutEntry(character.Weapon_Tertiary);
-            PrimaryItem = new LoadoutEntry(character.Item_Primary);
-            SecondaryItem = new LoadoutEntry(character.Item_Secondary);
-            TertiaryItem = new LoadoutEntry(character.Item_Tertiary);
-            Shield = new LoadoutEntry(character.Item_Shield);
+            PrimaryWeapon = character.Has_Weapon_Primary ? new LoadoutEntry(character.Weapon_Primary) : new();
+            SecondaryWeapon = character.Has_Weapon_Secondary ? new LoadoutEntry(character.Weapon_Secondary) : new();
+            TertiaryWeapon = character.Has_Weapon_Tertiary ? new LoadoutEntry(character.Weapon_Tertiary) : new();
+            PrimaryItem = character.Has_Item_Primary ? new LoadoutEntry(character.Item_Primary) : new();
+            SecondaryItem = character.Has_Item_Secondary ? new LoadoutEntry(character.Item_Secondary) : new();
+            TertiaryItem = character.Has_Item_Tertiary ? new LoadoutEntry(character.Item_Tertiary) : new();
+            Shield = character.Has_Item_Shield ? new LoadoutEntry(character.Item_Shield) : new();
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
 
@@ -158,13 +158,13 @@ namespace TNHFramework.ObjectTemplates
             MagazineBlacklist = character.MagazineBlacklist ?? [];
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
-            PrimaryWeapon = new LoadoutEntry(character.PrimaryWeapon);
-            SecondaryWeapon = new LoadoutEntry(character.SecondaryWeapon);
-            TertiaryWeapon = new LoadoutEntry(character.TertiaryWeapon);
-            PrimaryItem = new LoadoutEntry(character.PrimaryItem);
-            SecondaryItem = new LoadoutEntry(character.SecondaryItem);
-            TertiaryItem = new LoadoutEntry(character.TertiaryItem);
-            Shield = new LoadoutEntry(character.Shield);
+            PrimaryWeapon = character.HasPrimaryWeapon? new LoadoutEntry(character.PrimaryWeapon) : new();
+            SecondaryWeapon = character.HasSecondaryWeapon ? new LoadoutEntry(character.SecondaryWeapon) : new();
+            TertiaryWeapon = character.HasTertiaryWeapon ? new LoadoutEntry(character.TertiaryWeapon) : new();
+            PrimaryItem = character.HasPrimaryItem ? new LoadoutEntry(character.PrimaryItem) : new();
+            SecondaryItem = character.HasSecondaryItem ? new LoadoutEntry(character.SecondaryItem) : new();
+            TertiaryItem = character.HasTertiaryItem ? new LoadoutEntry(character.TertiaryItem) : new();
+            Shield = character.HasShield ? new LoadoutEntry(character.Shield) : new();
 
             EquipmentPools = [];
             foreach (V1.EquipmentPool oldPool in character.EquipmentPools)
