@@ -205,17 +205,20 @@ namespace TNHFramework.Utilities
                 }
             }
 
-            //Get a list of ammo types that cost more than 0 and sort them in descending order by cost
-            var dogshit = AM.STypeDic[firearm.RoundType].Values
-                .Where(x => x.Cost > 0)
-                .OrderByDescending(x => x.Cost);
-
-            //Remove ammo types starting from highest cost. Don't remove if it's the last one left.
-            foreach (var round in dogshit)
+            if (AM.STypeDic.ContainsKey(firearm.RoundType))
             {
-                if (compatibleRounds.Count > 1 && compatibleRounds.Contains(round.ObjectID))
+                //Get a list of ammo types that cost more than 0 and sort them in descending order by cost
+                var dogshit = AM.STypeDic[firearm.RoundType].Values
+                    .Where(x => x.Cost > 0)
+                    .OrderByDescending(x => x.Cost);
+
+                //Remove ammo types starting from highest cost. Don't remove if it's the last one left.
+                foreach (var round in dogshit)
                 {
-                    compatibleRounds.Remove(round.ObjectID);
+                    if (compatibleRounds.Count > 1 && compatibleRounds.Contains(round.ObjectID))
+                    {
+                        compatibleRounds.Remove(round.ObjectID);
+                    }
                 }
             }
 
