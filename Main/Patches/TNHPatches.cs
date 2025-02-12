@@ -1620,6 +1620,7 @@ namespace TNHFramework.Patches
 
 
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPriority(800)]
         [HarmonyPrefix]
         public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, int i)
         {
