@@ -472,15 +472,6 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_Manager __instance, int curStandardIndex, int excludeHoldIndex, bool isStart)
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
-            Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
-
-            //Get a valid patrol index, and exit if there are no valid patrols
-            int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
-            if (patrolIndex == -1)
-                return false;
-
-            Patrol patrol = currLevel.Patrols[patrolIndex];
             List<int> validLocations = [];
             float minDist = __instance.TAHReticle.Range * 1.2f;
 
@@ -503,6 +494,15 @@ namespace TNHFramework.Patches
             if (validLocations.Count < 1) return false;
             validLocations.Shuffle();
 
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
+            Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
+
+            //Get a valid patrol index, and exit if there are no valid patrols
+            int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
+            if (patrolIndex == -1)
+                return false;
+
+            Patrol patrol = currLevel.Patrols[patrolIndex];
             TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(__instance, validLocations[0], patrol, patrolIndex);
             __instance.m_patrolSquads.Add(squad);
 

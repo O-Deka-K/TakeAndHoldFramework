@@ -63,7 +63,7 @@ namespace TNHFramework
             InitPanel();
             UpdateIcons();
 
-            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+            original.M.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
         private void OnDestroy()
@@ -364,7 +364,7 @@ namespace TNHFramework
             DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
-            int numTokens = GM.TNH_Manager.GetNumTokens();
+            int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
 
             if (detectedMag != null || detectedSpeedLoader != null)
@@ -449,7 +449,7 @@ namespace TNHFramework
             InitPanel();
             UpdateIcons();
 
-            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+            original.M.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
         private void OnDestroy()
@@ -633,7 +633,7 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
-            int numTokens = GM.TNH_Manager.GetNumTokens();
+            int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
 
             if (detectedFirearm != null)
@@ -700,7 +700,7 @@ namespace TNHFramework
             InitPanel();
             UpdateIcons();
 
-            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+            original.M.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
         private void OnDestroy()
@@ -1028,7 +1028,7 @@ namespace TNHFramework
         private void UpdateIcons()
         {
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
-            int numTokens = GM.TNH_Manager.GetNumTokens();
+            int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
 
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
@@ -1100,7 +1100,7 @@ namespace TNHFramework
             InitPanel();
             UpdateIcons();
 
-            GM.TNH_Manager.TokenCountChangeEvent += UpdateTokenDisplay;
+            original.M.TokenCountChangeEvent += UpdateTokenDisplay;
         }
 
         private void OnDestroy()
@@ -1365,7 +1365,7 @@ namespace TNHFramework
         {
             PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
-            int numTokens = GM.TNH_Manager.GetNumTokens();
+            int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
 
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)

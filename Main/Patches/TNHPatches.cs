@@ -399,7 +399,9 @@ namespace TNHFramework.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation, o =>
+                    Transform spawnPoint = __instance.SpawnPoints_SmallItem.Count >= 2 ? __instance.SpawnPoints_SmallItem[1] : __instance.SpawnPoints_SmallItem[0];
+
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -412,7 +414,9 @@ namespace TNHFramework.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation, o =>
+                    Transform spawnPoint = __instance.SpawnPoints_SmallItem.Count >= 3 ? __instance.SpawnPoints_SmallItem[2] : __instance.SpawnPoints_SmallItem[__instance.SpawnPoints_SmallItem.Count - 1];
+
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, o =>
                     {
                         __instance.M.AddObjectToTrackedList(o);
                     }));
@@ -1323,6 +1327,43 @@ namespace TNHFramework.Patches
             return false;
         }
 
+        // Anton pls fix - Don't play line to advance to next node when completing last hold
+        [HarmonyPatch(typeof(TNH_HoldPoint), "CompleteHold")]
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> CompleteHold_LineFix(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> code = new(instructions);
+
+            for (int i = 0; i < code.Count - 3; i++)
+            {
+                // Search for "EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt)" and remove it
+                if (code[i].opcode == OpCodes.Ldarg_0 &&
+                    code[i + 1].opcode == OpCodes.Ldfld &&
+                    code[i + 2].opcode == OpCodes.Ldc_I4_S && code[i + 2].operand.Equals((sbyte)90) &&
+                    code[i + 3].opcode == OpCodes.Callvirt)
+                {
+                    code[i].opcode = OpCodes.Nop;
+                    code[i + 1].opcode = OpCodes.Nop;
+                    code[i + 2].opcode = OpCodes.Nop;
+                    code[i + 3].opcode = OpCodes.Nop;
+                    break;
+                }
+            }
+
+            return code;
+        }
+
+        // Anton pls fix - Don't play line to advance to next node when completing last hold
+        [HarmonyPatch(typeof(TNH_Manager), "HoldPointCompleted")]
+        [HarmonyPostfix]
+        public static void HoldPointCompleted_LineFix(TNH_Manager __instance)
+        {
+            if (__instance.m_level < __instance.m_maxLevels)
+            {
+                __instance.EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt);
+            }
+        }
+
 
         #endregion
 
@@ -1579,6 +1620,7 @@ namespace TNHFramework.Patches
 
 
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPriority(800)]
         [HarmonyPrefix]
         public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, int i)
         {
