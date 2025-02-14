@@ -25,8 +25,6 @@ namespace TNHFramework.Patches
         {
             if (!__instance.m_hasInit && __instance.AIManager.HasInit)
             {
-                //Clear all entries from the tracked stats
-                TNHFramework.HoldActions.Clear();
                 TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
             }
             
@@ -38,9 +36,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool TrackPlayerSpawnPatch(TNH_Manager __instance)
         {
-            TNHFramework.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
             TNHFrameworkLogger.Log("Spawned Player", TNHFrameworkLogger.LogType.TNH);
-
             return true;
         }
 
@@ -60,8 +56,6 @@ namespace TNHFramework.Patches
         public static bool TrackNextLevel()
         {
             TNHFrameworkLogger.Log("Set Level", TNHFrameworkLogger.LogType.TNH);
-            TNHFramework.HoldActions.Add([]);
-
             return true;
         }
 
@@ -71,8 +65,6 @@ namespace TNHFramework.Patches
         public static bool TrackDeath()
         {
             TNHFrameworkLogger.Log("Died", TNHFrameworkLogger.LogType.TNH);
-            TNHFramework.HoldActions.Last().Add("Died");
-
             return true;
         }
 
@@ -82,8 +74,6 @@ namespace TNHFramework.Patches
         public static bool TrackVictory()
         {
             TNHFrameworkLogger.Log("Victory", TNHFrameworkLogger.LogType.TNH);
-            TNHFramework.HoldActions.Last().Add("Victory");
-
             return true;
         }
 
@@ -93,8 +83,6 @@ namespace TNHFramework.Patches
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
         {
             TNHFrameworkLogger.Log("Hold Start", TNHFrameworkLogger.LogType.TNH);
-            TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
-
             return true;
         }
 
@@ -104,10 +92,6 @@ namespace TNHFramework.Patches
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
             TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
-            if (__instance.m_selectedObject != null)
-            {
-                TNHFramework.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_selectedObject.ObjectWrapper.DisplayName}");
-            }
 
             return true;
         }
@@ -130,7 +114,6 @@ namespace TNHFramework.Patches
                 {
                     __instance.m_contact.SetVisited(true);
                     TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
-                    TNHFramework.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
                 __instance.m_hasBeenVisited = true;
             }

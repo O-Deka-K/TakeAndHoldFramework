@@ -1706,7 +1706,6 @@ namespace TNHFramework.Patches
                 if (pool.SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
                 FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
-                TNHFramework.HoldActions[constructor.M.m_level].Add($"Purchased {item.DisplayName}");
                 GameObject itemCase = SpawnWeaponCase(constructor.M, selectedGroups[0].BespokeAttachmentChance, caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 constructor.m_spawnedCase = itemCase;
@@ -1819,8 +1818,6 @@ namespace TNHFramework.Patches
                         }
 
                         TNHFrameworkLogger.Log("Level: " + constructor.M.m_level, TNHFrameworkLogger.LogType.TNH);
-                        TNHFrameworkLogger.Log("Hold Actions Length: " + TNHFramework.HoldActions.Count, TNHFrameworkLogger.LogType.TNH);
-                        TNHFramework.HoldActions[constructor.M.m_level].Add($"Purchased {mainObject.DisplayName}");
 
                         // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
                         if (vaultFile != null)

@@ -178,13 +178,11 @@ namespace TNHFramework
 
                 if (detectedMag != null)
                 {
-                    TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedMag.ObjectWrapper.DisplayName}");
                     FirearmUtils.SpawnDuplicateMagazine(original.M, detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
                 else
                 {
-                    TNHFramework.HoldActions[original.M.m_level].Add($"Duplicated {detectedSpeedLoader.ObjectWrapper.DisplayName}");
                     FirearmUtils.SpawnDuplicateSpeedloader(original.M, detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
@@ -205,8 +203,6 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(UpgradeCost);
 
-                TNHFramework.HoldActions[original.M.m_level].Add($"Upgraded {detectedMag.ObjectWrapper.DisplayName} To {upgradeMag.DisplayName}");
-
                 Destroy(detectedMag.GameObject);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
@@ -226,8 +222,6 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PurchaseCost);
-
-                TNHFramework.HoldActions[original.M.m_level].Add($"Purchased {purchaseMag.DisplayName}");
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
@@ -760,21 +754,18 @@ namespace TNHFramework
 
                 if(detectedHandgun != null)
                 {
-                    TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedHandgun.ObjectWrapper.DisplayName}");
                     AddFullAutoToHandgun(detectedHandgun);
                     ClearSelection();
                 }
 
                 else if (detectedClosedBolt != null)
                 {
-                    TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedClosedBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToClosedBolt(detectedClosedBolt);
                     ClearSelection();
                 }
 
                 else if(detectedOpenBolt != null)
                 {
-                    TNHFramework.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedOpenBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToOpenBolt(detectedOpenBolt);
                     ClearSelection();
                 }
@@ -1193,7 +1184,6 @@ namespace TNHFramework
         {
             if (detectedHandgun != null)
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedHandgun.ObjectWrapper.DisplayName}");
                 detectedHandgun.Slide.SpringStiffness *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Rearward *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Forward *= fireRateMultiplier;
@@ -1202,7 +1192,6 @@ namespace TNHFramework
 
             else if (detectedClosedBolt != null)
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
                 detectedClosedBolt.Bolt.SpringStiffness *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Forward *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Rearward *= fireRateMultiplier;
@@ -1211,7 +1200,6 @@ namespace TNHFramework
 
             else
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= fireRateMultiplier;
@@ -1225,7 +1213,6 @@ namespace TNHFramework
         {
             if(detectedHandgun != null)
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedHandgun.ObjectWrapper.DisplayName}");
                 detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
@@ -1234,7 +1221,6 @@ namespace TNHFramework
 
             else if(detectedClosedBolt != null)
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
                 detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
@@ -1243,7 +1229,6 @@ namespace TNHFramework
 
             else
             {
-                TNHFramework.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= (1f / fireRateMultiplier);

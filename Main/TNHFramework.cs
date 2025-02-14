@@ -53,12 +53,6 @@ namespace TNHFramework
         public static List<GameObject> SpawnedPanels = [];
         public static List<EquipmentPoolDef.PoolEntry> SpawnedPools = [];
 
-        public static List<List<string>> HoldActions = [];
-        public static List<HoldStats> HoldStats = [];
-
-        public static int GunsRecycled;
-        public static int ShotsFired;
-
         /// <summary>
         /// First method that gets called
         /// </summary>
