@@ -865,7 +865,6 @@ namespace TNHFramework.ObjectTemplates
             IsCompatibleMagazine = false;
             AutoPopulateGroup = !objectTableDef.UseIDListOverride;
             IDOverride = new List<string>(objectTableDef.IDOverride);
-            objectTableDef.IDOverride.Clear();
 
             Tags = new()
             {
