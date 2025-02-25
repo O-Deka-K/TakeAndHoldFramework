@@ -86,6 +86,7 @@
 
 ## [0.2.1] - 2025-XX-XX
 
+- Fixed missing equipment pools in vanilla characters.
 - Fixed patrol algorithm from skipping patrol types occassionally.
 - Fixed the case where the ammo blacklist removes all compatible rounds. It will now leave at least one type of round for each gun at the ammo spawner.
 - Fixed panels (ammo reloader, etc.) sometimes breaking when being used a lot.
