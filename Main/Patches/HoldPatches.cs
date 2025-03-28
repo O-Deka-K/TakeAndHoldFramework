@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using FistVR;
 using HarmonyLib;
-using FistVR;
-using UnityEngine;
+using System.Collections.Generic;
 using TNHFramework.ObjectTemplates;
+using UnityEngine;
 
 namespace TNHFramework.Patches
 {

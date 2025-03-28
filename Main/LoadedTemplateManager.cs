@@ -1,8 +1,5 @@
 ﻿using FistVR;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -56,7 +53,7 @@ namespace TNHFramework
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
@@ -79,7 +76,7 @@ namespace TNHFramework
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
@@ -89,14 +86,14 @@ namespace TNHFramework
             CustomCharacters.Add(template);
             LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
 
-            foreach(EquipmentPool pool in template.EquipmentPools)
+            foreach (EquipmentPool pool in template.EquipmentPools)
             {
                 EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
             }
 
             NewCharacterID += 1;
 
-            TNHFrameworkLogger.Log("Character added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Character added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)

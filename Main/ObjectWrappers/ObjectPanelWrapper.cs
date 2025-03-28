@@ -752,7 +752,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
 
-                if(detectedHandgun != null)
+                if (detectedHandgun != null)
                 {
                     AddFullAutoToHandgun(detectedHandgun);
                     ClearSelection();
@@ -764,7 +764,7 @@ namespace TNHFramework
                     ClearSelection();
                 }
 
-                else if(detectedOpenBolt != null)
+                else if (detectedOpenBolt != null)
                 {
                     AddFullAutoToOpenBolt(detectedOpenBolt);
                     ClearSelection();
@@ -1211,7 +1211,7 @@ namespace TNHFramework
 
         public void DecreaseFireRate()
         {
-            if(detectedHandgun != null)
+            if (detectedHandgun != null)
             {
                 detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
@@ -1219,7 +1219,7 @@ namespace TNHFramework
                 return;
             }
 
-            else if(detectedClosedBolt != null)
+            else if (detectedClosedBolt != null)
             {
                 detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);

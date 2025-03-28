@@ -1,25 +1,12 @@
-﻿using ADepIn;
-using BepInEx;
-using Deli;
-using Deli.Immediate;
-using Deli.Runtime;
-using Deli.Runtime.Yielding;
+﻿using Deli;
 using Deli.Setup;
 using Deli.VFS;
-using Valve.Newtonsoft.Json;
-using Valve.Newtonsoft.Json.Linq;
-using FistVR;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
-using Stratum;
-using Stratum.Extensions;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework
 {
@@ -28,7 +15,7 @@ namespace TNHFramework
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
 
-            if(handle is not IFileHandle file)
+            if (handle is not IFileHandle file)
             {
                 throw new ArgumentException("Could not load sosig! Make sure you're pointing to a sosig template json file in the manifest");
             }
@@ -42,7 +29,7 @@ namespace TNHFramework
                 };
 
                 SosigTemplate sosig = JsonConvert.DeserializeObject<SosigTemplate>(charString, settings);
-                TNHFrameworkLogger.Log("Sosig loaded successfuly : " + sosig.DisplayName, TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Sosig loaded successfully : " + sosig.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
@@ -61,7 +48,7 @@ namespace TNHFramework
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
             
-            if(handle is not IDirectoryHandle dir)
+            if (handle is not IDirectoryHandle dir)
             {
                 throw new ArgumentException("Could not load character! Character should point to a folder holding the character.json and thumb.png");
             }
@@ -114,7 +101,7 @@ namespace TNHFramework
                     }
                 }
 
-                TNHFrameworkLogger.Log("Character loaded successfuly : " + character.DisplayName, TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Character loaded successfully : " + character.DisplayName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
@@ -146,7 +133,7 @@ namespace TNHFramework
                 };
 
                 SavedGunSerializable savedGun = JsonConvert.DeserializeObject<SavedGunSerializable>(charString, settings);
-                TNHFrameworkLogger.Log("Vault file loaded successfuly : " + savedGun.FileName, TNHFrameworkLogger.LogType.General);
+                TNHFrameworkLogger.Log("Vault file loaded successfully : " + savedGun.FileName, TNHFrameworkLogger.LogType.General);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }

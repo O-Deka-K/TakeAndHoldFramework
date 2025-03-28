@@ -9,7 +9,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using TNHFramework.ObjectTemplates;
 using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -65,7 +64,7 @@ namespace TNHFramework
                 TNHFrameworkLogger.Init();
             }
 
-            TNHFrameworkLogger.Log("Hello World (from TNH Tweaker)", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log("Hello World (from TNHFramework)", TNHFrameworkLogger.LogType.General);
 
             SetupOutputDirectory();
 
@@ -220,7 +219,7 @@ namespace TNHFramework
 
 
 
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {

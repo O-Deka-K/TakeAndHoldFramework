@@ -527,7 +527,7 @@ namespace TNHFramework.Utilities
         {
             List<FVRObject> loadedItems = new List<FVRObject>();
 
-            foreach(AmmoObjectDataTemplate item in items)
+            foreach (AmmoObjectDataTemplate item in items)
             {
                 if (IM.OD.ContainsKey(item.ObjectID)) loadedItems.Add(IM.OD[item.ObjectID]);
             }

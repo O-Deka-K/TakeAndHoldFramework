@@ -1,8 +1,4 @@
-﻿using FistVR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace TNHFramework.Utilities
@@ -23,7 +19,7 @@ namespace TNHFramework.Utilities
 
         public static bool ContainsNull<T>(this List<T> list)
         {
-            for(int i = 0; i < list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 if (list[i] == null) return true;
             }

@@ -1,18 +1,19 @@
-﻿using ADepIn;
-using Deli.VFS;
+﻿using Deli.VFS;
 using FistVR;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using YamlDotNet.Serialization;
+using CustomCharacter = TNHFramework.ObjectTemplates.CustomCharacter;
+using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
+using EquipmentPool = TNHFramework.ObjectTemplates.EquipmentPool;
+using Type = System.Type;
 
 namespace TNHFramework.Utilities
 {
@@ -35,9 +36,9 @@ namespace TNHFramework.Utilities
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
-                            obj.DisplayName.Replace(",", ".") + "," +  // ODK - Added
+                            obj.DisplayName.Replace(",", ".") + "," +
                             obj.ItemID.Replace(",", ".") + "," + 
-                            obj.IsModContent.ToString() + "," +  // ODK - Added
+                            obj.IsModContent.ToString() + "," +
                             obj.Category + "," +
                             obj.TagEra + "," +
                             obj.TagSet + "," +
@@ -162,9 +163,9 @@ namespace TNHFramework.Utilities
         {
             Dictionary<string, Sprite> icons = [];
 
-            foreach(CustomCharacter character in characters)
+            foreach (CustomCharacter character in characters)
             {
-                foreach(EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
+                foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
@@ -318,7 +319,7 @@ namespace TNHFramework.Utilities
 
                 string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
                 List<SavedGunSerializable> savedGuns = [];
-                foreach(string name in vaultFiles)
+                foreach (string name in vaultFiles)
                 {
                     try
                     {
@@ -398,13 +399,13 @@ namespace TNHFramework.Utilities
                 }
 
 
-                foreach(CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
+                foreach (CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
                 {
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))
                     {
                         sw.WriteLine("Primary Starting Weapon");
-                        if(character.PrimaryWeapon != null)
+                        if (character.PrimaryWeapon != null)
                         {
                             sw.WriteLine(character.PrimaryWeapon.ToString());
                         }
@@ -445,7 +446,7 @@ namespace TNHFramework.Utilities
                             sw.WriteLine(character.Shield.ToString());
                         }
 
-                        foreach(EquipmentPool pool in character.EquipmentPools)
+                        foreach (EquipmentPool pool in character.EquipmentPools)
                         {
                             sw.WriteLine("\n\n" + pool.ToString());
                         }
@@ -494,7 +495,7 @@ namespace TNHFramework.Utilities
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
@@ -504,7 +505,7 @@ namespace TNHFramework.Utilities
                             }
                         }
 
-                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
@@ -514,7 +515,7 @@ namespace TNHFramework.Utilities
                             }
                         }
 
-                        //If this is not a vaulted gun, remove it
+                        // If this is not a vaulted gun, remove it
                         else
                         {
                             TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
@@ -575,7 +576,7 @@ namespace TNHFramework.Utilities
             //Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
-                for(int i = 0; i < config.Headwear.Count; i++)
+                for (int i = 0; i < config.Headwear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
@@ -933,19 +934,19 @@ namespace TNHFramework.Utilities
                 {
                     if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
                     {
-                        //First, async get the game object to spawn
+                        // First, async get the game object to spawn
                         AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
                         yield return objectCallback;
 
-                        //Next calculate the height needed for this item
+                        // Next calculate the height needed for this item
                         GameObject gameObject = selectedFVR.GetGameObject();
                         float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
                         currentHeight += heightNeeded;
 
-                        //Finally spawn the item and call the callback if it's not null
+                        // Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
-                        // ODK - This is added to the tracked object list after we return
-                        if(callback != null) callback.Invoke(spawnedObject);
+                        // This is added to the tracked object list after we return
+                        if (callback != null) callback.Invoke(spawnedObject);
                         yield return null;
                     }
                 }

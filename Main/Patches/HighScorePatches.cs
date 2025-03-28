@@ -1,18 +1,6 @@
-﻿using Valve.Newtonsoft.Json;
-using FistVR;
+﻿using FistVR;
 using HarmonyLib;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
-using UnityEngine.Networking;
-using Steamworks;
-using UnityEngine;
 
 namespace TNHFramework.Patches
 {
@@ -46,7 +34,6 @@ namespace TNHFramework.Patches
         public static bool TrackHoldCompletion()
         {
             TNHFrameworkLogger.Log("Hold Completion", TNHFrameworkLogger.LogType.TNH);
-
             return true;
         }
 
@@ -92,7 +79,6 @@ namespace TNHFramework.Patches
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
             TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
-
             return true;
         }
 

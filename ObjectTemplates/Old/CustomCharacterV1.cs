@@ -1,21 +1,11 @@
 ﻿using ADepIn;
-using Deli.Immediate;
-using Valve.Newtonsoft.Json;
-using Deli.Setup;
-using Deli.VFS;
 using FistVR;
-using MagazinePatcher;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Security.Policy;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates.V1
 {
@@ -1107,10 +1097,12 @@ namespace TNHFramework.ObjectTemplates.V1
             SupplyChallenge = new TakeChallenge(level.TakeChallenge);
             HoldPhases = level.HoldChallenge.Phases.Select(o => new Phase(o)).ToList();
             Patrols = level.PatrolChallenge.Patrols.Select(o => new Patrol(o)).ToList();
-            PossiblePanelTypes = new List<PanelType>();
-            PossiblePanelTypes.Add(PanelType.AmmoReloader);
-            PossiblePanelTypes.Add(PanelType.MagDuplicator);
-            PossiblePanelTypes.Add(PanelType.Recycler);
+            PossiblePanelTypes =
+            [
+                PanelType.AmmoReloader,
+                PanelType.MagDuplicator,
+                PanelType.Recycler,
+            ];
             MinConstructors = 1;
             MaxConstructors = 1;
             MinPanels = 1;

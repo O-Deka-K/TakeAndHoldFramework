@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TNHFramework.Utilities;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace TNHFramework
@@ -19,7 +14,7 @@ namespace TNHFramework
 
             float totalStatus = 0;
 
-            for(int i = 0; i < CallbackList.Count; i++)
+            for (int i = 0; i < CallbackList.Count; i++)
             {
                 if (CallbackList[i].IsCompleted)
                 {

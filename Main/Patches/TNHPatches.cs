@@ -3,13 +3,8 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics.Eventing.Reader;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection.Emit;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -72,8 +67,6 @@ namespace TNHFramework.Patches
         public static bool InitTNH(TNH_UIManager __instance)
         {
             TNHFrameworkLogger.Log("Start method of TNH_UIManager just got called!", TNHFrameworkLogger.LogType.General);
-
-            GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
             Text itemsText = CreateItemsText(__instance);
@@ -191,7 +184,7 @@ namespace TNHFramework.Patches
             __instance.m_selectedCategory = cat + OffsetCat;
             OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
 
-            // probably better done with a switch statement and a single int, but i just wanna get this done first]
+            // probably better done with a switch statement and a single int, but i just wanna get this done first
             int adjust = 0;
             if (cat == OffsetCat)
             {
@@ -444,7 +437,7 @@ namespace TNHFramework.Patches
 
 
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")]
         [HarmonyPrefix]
         public static bool SetPhase_Take_Replacement(TNH_Manager __instance)
         {
@@ -671,7 +664,7 @@ namespace TNHFramework.Patches
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
 
-                    if (TNHFramework.AlwaysMagUpgrader.Value)  // ODK - Added new option
+                    if (TNHFramework.AlwaysMagUpgrader.Value)
                         panel.AddComponent(typeof(MagazinePanel));
                 }
 
@@ -1061,7 +1054,7 @@ namespace TNHFramework.Patches
         }
 
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTakeEnemyGroup")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTakeEnemyGroup")]
         [HarmonyPrefix]
         public static bool SpawnTakeGroupReplacement(TNH_HoldPoint __instance)
         {
@@ -1087,7 +1080,7 @@ namespace TNHFramework.Patches
 
 
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTurrets")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTurrets")]
         [HarmonyPrefix]
         public static bool SpawnTurretsReplacement(TNH_HoldPoint __instance)
         {
@@ -1126,7 +1119,7 @@ namespace TNHFramework.Patches
 
 
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")]
         [HarmonyPrefix]
         public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance)
         {
@@ -1283,13 +1276,13 @@ namespace TNHFramework.Patches
 
 
             }
+            
             isFirstWave = false;
-
         }
 
 
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")]
         [HarmonyPrefix]
         public static bool SpawningUpdateReplacement(TNH_HoldPoint __instance)
         {
@@ -1566,13 +1559,12 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
         {
-
             //Collect all pools that could spawn based on level and type, and sum up their rarities
             List<EquipmentPoolDef.PoolEntry> validPools = [];
             float summedRarity = 0;
-            foreach(EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
+            foreach (EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
             {
-                if(entry.Type == t && entry.MinLevelAppears <= level && entry.MaxLevelAppears >= level)
+                if (entry.Type == t && entry.MinLevelAppears <= level && entry.MaxLevelAppears >= level)
                 {
                     validPools.Add(entry);
                     summedRarity += entry.Rarity;
@@ -1580,7 +1572,7 @@ namespace TNHFramework.Patches
             }
 
             //If we didn't find a single pool, we cry about it
-            if(validPools.Count == 0)
+            if (validPools.Count == 0)
             {
                 TNHFrameworkLogger.LogWarning("No valid pool could spawn at constructor for type (" + t + ")");
                 __result = null;
@@ -1589,7 +1581,7 @@ namespace TNHFramework.Patches
 
             //Go back through and remove pools that have already spawned, unless there is only one entry left
             validPools.Shuffle();
-            for(int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
+            for (int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
             {
                 if (TNHFramework.SpawnedPools.Contains(validPools[i]))
                 {
@@ -1601,10 +1593,10 @@ namespace TNHFramework.Patches
             //Select a random value within the summed rarity, and select a pool based on that value
             float selectValue = UnityEngine.Random.Range(0, summedRarity);
             float currentSum = 0;
-            foreach(EquipmentPoolDef.PoolEntry entry in validPools)
+            foreach (EquipmentPoolDef.PoolEntry entry in validPools)
             {
                 currentSum += entry.Rarity;
-                if(selectValue <= currentSum)
+                if (selectValue <= currentSum)
                 {
                     __result = entry;
                     TNHFramework.SpawnedPools.Add(entry);
@@ -1619,7 +1611,7 @@ namespace TNHFramework.Patches
         }
 
 
-        [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")]
         [HarmonyPriority(800)]
         [HarmonyPrefix]
         public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, int i)
@@ -1721,26 +1713,6 @@ namespace TNHFramework.Patches
                 int ammoSpawnCount = 0;
                 int objectSpawnCount = 0;
 
-                // This gathers all spawn points, so that multiple things can be spawned at the same time, on different spawnpoints.
-                //TODO: I dont like this, but it should work.
-                Dictionary<Transform, List<GameObject>> itemsToSpawn = new()
-                {
-                    { constructor.SpawnPoint_Mag, [] },
-                    { constructor.SpawnPoint_Ammo, [] },
-                    { constructor.SpawnPoint_Grenade, [] },
-                    { constructor.SpawnPoint_Melee, [] },
-                    { constructor.SpawnPoint_Shield, [] },
-                    { constructor.SpawnPoint_Object, [] },
-
-                    //This should only have one, and throw when trying to spawn more.
-                    { constructor.SpawnPoint_Case, [] }
-                };
-                
-                foreach (var gunSpawnPoint in constructor.SpawnPoints_GunsSize)
-                {
-                    itemsToSpawn.Add(gunSpawnPoint, []);
-                }
-
                 TNHFrameworkLogger.Log("Pool has " + selectedGroups.Count + " groups to spawn from", TNHFrameworkLogger.LogType.TNH);
                 for (int groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
                 {
@@ -1838,6 +1810,7 @@ namespace TNHFramework.Patches
                             TNHFrameworkLogger.Log("Spawning normal item", TNHFrameworkLogger.LogType.TNH);
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
+
                             GameObject spawnedObject = UnityEngine.Object.Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
                             constructor.M.AddObjectToTrackedList(spawnedObject);
                             TNHFrameworkLogger.Log("Normal item spawned", TNHFrameworkLogger.LogType.TNH);
@@ -1849,7 +1822,7 @@ namespace TNHFramework.Patches
                         {
                             for (int j = 0; j < mainObject.RequiredSecondaryPieces.Count; j++)
                             {
-                                if(mainObject.RequiredSecondaryPieces[j] == null)
+                                if (mainObject.RequiredSecondaryPieces[j] == null)
                                 {
                                     TNHFrameworkLogger.Log("Null required object! Skipping", TNHFrameworkLogger.LogType.TNH);
                                     continue;
@@ -1951,7 +1924,6 @@ namespace TNHFramework.Patches
                                 }
                             }
                         }
-
 
                         //If this object requires picatinny sights, we should try to spawn one
                         if (mainObject.RequiresPicatinnySight && character.RequireSightTable != null)
@@ -2061,21 +2033,21 @@ namespace TNHFramework.Patches
         //////////////////////////
 
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Hold")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Hold")]
         [HarmonyPostfix]
         public static void AfterSetHold()
         {
             ClearAllPanels();
         }
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")]
         [HarmonyPostfix]
         public static void AfterSetDead()
         {
             ClearAllPanels();
         }
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")]
         [HarmonyPostfix]
         public static void AfterSetComplete()
         {

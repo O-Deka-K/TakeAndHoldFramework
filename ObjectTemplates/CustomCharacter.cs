@@ -3,7 +3,6 @@ using FistVR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TNHFramework.ObjectTemplates.V1;
 using TNHFramework.Utilities;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
@@ -288,7 +287,6 @@ namespace TNHFramework.ObjectTemplates
                 {
                     character.Progressions[0].Levels.Add(level.GetLevel());
                 }
-
 
                 character.Progressions_Endless = [(TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression))];
                 character.Progressions_Endless[0].Levels = [];
@@ -749,13 +747,13 @@ namespace TNHFramework.ObjectTemplates
     {
             string output = "Equipment Pool : IconName=" + IconName + " : CostLimited=" + TokenCostLimited + " : CostSpawnlock=" + TokenCost;
 
-            if(PrimaryGroup != null)
+            if (PrimaryGroup != null)
             {
                 output += "\nPrimary Group";
                 output += PrimaryGroup.ToString(0);
             }
 
-            if(BackupGroup != null)
+            if (BackupGroup != null)
             {
                 output += "\nBackup Group";
                 output += BackupGroup.ToString(0);

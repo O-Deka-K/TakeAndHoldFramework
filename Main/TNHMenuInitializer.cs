@@ -4,9 +4,7 @@ using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -278,7 +276,7 @@ namespace TNHFramework
         {
             List<string> loading = OtherLoader.LoaderStatus.LoadingItems;
 
-            for(int i = 0; i < loading.Count; i++)
+            for (int i = 0; i < loading.Count; i++)
             {
                 string colorHex = ColorUtility.ToHtmlStringRGBA(new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp(((float)loading.Count - i) / loading.Count, 0, 1)));
                 loading[i] = "<color=#" + colorHex + ">Loading Assets (" + loading[i] + ")</color>";

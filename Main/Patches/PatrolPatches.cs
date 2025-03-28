@@ -3,7 +3,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -460,7 +459,6 @@ namespace TNHFramework.Patches
         {
             // We've replaced all calls to GenerateSentryPatrol() with our own, so stub this out
             TNHFrameworkLogger.LogWarning("GenerateSentryPatrolStub() called! This should have been overridden!");
-            //throw new ArgumentException("GenerateSentryPatrolStub called");  // DEBUG
             return false;
         }
 
@@ -475,7 +473,7 @@ namespace TNHFramework.Patches
             List<int> validLocations = [];
             float minDist = __instance.TAHReticle.Range * 1.2f;
 
-            //Get a safe starting point for the patrol to spawn
+            // Get a safe starting point for the patrol to spawn
             TNH_SafePositionMatrix.PositionEntry startingEntry = (isStart) ?
                 __instance.SafePosMatrix.Entries_SupplyPoints[curStandardIndex] : __instance.SafePosMatrix.Entries_HoldPoints[curStandardIndex];
 
@@ -497,7 +495,7 @@ namespace TNHFramework.Patches
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
             Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
 
-            //Get a valid patrol index, and exit if there are no valid patrols
+            // Get a valid patrol index, and exit if there are no valid patrols
             int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
             if (patrolIndex == -1)
                 return false;
@@ -596,7 +594,6 @@ namespace TNHFramework.Patches
         {
             // We've replaced all calls to GeneratePatrol() with our own, so stub this out
             TNHFrameworkLogger.LogWarning("GeneratePatrolStub() called! This should have been overridden!");
-            //throw new ArgumentException("GeneratePatrolStub called");  // DEBUG
             return false;
         }
 
@@ -605,7 +602,7 @@ namespace TNHFramework.Patches
         //PATCHES FOR SPAWNING SOSIGS
         /////////////////////////////
 
-        [HarmonyPatch(typeof(Sosig), "ClearSosig")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(Sosig), "ClearSosig")]
         [HarmonyPrefix]
         public static void ClearSosig(Sosig __instance)
         {
@@ -627,7 +624,7 @@ namespace TNHFramework.Patches
 
             TNHFrameworkLogger.Log("Spawning sosig: " + customTemplate.SosigEnemyID, TNHFrameworkLogger.LogType.TNH);
 
-            //Fill out the sosig's config based on the difficulty
+            // Fill out the sosig's config based on the difficulty
             SosigConfig config;
 
             if (M.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
@@ -651,12 +648,12 @@ namespace TNHFramework.Patches
             sosigComponent.Configure(config.GetConfigTemplate());
             sosigComponent.SetIFF(IFF);
 
-            //Set up the sosig's inventory
+            // Set up the sosig's inventory
             sosigComponent.Inventory.Init();
             sosigComponent.Inventory.FillAllAmmo();
             sosigComponent.InitHands();
 
-            //Equip the sosig's weapons
+            // Equip the sosig's weapons
             if (customTemplate.WeaponOptions.Count > 0)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptions.GetRandom<string>()].GetGameObject();
@@ -678,7 +675,7 @@ namespace TNHFramework.Patches
                 EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
             }
 
-            //Equip clothing to the sosig
+            // Equip clothing to the sosig
             OutfitConfig outfitConfig = customTemplate.OutfitConfigs.GetRandom<OutfitConfig>();
 
             if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
@@ -716,7 +713,7 @@ namespace TNHFramework.Patches
                 EquipSosigClothing(outfitConfig.Backpacks, sosigComponent.Links[1], outfitConfig.ForceWearAllBackpacks);
             }
 
-            //Set up the sosig's orders
+            // Set up the sosig's orders
             if (isAssault)
             {
                 sosigComponent.CurrentOrder = Sosig.SosigOrder.Assault;
@@ -732,7 +729,7 @@ namespace TNHFramework.Patches
             }
             sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
 
-            //Handle sosig dropping custom loot
+            // Handle sosig dropping custom loot
             if (customTemplate.DroppedObjectPool != null && UnityEngine.Random.value < customTemplate.DroppedLootChance)
             {
                 SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
@@ -747,7 +744,7 @@ namespace TNHFramework.Patches
         }
 
 
-        [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")]
         [HarmonyPrefix]
         public static bool SetOutfitReplacement(FVRPlayerBody __instance, SosigEnemyTemplate tem)
         {
@@ -815,7 +812,7 @@ namespace TNHFramework.Patches
 
             //TNHFrameworkLogger.Log("Equipping sosig weapon: " + weapon.gameObject.name, TNHFrameworkLogger.LogType.TNH);
 
-            //Equip the sosig weapon to the sosig
+            // Equip the sosig weapon to the sosig
             sosig.ForceEquip(weapon);
             weapon.SetAmmoClamping(true);
             if (difficulty == TNHModifier_AIDifficulty.Arcade) weapon.FlightVelocityMultiplier = 0.3f;
@@ -886,7 +883,7 @@ namespace TNHFramework.Patches
             }
         }
 
-        [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")]
         [HarmonyPrefix]
         public static bool OverrideCloaking()
         {
