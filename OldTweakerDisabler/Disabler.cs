@@ -38,6 +38,7 @@ namespace TweakerDisabler
             string deli = Path.Combine(dir, "TakeAndHoldTweaker.deli");
             string deliBak = Path.Combine(dir, "TakeAndHoldTweaker.deli.bak");
             string deliOld = Path.Combine(dir, "TakeAndHoldTweaker.deli.old");
+            string deliBakOld = Path.Combine(dir, "TakeAndHoldTweaker.deli.bak.old");
 
             if (File.Exists(deliBak))
             {
@@ -45,6 +46,14 @@ namespace TweakerDisabler
                     File.Delete(deliBak);
                 else
                     File.Move(deliBak, deli);
+            }
+
+            if (File.Exists(deliBakOld))
+            {
+                if (File.Exists(deliOld))
+                    File.Delete(deliBakOld);
+                else
+                    File.Move(deliBakOld, deliOld);
             }
 
             if (File.Exists(deli))
