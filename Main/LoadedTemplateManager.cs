@@ -112,7 +112,7 @@ namespace TNHFramework
                 }
             }
 
-            TNHFrameworkLogger.Log("Character added successfuly : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Character added successfully : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddVaultFile(VaultFile template)
