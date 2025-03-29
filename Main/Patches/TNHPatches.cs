@@ -473,7 +473,7 @@ namespace TNHFramework.Patches
 
             // For default characters, only a single supply point spawns in each level of Institution
             // We will allow multiple supply points for custom characters
-            bool isCustomCharacter = ((int)__instance.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
+            bool isCustomCharacter = ((int)__instance.C.CharacterID >= 1000);
             bool allowExplicitSingleSupplyPoints = !isCustomCharacter;
 
             // Now spawn and set up all of the supply points
@@ -610,7 +610,7 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Spawning secondary panels", TNHFrameworkLogger.LogType.TNH);
 
-            bool isCustomCharacter = ((int)point.M.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
+            bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
             if (point.M.LevelName == "Institution" && !isCustomCharacter)
@@ -729,7 +729,7 @@ namespace TNHFramework.Patches
         {
             point.SpawnPoints_Boxes.Shuffle();
 
-            bool isCustomCharacter = ((int)point.M.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
+            bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
 
             // Custom Character behavior:
             // - Every supply point has the same min and max number of boxes
