@@ -90,7 +90,7 @@ namespace TNHFramework.Patches
             int maxPatrols = (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ?
                 currLevel.Patrols[0].MaxPatrols : currLevel.Patrols[0].MaxPatrolsLimited;
 
-            bool isCustomCharacter = !TNHPatches.BaseCharStrings.Contains(__instance.C.TableID);
+            bool isCustomCharacter = (int)__instance.C.CharacterID >= LoadedTemplateManager.NewCharacterID;
 
             // Adjust max patrols for new patrol behavior
             if (!__instance.UsesClassicPatrolBehavior && !isCustomCharacter)

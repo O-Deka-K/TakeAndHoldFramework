@@ -15,22 +15,6 @@ namespace TNHFramework.Patches
 {
     public class TNHPatches
     {
-        public static readonly List<string> BaseCharStrings =
-        [
-            "DD_C00",
-            "DD_C01",
-            "DD_C02",
-            "DD_C03",
-            "COMP_C01",
-            "WTT_C01",
-            "WTT_C02",
-            "WTT_C03",
-            "WTT_C04",
-            "MM_C01",
-            "MM_C02",
-            "MM_C03",
-        ];
-
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
         public static bool InitTNH(TNH_Manager __instance)
@@ -489,7 +473,7 @@ namespace TNHFramework.Patches
 
             // For default characters, only a single supply point spawns in each level of Institution
             // We will allow multiple supply points for custom characters
-            bool isCustomCharacter = !BaseCharStrings.Contains(__instance.C.TableID);
+            bool isCustomCharacter = ((int)__instance.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
             bool allowExplicitSingleSupplyPoints = !isCustomCharacter;
 
             // Now spawn and set up all of the supply points
@@ -626,20 +610,12 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Spawning secondary panels", TNHFrameworkLogger.LogType.TNH);
 
+            bool isCustomCharacter = ((int)point.M.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
-            // Suboptimal, but the simplest way to implement.
-            // Check if the map is Institution. Then check if the character is a base-game character.
-            if (point.M.LevelName == "Institution") 
+            if (point.M.LevelName == "Institution" && !isCustomCharacter)
             {
-                foreach (string Item in BaseCharStrings)
-                {
-                    if (point.M.C.TableID == Item)
-                    {
-                        numPanels = 3;
-                        break;
-                    }
-                }
+                numPanels = 3;
             }
 
             for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && level.PossiblePanelTypes.Count > 0; i++)
@@ -753,7 +729,7 @@ namespace TNHFramework.Patches
         {
             point.SpawnPoints_Boxes.Shuffle();
 
-            bool isCustomCharacter = !BaseCharStrings.Contains(point.M.C.TableID);
+            bool isCustomCharacter = ((int)point.M.C.CharacterID >= LoadedTemplateManager.NewCharacterID);
 
             // Custom Character behavior:
             // - Every supply point has the same min and max number of boxes
