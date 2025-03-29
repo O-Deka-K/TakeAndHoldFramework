@@ -14,12 +14,11 @@ namespace TNHFramework
 
             float totalStatus = 0;
 
-            for (int i = 0; i < CallbackList.Count; i++)
+            for (int i = CallbackList.Count - 1; i >= 0; i--)
             {
                 if (CallbackList[i].IsCompleted)
                 {
                     CallbackList.RemoveAt(i);
-                    i -= 1;
                 }
 
                 else

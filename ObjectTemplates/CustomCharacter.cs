@@ -459,7 +459,7 @@ namespace TNHFramework.ObjectTemplates
                 }
             }
 
-            for (int i = 0; i < EquipmentPools.Count; i++)
+            for (int i = EquipmentPools.Count - 1; i >= 0; i--)
             {
                 EquipmentPool pool = EquipmentPools[i];
                 if (!pool.DelayedInit(GlobalObjectBlacklist))
@@ -467,7 +467,6 @@ namespace TNHFramework.ObjectTemplates
                     TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
-                    i -= 1;
                 }
             }
 
@@ -1036,13 +1035,12 @@ namespace TNHFramework.ObjectTemplates
             //Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
-                for (int i = 0; i < SubGroups.Count; i++)
+                for (int i = SubGroups.Count - 1; i >= 0; i--)
                 {
                     if (!SubGroups[i].DelayedInit(globalObjectBlacklist))
                     {
                         //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
-                        i -= 1;
                     }
                 }
             }

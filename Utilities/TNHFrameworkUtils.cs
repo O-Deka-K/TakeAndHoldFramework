@@ -491,7 +491,7 @@ namespace TNHFramework.Utilities
         {
             if (group.IDOverride != null)
             {
-                for (int i = 0; i < group.IDOverride.Count; i++)
+                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
@@ -501,7 +501,6 @@ namespace TNHFramework.Utilities
                             if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -511,7 +510,6 @@ namespace TNHFramework.Utilities
                             if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -520,7 +518,6 @@ namespace TNHFramework.Utilities
                         {
                             TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i--;
                         }
                     }
                 }
@@ -533,7 +530,7 @@ namespace TNHFramework.Utilities
         {
             if (group.IDOverride != null)
             {
-                for (int i = 0; i < group.IDOverride.Count; i++)
+                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
@@ -543,7 +540,6 @@ namespace TNHFramework.Utilities
                             if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -553,7 +549,6 @@ namespace TNHFramework.Utilities
                             if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -562,7 +557,6 @@ namespace TNHFramework.Utilities
                         {
                             TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i--;
                         }
                     }
                 }
@@ -576,79 +570,72 @@ namespace TNHFramework.Utilities
             //Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
-                for (int i = 0; i < config.Headwear.Count; i++)
+                for (int i = config.Headwear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Headwear.Count == 0) config.Chance_Headwear = 0;
 
-                for (int i = 0; i < config.Facewear.Count; i++)
+                for (int i = config.Facewear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Facewear.Count == 0) config.Chance_Facewear = 0;
 
-                for (int i = 0; i < config.Eyewear.Count; i++)
+                for (int i = config.Eyewear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Eyewear.Count == 0) config.Chance_Eyewear = 0;
 
-                for (int i = 0; i < config.Torsowear.Count; i++)
+                for (int i = config.Torsowear.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Torsowear.Count == 0) config.Chance_Torsowear = 0;
 
-                for (int i = 0; i < config.Pantswear.Count; i++)
+                for (int i = config.Pantswear.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Pantswear.Count == 0) config.Chance_Pantswear = 0;
 
-                for (int i = 0; i < config.Pantswear_Lower.Count; i++)
+                for (int i = config.Pantswear_Lower.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Pantswear_Lower.Count == 0) config.Chance_Pantswear_Lower = 0;
 
-                for (int i = 0; i < config.Backpacks.Count; i++)
+                for (int i = config.Backpacks.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Backpacks.Count == 0) config.Chance_Backpacks = 0;

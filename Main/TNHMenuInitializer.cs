@@ -358,7 +358,7 @@ namespace TNHFramework
         /// <param name="isCustom"></param>
         private static void InitCharacters(List<CustomCharacter> characters, bool isCustom)
         {
-            for (int i = 0; i < characters.Count; i++)
+            for (int i = characters.Count - 1; i >= 0; i--)
             {
                 CustomCharacter character = characters[i];
 
@@ -371,7 +371,6 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
                     characters.RemoveAt(i);
                     LoadedTemplateManager.LoadedCharactersDict.Remove(character.GetCharacter());
-                    i -= 1;
                 }
             }
         }
@@ -395,7 +394,7 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
                     //Find any characters that use this sosig, and remove them
-                    for (int j = 0; j < LoadedTemplateManager.LoadedCharactersDict.Values.Count; j++)
+                    for (int j = LoadedTemplateManager.LoadedCharactersDict.Values.Count - 1; j >= 0; j--)
                     {
                         //This is probably monsterously inefficient, but if you're at this point you're already fucked :)
                         KeyValuePair<TNH_CharacterDef, CustomCharacter> value_pair = LoadedTemplateManager.LoadedCharactersDict.ToList()[j];
@@ -404,7 +403,6 @@ namespace TNHFramework
                         {
                             TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + value_pair.Value.DisplayName);
                             LoadedTemplateManager.LoadedCharactersDict.Remove(value_pair.Key);
-                            j -= 1;
                         }
                     }
                 }

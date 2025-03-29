@@ -2058,31 +2058,31 @@ namespace TNHFramework.Patches
         {
             TNHFramework.SpawnedPools.Clear();
 
-            while (TNHFramework.SpawnedConstructors.Count > 0)
+            for (int i = TNHFramework.SpawnedConstructors.Count - 1; i >= 0; i--)
             {
                 try
                 {
-                    TNH_ObjectConstructor constructor = TNHFramework.SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
+                    TNH_ObjectConstructor constructor = TNHFramework.SpawnedConstructors[i].GetComponent<TNH_ObjectConstructor>();
 
                     if (constructor != null)
                     {
                         constructor.ClearCase();
                     }
 
-                    UnityEngine.Object.Destroy(TNHFramework.SpawnedConstructors[0]);
+                    UnityEngine.Object.Destroy(TNHFramework.SpawnedConstructors[i]);
                 }
                 catch
                 {
                     TNHFrameworkLogger.LogWarning("Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
                 }
 
-                TNHFramework.SpawnedConstructors.RemoveAt(0);
+                TNHFramework.SpawnedConstructors.RemoveAt(i);
             }
 
-            while (TNHFramework.SpawnedPanels.Count > 0)
+            for (int i = TNHFramework.SpawnedPanels.Count - 1; i >= 0; i--)
             {
-                UnityEngine.Object.Destroy(TNHFramework.SpawnedPanels[0]);
-                TNHFramework.SpawnedPanels.RemoveAt(0);
+                UnityEngine.Object.Destroy(TNHFramework.SpawnedPanels[i]);
+                TNHFramework.SpawnedPanels.RemoveAt(i);
             }
         }
 
