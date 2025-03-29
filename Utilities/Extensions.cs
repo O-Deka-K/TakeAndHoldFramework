@@ -31,9 +31,11 @@ namespace TNHFramework.Utilities
         /// </summary>
         /// <param name="g"></param>
         /// <returns></returns>
-        public static Bounds GetMaxBounds(this GameObject g) {
+        public static Bounds GetMaxBounds(this GameObject g)
+        {
             var b = new Bounds(g.transform.position, Vector3.zero);
-            foreach (Renderer r in g.GetComponentsInChildren<Renderer>()) {
+            foreach (Renderer r in g.GetComponentsInChildren<Renderer>())
+            {
                 b.Encapsulate(r.bounds);
             }
             return b;
