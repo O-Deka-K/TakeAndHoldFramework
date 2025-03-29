@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -383,9 +384,13 @@ namespace TNHFramework
                 }
             }
 
-            DupeIcon.UpdateIconDisplay();
-            UpgradeIcon.UpdateIconDisplay();
-            PurchaseIcon.UpdateIconDisplay();
+            //DupeIcon.UpdateIconDisplay();
+            //UpgradeIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateIconDisplay.Invoke(DupeIcon, []);
+            miUpdateIconDisplay.Invoke(UpgradeIcon, []);
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -636,7 +641,9 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PurchaseIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -1028,7 +1035,9 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PurchaseIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -1360,8 +1369,11 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PlusIcon.UpdateIconDisplay();
-            MinusIcon.UpdateIconDisplay();
+            //PlusIcon.UpdateIconDisplay();
+            //MinusIcon.UpdateIconDisplay();
+            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateIconDisplay.Invoke(PlusIcon, []);
+            miUpdateIconDisplay.Invoke(MinusIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 

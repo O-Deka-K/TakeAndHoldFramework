@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
@@ -17,9 +18,9 @@ namespace TNHFramework.Patches
     {
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
-        public static bool InitTNH(TNH_Manager __instance)
+        public static bool InitTNH(TNH_Manager __instance, bool ___m_hasInit)
         {
-            if (!__instance.m_hasInit)
+            if (!___m_hasInit)
             {
                 __instance.CharDB.Characters = TNHMenuInitializer.SavedCharacters;
 
@@ -161,14 +162,14 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategory")]
         [HarmonyPrefix]
-        public static bool SetCategoryUIPatch(TNH_UIManager __instance, int cat)
+        public static bool SetCategoryUIPatch(TNH_UIManager __instance, ref int ___m_selectedCategory, int cat)
         {
             //TNHFrameworkLogger.Log("Category number " + cat + ", offset " + OffsetCat + ", max is " + __instance.Categories.Count, TNHFrameworkLogger.LogType.TNH);
 
-            __instance.m_selectedCategory = cat + OffsetCat;
+            ___m_selectedCategory = cat + OffsetCat;
             OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
 
-            // probably better done with a switch statement and a single int, but i just wanna get this done first
+            // Probably better done with a switch statement and a single int, but i just wanna get this done first
             int adjust = 0;
             if (cat == OffsetCat)
             {
@@ -192,7 +193,9 @@ namespace TNHFramework.Patches
             OffsetCat += adjust;
             buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
 
-            __instance.PlayButtonSound(0);
+            //__instance.PlayButtonSound(0);
+            var miPlayButtonSound = __instance.GetType().GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
+            miPlayButtonSound.Invoke(__instance, [0]);
 
             for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
             {
@@ -222,11 +225,11 @@ namespace TNHFramework.Patches
         // INT INDEX
         // PLEASE.
         // I WILL SACRIFICE AN F2000 FOR YOU TO CHANGE THIS.
-        public static bool SetCharacterUIPatch(TNH_UIManager __instance, int i)
+        public static bool SetCharacterUIPatch(TNH_UIManager __instance, int ___m_selectedCategory, int ___m_selectedCharacter, int i)
         {
-            //TNHFrameworkLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[__instance.m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
+            //TNHFrameworkLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[___m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
 
-            __instance.m_selectedCharacter = i + OffsetChar;
+            ___m_selectedCharacter = i + OffsetChar;
             OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
 
             int adjust = 0;
@@ -238,13 +241,13 @@ namespace TNHFramework.Patches
             {
                 adjust = Math.Max(-1, 0 - OffsetChar);
             }
-            else if (i == 10 && __instance.Categories[__instance.m_selectedCategory].Characters.Count > 12)
+            else if (i == 10 && __instance.Categories[___m_selectedCategory].Characters.Count > 12)
             {
-                adjust = Math.Min(1, __instance.Categories[__instance.m_selectedCategory].Characters.Count - OffsetChar - 12);
+                adjust = Math.Min(1, __instance.Categories[___m_selectedCategory].Characters.Count - OffsetChar - 12);
             }
-            else if (i == 11 && __instance.Categories[__instance.m_selectedCategory].Characters.Count > 12)
+            else if (i == 11 && __instance.Categories[___m_selectedCategory].Characters.Count > 12)
             {
-                adjust = Math.Min(2, __instance.Categories[__instance.m_selectedCategory].Characters.Count - OffsetChar - 12);
+                adjust = Math.Min(2, __instance.Categories[___m_selectedCategory].Characters.Count - OffsetChar - 12);
             }
 
             //TNHFrameworkLogger.Log("Adjust is " + adjust, TNHFrameworkLogger.LogType.TNH);
@@ -252,8 +255,15 @@ namespace TNHFramework.Patches
             OffsetChar += adjust;
             buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
 
-            __instance.SetCharacter(__instance.Categories[__instance.m_selectedCategory].Characters[__instance.m_selectedCharacter]);
-            __instance.PlayButtonSound(1);
+            TNH_Char character = __instance.Categories[___m_selectedCategory].Characters[___m_selectedCharacter];
+
+            //__instance.SetCharacter(character);
+            var miSetCharacter = __instance.GetType().GetMethod("SetCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
+            miSetCharacter.Invoke(__instance, [character]);
+
+            //__instance.PlayButtonSound(1);
+            var miPlayButtonSound = __instance.GetType().GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
+            miPlayButtonSound.Invoke(__instance, [1]);
 
             // now i don't know what to name this. fuck this, it's getting a j. you did this to me, anton.
             // ...who am i kidding anton isn't reading this-
@@ -262,11 +272,11 @@ namespace TNHFramework.Patches
             {
                 //TNHFrameworkLogger.Log("Char iterator is " + j, TNHFrameworkLogger.LogType.TNH);
 
-                if (j + OffsetChar < __instance.Categories[__instance.m_selectedCategory].Characters.Count)
+                if (j + OffsetChar < __instance.Categories[___m_selectedCategory].Characters.Count)
                 {
                     __instance.LBL_CharacterName[j].gameObject.SetActive(true);
 
-                    TNH_CharacterDef def = __instance.CharDatabase.GetDef(__instance.Categories[__instance.m_selectedCategory].Characters[j + OffsetChar]);
+                    TNH_CharacterDef def = __instance.CharDatabase.GetDef(__instance.Categories[___m_selectedCategory].Characters[j + OffsetChar]);
                     __instance.LBL_CharacterName[j].text = (j + OffsetChar + 1).ToString() + ". " + def.DisplayName;
                 }
                 else
@@ -289,9 +299,9 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "ConfigureAtBeginning")]
         [HarmonyPrefix]
-        public static bool SpawnStartingEquipment(TNH_SupplyPoint __instance)
+        public static bool SpawnStartingEquipment(TNH_SupplyPoint __instance, ref List<GameObject> ___m_trackedObjects)
         {
-            __instance.m_trackedObjects.Clear();
+            ___m_trackedObjects.Clear();
             if (__instance.M.ItemSpawnerMode == TNH_ItemSpawnerMode.On)
             {
                 __instance.M.ItemSpawner.transform.position = __instance.SpawnPoints_Panels[0].position + Vector3.up * 0.8f;
@@ -302,7 +312,7 @@ namespace TNHFramework.Patches
             for (int i = 0; i < __instance.SpawnPoint_Tables.Count; i++)
             {
                 GameObject item = UnityEngine.Object.Instantiate(__instance.M.Prefab_MetalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
-                __instance.m_trackedObjects.Add(item);
+                ___m_trackedObjects.Add(item);
             }
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
@@ -320,7 +330,7 @@ namespace TNHFramework.Patches
                         TNHFrameworkLogger.Log($"{selectedItem.CompatibleMagazines}", TNHFrameworkLogger.LogType.TNH);
                     }
                     GameObject weaponCase = SpawnWeaponCase(__instance.M, selectedGroup.BespokeAttachmentChance, __instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
-                    __instance.m_trackedObjects.Add(weaponCase);
+                    ___m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
                 }
             }
@@ -339,7 +349,7 @@ namespace TNHFramework.Patches
                         TNHFrameworkLogger.Log($"{selectedItem.CompatibleMagazines}", TNHFrameworkLogger.LogType.TNH);
                     }
                     GameObject weaponCase = SpawnWeaponCase(__instance.M, selectedGroup.BespokeAttachmentChance, __instance.M.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall.position, __instance.SpawnPoint_CaseSmall.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
-                    __instance.m_trackedObjects.Add(weaponCase);
+                    ___m_trackedObjects.Add(weaponCase);
                     weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
                 }
             }
@@ -423,15 +433,16 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")]
         [HarmonyPrefix]
-        public static bool SetPhase_Take_Replacement(TNH_Manager __instance)
+        public static bool SetPhase_Take_Replacement(TNH_Manager __instance, ref List<int> ___m_activeSupplyPointIndicies, ref TNH_Progression.Level ___m_curLevel,
+            ref int ___m_lastHoldIndex, ref int ___m_curHoldIndex, ref TNH_HoldPoint ___m_curHoldPoint, TNH_PointSequence ___m_curPointSequence, int ___m_level)
         {
             __instance.ResetAlertedThisPhase();
             __instance.ResetPlayerTookDamageThisPhase();
             __instance.ResetHasGuardBeenKilledThatWasAltered();
-            __instance.m_activeSupplyPointIndicies.Clear();
+            ___m_activeSupplyPointIndicies.Clear();
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
-            Level level = character.GetCurrentLevel(__instance.m_curLevel);
+            Level level = character.GetCurrentLevel(___m_curLevel);
 
             TNHFramework.SpawnedBossIndexes.Clear();
             TNHFramework.PatrolIndexPool.Clear();
@@ -450,14 +461,13 @@ namespace TNHFramework.Patches
             __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Hold);
             __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Supply);
 
-            __instance.m_lastHoldIndex = __instance.m_curHoldIndex;
-            int curHoldIndex = __instance.m_curHoldIndex;
+            ___m_lastHoldIndex = ___m_curHoldIndex;
 
             // Get the next hold point and configure it
-            __instance.m_curHoldIndex = GetNextHoldPointIndex(__instance, __instance.m_curPointSequence, __instance.m_level, __instance.m_curHoldIndex);
-            __instance.m_curHoldPoint = __instance.HoldPoints[__instance.m_curHoldIndex];
-            __instance.m_curHoldPoint.ConfigureAsSystemNode(__instance.m_curLevel.TakeChallenge, __instance.m_curLevel.HoldChallenge, __instance.m_curLevel.NumOverrideTokensForHold);
-            __instance.TAHReticle.RegisterTrackedObject(__instance.m_curHoldPoint.SpawnPoint_SystemNode, TAH_ReticleContact.ContactType.Hold);
+            ___m_curHoldIndex = GetNextHoldPointIndex(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
+            ___m_curHoldPoint = __instance.HoldPoints[___m_curHoldIndex];
+            ___m_curHoldPoint.ConfigureAsSystemNode(___m_curLevel.TakeChallenge, ___m_curLevel.HoldChallenge, ___m_curLevel.NumOverrideTokensForHold);
+            __instance.TAHReticle.RegisterTrackedObject(___m_curHoldPoint.SpawnPoint_SystemNode, TAH_ReticleContact.ContactType.Hold);
 
             // Shuffle panel types
             level.PossiblePanelTypes.Shuffle();
@@ -478,36 +488,36 @@ namespace TNHFramework.Patches
 
             // Now spawn and set up all of the supply points
             int panelIndex = 0;
-            if (allowExplicitSingleSupplyPoints && __instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level < 5)
+            if (allowExplicitSingleSupplyPoints && ___m_curPointSequence.UsesExplicitSingleSupplyPoints && ___m_level < 5)
             {
                 TNHFrameworkLogger.Log("Spawning explicit single supply point", TNHFrameworkLogger.LogType.TNH);
 
-                int supplyPointIndex = __instance.m_curPointSequence.SupplyPoints[__instance.m_level];
+                int supplyPointIndex = ___m_curPointSequence.SupplyPoints[___m_level];
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
-                //supplyPoint.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
+                //supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
                 ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
-                __instance.m_activeSupplyPointIndicies.Add(supplyPointIndex);
+                ___m_activeSupplyPointIndicies.Add(supplyPointIndex);
             }
-            else if (allowExplicitSingleSupplyPoints && __instance.m_curPointSequence.UsesExplicitSingleSupplyPoints && __instance.m_level >= 5)
+            else if (allowExplicitSingleSupplyPoints && ___m_curPointSequence.UsesExplicitSingleSupplyPoints && ___m_level >= 5)
             {
-                List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, __instance.m_curPointSequence, __instance.m_level, __instance.m_curHoldIndex);
+                List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
                 int supplyPointIndex = supplyPointsIndexes[0];
 
                 TNHFrameworkLogger.Log($"Spawning explicit single supply point", TNHFrameworkLogger.LogType.TNH);
 
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
-                //supplyPoint.Configure(__instance.m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
+                //supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
                 ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
-                __instance.m_activeSupplyPointIndicies.Add(supplyPointIndex);
+                ___m_activeSupplyPointIndicies.Add(supplyPointIndex);
             }
             else
             {
                 // Generate all of the supply points for this level
-                List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, __instance.m_curPointSequence, __instance.m_level, __instance.m_curHoldIndex);
+                List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
                 supplyPointsIndexes.Shuffle<int>();
 
                 int numSupplyPoints = UnityEngine.Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
@@ -525,41 +535,57 @@ namespace TNHFramework.Patches
                     spawnToken = false;
                     TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                     supplyPoint.SetContact(contact);
-                    __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
+                    ___m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
                 }
             }
 
             // Spawn the initial patrol
             if (__instance.UsesClassicPatrolBehavior)
             {
-                if (__instance.m_level == 0)
-                    __instance.GenerateValidPatrol(__instance.m_curLevel.PatrolChallenge, __instance.m_curPointSequence.StartSupplyPointIndex, __instance.m_curHoldIndex, true);
+                var miGenerateValidPatrol = __instance.GetType().GetMethod("GenerateValidPatrol", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                if (___m_level == 0)
+                {
+                    //__instance.GenerateValidPatrol(___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, ___m_curHoldIndex, true);
+                    miGenerateValidPatrol.Invoke(__instance, [___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, ___m_curHoldIndex, true]);
+                }
                 else
-                    __instance.GenerateValidPatrol(__instance.m_curLevel.PatrolChallenge, __instance.m_curHoldIndex, __instance.m_curHoldIndex, false);
+                {
+                    //__instance.GenerateValidPatrol(___m_curLevel.PatrolChallenge, ___m_curHoldIndex, ___m_curHoldIndex, false);
+                    miGenerateValidPatrol.Invoke(__instance, [___m_curLevel.PatrolChallenge, ___m_curHoldIndex, ___m_curHoldIndex, false]);
+                }
             }
             else
             {
-                if (__instance.m_level == 0)
-                    __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, __instance.m_curPointSequence.StartSupplyPointIndex, -1, __instance.m_curHoldIndex, true);
+                var miGenerateInitialTakeSentryPatrols = __instance.GetType().GetMethod("GenerateInitialTakeSentryPatrols", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                if (___m_level == 0)
+                {
+                    //__instance.GenerateInitialTakeSentryPatrols(___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, -1, ___m_curHoldIndex, true);
+                    miGenerateInitialTakeSentryPatrols.Invoke(__instance, [___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, -1, ___m_curHoldIndex, true]);
+                }
                 else
-                    __instance.GenerateInitialTakeSentryPatrols(__instance.m_curLevel.PatrolChallenge, -1, __instance.m_curHoldIndex, __instance.m_curHoldIndex, false);
+                {
+                    //__instance.GenerateInitialTakeSentryPatrols(___m_curLevel.PatrolChallenge, -1, ___m_curHoldIndex, ___m_curHoldIndex, false);
+                    miGenerateInitialTakeSentryPatrols.Invoke(__instance, [___m_curLevel.PatrolChallenge, -1, ___m_curHoldIndex, ___m_curHoldIndex, false]);
+                }
             }
 
             // Spawn the constructor panels
             for (int i = 0; i < __instance.ConstructSpawners.Count; i++)
             {
-                if (curHoldIndex >= 0)
+                if (___m_lastHoldIndex >= 0)
                 {
-                    TNH_HoldPoint holdPoint = __instance.HoldPoints[curHoldIndex];
+                    TNH_HoldPoint holdPoint = __instance.HoldPoints[___m_lastHoldIndex];
                     
                     if (!holdPoint.ExcludeConstructVolumes.Contains(__instance.ConstructSpawners[i]))
                     {
-                        __instance.ConstructSpawners[i].SpawnConstructs(__instance.m_level);
+                        __instance.ConstructSpawners[i].SpawnConstructs(___m_level);
                     }
                 }
                 else
                 {
-                    __instance.ConstructSpawners[i].SpawnConstructs(__instance.m_level);
+                    __instance.ConstructSpawners[i].SpawnConstructs(___m_level);
                 }
             }
 
@@ -575,7 +601,8 @@ namespace TNHFramework.Patches
         {
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
-            supplyPoint.m_isconfigured = true;
+            //supplyPoint.m_isconfigured = true;
+            typeof(TNH_SupplyPoint).GetField("m_isconfigured", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(supplyPoint, true);
 
             SpawnSupplyGroup(supplyPoint, level);
 
@@ -589,7 +616,8 @@ namespace TNHFramework.Patches
 
             SpawnSupplyBoxes(supplyPoint, level, minBoxPiles, maxBoxPiles, spawnToken);
 
-            supplyPoint.m_hasBeenVisited = false;
+            //supplyPoint.m_hasBeenVisited = false;
+            typeof(TNH_SupplyPoint).GetField("m_hasBeenVisited", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(supplyPoint, false);
         }
 
 
@@ -705,7 +733,9 @@ namespace TNHFramework.Patches
 
                 Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
-                point.m_activeSosigs.Add(enemy);
+                //point.m_activeSosigs.Add(enemy);
+                var activeSosigs = (List<Sosig>)typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
+                activeSosigs.Add(enemy);
             }
         }
 
@@ -719,7 +749,10 @@ namespace TNHFramework.Patches
             {
                 Vector3 pos = point.SpawnPoints_Turrets[i].position + Vector3.up * 0.25f;
                 AutoMeater turret = UnityEngine.Object.Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, point.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
-                point.m_activeTurrets.Add(turret);
+
+                //point.m_activeTurrets.Add(turret);
+                var activeTurrets = (List<AutoMeater>)typeof(TNH_SupplyPoint).GetField("m_activeTurrets", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
+                activeTurrets.Add(turret);
             }
 
         }
@@ -730,6 +763,7 @@ namespace TNHFramework.Patches
             point.SpawnPoints_Boxes.Shuffle();
 
             bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
+            var spawnBoxes = (List<GameObject>)typeof(TNH_SupplyPoint).GetField("m_spawnBoxes", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
 
             // Custom Character behavior:
             // - Every supply point has the same min and max number of boxes
@@ -753,7 +787,8 @@ namespace TNHFramework.Patches
                     Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
 
                     GameObject box = UnityEngine.Object.Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                    point.m_spawnBoxes.Add(box);
+                    //point.m_spawnBoxes.Add(box);
+                    spawnBoxes.Add(box);
                 }
 
                 int tokensSpawned = 0;
@@ -761,7 +796,7 @@ namespace TNHFramework.Patches
                 // J: If you're asking "why is this an if/elseif check if it's a boolean value?", I... I don't know. I don't know why Anton does this. It's not a big deal but I don't know why.
                 if (!point.M.UsesUberShatterableCrates)
                 {
-                    foreach (GameObject boxObj in point.m_spawnBoxes)
+                    foreach (GameObject boxObj in spawnBoxes)
                     {
 
                         if (tokensSpawned < minTokens)
@@ -785,9 +820,9 @@ namespace TNHFramework.Patches
 
                 else if (point.M.UsesUberShatterableCrates)
                 {
-                    for (int k = 0; k < point.m_spawnBoxes.Count; k++)
+                    for (int k = 0; k < spawnBoxes.Count; k++)
                     {
-                        UberShatterable boxComp = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
+                        UberShatterable boxComp = spawnBoxes[k].GetComponent<UberShatterable>();
                         if (tokensSpawned < minTokens)
                         {
                             spawnBoxWithToken(point, boxComp);
@@ -840,50 +875,53 @@ namespace TNHFramework.Patches
                         Quaternion rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(onUnitSphere, Vector3.up), 0.1f);
 
                         GameObject item = UnityEngine.Object.Instantiate<GameObject>(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                        point.m_spawnBoxes.Add(item);
+                        //point.m_spawnBoxes.Add(item);
+                        spawnBoxes.Add(item);
                     }
                 }
 
-                point.m_spawnBoxes.Shuffle<GameObject>();
+                //point.m_spawnBoxes.Shuffle();
+                spawnBoxes.Shuffle();
+                //miShuffle.Invoke(spawnBoxes, []);
 
                 if (!point.M.UsesUberShatterableCrates)
                 {
                     int spawnIndex = 0;
                     TNH_ShatterableCrate boxComp;
 
-                    if (spawnToken && point.m_spawnBoxes.Count > spawnIndex)
+                    if (spawnToken && spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
                         boxComp.SetHoldingToken(point.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth1 && point.m_spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth1 && spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
                         boxComp.SetHoldingHealth(point.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth2 && point.m_spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth2 && spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
                         boxComp.SetHoldingHealth(point.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth3 && point.m_spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth3 && spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = point.m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
                         boxComp.SetHoldingHealth(point.M);
                         //spawnIndex++;
                     }
                 }
                 else
                 {
-                    for (int k = 0; k < point.m_spawnBoxes.Count; k++)
+                    for (int k = 0; k < spawnBoxes.Count; k++)
                     {
-                        UberShatterable boxComp = point.m_spawnBoxes[k].GetComponent<UberShatterable>();
+                        UberShatterable boxComp = spawnBoxes[k].GetComponent<UberShatterable>();
 
                         if (spawnToken)
                         {
@@ -1004,26 +1042,25 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnTakeEnemyGroup")]
         [HarmonyPrefix]
-        public static bool SpawnTakeEnemyGroupReplacement(TNH_SupplyPoint __instance)
+        public static bool SpawnTakeEnemyGroupReplacement(TNH_SupplyPoint __instance, ref int ___numSpawnBonus, ref List<Sosig> ___m_activeSosigs)
         {
             __instance.SpawnPoints_Sosigs_Defense.Shuffle();
-            __instance.SpawnPoints_Sosigs_Defense.Shuffle();
+            //__instance.SpawnPoints_Sosigs_Defense.Shuffle();
 
-            int num = UnityEngine.Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
-            num += __instance.numSpawnBonus;
-            num = Mathf.Clamp(num, 0, 5);
-            __instance.numSpawnBonus++;
+            int numGuards = UnityEngine.Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
+            numGuards += ___numSpawnBonus;
+            numGuards = Mathf.Clamp(numGuards, 0, 5);
+            ___numSpawnBonus++;
 
             TNHFrameworkLogger.Log($"Spawning {__instance.T.NumGuards} supply guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
 
-            for (int i = 0; i < __instance.T.NumGuards && i < __instance.SpawnPoints_Sosigs_Defense.Count; i++)
+            for (int i = 0; i < numGuards && i < __instance.SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
                 Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
-
-                __instance.m_activeSosigs.Add(enemy);
+                ___m_activeSosigs.Add(enemy);
             }
 
             return false;
@@ -1032,10 +1069,10 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTakeEnemyGroup")]
         [HarmonyPrefix]
-        public static bool SpawnTakeGroupReplacement(TNH_HoldPoint __instance)
+        public static bool SpawnTakeGroupReplacement(TNH_HoldPoint __instance, ref List<Sosig> ___m_activeSosigs)
         {
             __instance.SpawnPoints_Sosigs_Defense.Shuffle();
-            __instance.SpawnPoints_Sosigs_Defense.Shuffle();
+            //__instance.SpawnPoints_Sosigs_Defense.Shuffle();
 
             TNHFrameworkLogger.Log($"Spawning {__instance.T.NumGuards} hold guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
 
@@ -1047,7 +1084,7 @@ namespace TNHFramework.Patches
 
                 Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
 
-                __instance.m_activeSosigs.Add(enemy);
+                ___m_activeSosigs.Add(enemy);
                 __instance.M.RegisterGuard(enemy);
             }
 
@@ -1058,7 +1095,7 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTurrets")]
         [HarmonyPrefix]
-        public static bool SpawnTurretsReplacement(TNH_HoldPoint __instance)
+        public static bool SpawnTurretsReplacement(TNH_HoldPoint __instance, ref List<AutoMeater> ___m_activeTurrets)
         {
             __instance.SpawnPoints_Turrets.Shuffle<Transform>();
             FVRObject turretPrefab = __instance.M.GetTurretPrefab(__instance.T.TurretType);
@@ -1067,7 +1104,7 @@ namespace TNHFramework.Patches
             {
                 Vector3 pos = __instance.SpawnPoints_Turrets[i].position + Vector3.up * 0.25f;
                 AutoMeater turret = UnityEngine.Object.Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, __instance.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
-                __instance.m_activeTurrets.Add(turret);
+                ___m_activeTurrets.Add(turret);
             }
 
             return false;
@@ -1097,38 +1134,43 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")]
         [HarmonyPrefix]
-        public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance)
+        public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, ref TNH_HoldPoint.HoldState ___m_state,
+            ref float ___m_tickDownToFailure, ref TNH_HoldPointSystemNode ___m_systemNode)
         {
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
-            Phase currentPhase = character.GetCurrentPhase(__instance.m_curPhase);
+            Phase currentPhase = character.GetCurrentPhase(___m_curPhase);
 
             // If we shouldn't spawn any targets, we exit out early
             if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
                 (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
             {
-                __instance.CompletePhase();
+                //__instance.CompletePhase();
+                var miCompletePhase = __instance.GetType().GetMethod("CompletePhase", BindingFlags.Instance | BindingFlags.NonPublic);
+                miCompletePhase.Invoke(__instance, []);
                 return false;
             }
 
-            __instance.m_state = TNH_HoldPoint.HoldState.Hacking;
-            __instance.m_tickDownToFailure = 120f;
+            ___m_state = TNH_HoldPoint.HoldState.Hacking;
+            ___m_tickDownToFailure = 120f;
 
+            var miDeleteAllActiveWarpIns = __instance.GetType().GetMethod("DeleteAllActiveWarpIns", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
             {
                 __instance.M.EnqueueEncryptionLine(TNH_EncryptionType.Static);
-                __instance.DeleteAllActiveWarpIns();
+                //__instance.DeleteAllActiveWarpIns();
+                miDeleteAllActiveWarpIns.Invoke(__instance, []);
                 SpawnEncryptionReplacement(__instance, currentPhase, true);
             }
             else
             {
                 __instance.M.EnqueueEncryptionLine(currentPhase.Encryptions[0]);
-                __instance.DeleteAllActiveWarpIns();
+                //__instance.DeleteAllActiveWarpIns();
+                miDeleteAllActiveWarpIns.Invoke(__instance, []);
                 SpawnEncryptionReplacement(__instance, currentPhase, false);
             }
 
-            __instance.m_systemNode.SetNodeMode(TNH_HoldPointSystemNode.SystemNodeMode.Indentified);
-
+            ___m_systemNode.SetNodeMode(TNH_HoldPointSystemNode.SystemNodeMode.Indentified);
             return false;
         }
 
@@ -1155,10 +1197,11 @@ namespace TNHFramework.Patches
                 encryptions = currentPhase.Encryptions.Select(o => holdPoint.M.GetEncryptionPrefab(o)).ToList();
             }
 
+            var validSpawnPoints = (List<Transform>)typeof(TNH_HoldPoint).GetField("m_validSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(holdPoint);
 
-            for (int i = 0; i < numTargets && i < holdPoint.m_validSpawnPoints.Count; i++)
+            for (int i = 0; i < numTargets && i < validSpawnPoints.Count; i++)
             {
-                GameObject gameObject = UnityEngine.Object.Instantiate(encryptions[i % encryptions.Count].GetGameObject(), holdPoint.m_validSpawnPoints[i].position, holdPoint.m_validSpawnPoints[i].rotation);
+                GameObject gameObject = UnityEngine.Object.Instantiate(encryptions[i % encryptions.Count].GetGameObject(), validSpawnPoints[i].position, validSpawnPoints[i].rotation);
                 TNH_EncryptionTarget encryption = gameObject.GetComponent<TNH_EncryptionTarget>();
                 encryption.SetHoldPoint(holdPoint);
                 holdPoint.RegisterNewTarget(encryption);
@@ -1167,8 +1210,9 @@ namespace TNHFramework.Patches
 
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int phaseIndex)
         {
+            var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel(M.m_curLevel);
+            Level currLevel = character.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             float grenadeChance = currPhase.GrenadeChance;
@@ -1205,8 +1249,9 @@ namespace TNHFramework.Patches
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
             // Get the custom character data
+            var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel(M.m_curLevel);
+            Level currLevel = character.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             // Set first enemy to be spawned as leader
@@ -1260,36 +1305,37 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")]
         [HarmonyPrefix]
-        public static bool SpawningUpdateReplacement(TNH_HoldPoint __instance)
+        public static bool SpawningUpdateReplacement(TNH_HoldPoint __instance, ref float ___m_tickDownToNextGroupSpawn, ref List<Sosig> ___m_activeSosigs,
+            TNH_HoldPoint.HoldState ___m_state, ref bool ___m_hasThrownNadesInWave, bool ___m_isFirstWave, int ___m_phaseIndex, TNH_HoldChallenge.Phase ___m_curPhase)
         {
-            __instance.m_tickDownToNextGroupSpawn -= Time.deltaTime;
+            ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
 
-            if (__instance.m_activeSosigs.Count < 1 && __instance.m_state == TNH_HoldPoint.HoldState.Analyzing)
+            if (___m_activeSosigs.Count < 1 && ___m_state == TNH_HoldPoint.HoldState.Analyzing)
             {
-                __instance.m_tickDownToNextGroupSpawn -= Time.deltaTime;
+                ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
             }
 
-            if (!__instance.m_hasThrownNadesInWave && __instance.m_tickDownToNextGroupSpawn <= 5f && !__instance.m_isFirstWave)
+            if (!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
             {
                 // Check if grenade vectors exist before throwing grenades
                 if (__instance.AttackVectors[0].GrenadeVector != null)
-                    SpawnGrenades(__instance.AttackVectors, __instance.M, __instance.m_phaseIndex);
+                    SpawnGrenades(__instance.AttackVectors, __instance.M, ___m_phaseIndex);
                 
-                __instance.m_hasThrownNadesInWave = true;
+                ___m_hasThrownNadesInWave = true;
             }
 
             // Handle spawning of a wave if it is time
-            if (__instance.m_curPhase != null && __instance.m_tickDownToNextGroupSpawn <= 0 && __instance.m_activeSosigs.Count + __instance.m_curPhase.MaxEnemies <= __instance.m_curPhase.MaxEnemiesAlive)
+            if (___m_curPhase != null && ___m_tickDownToNextGroupSpawn <= 0 && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive)
             {
                 __instance.AttackVectors.Shuffle();
 
-                SpawnHoldEnemyGroup(__instance.m_curPhase, __instance.m_phaseIndex, __instance.AttackVectors, __instance.SpawnPoints_Turrets, __instance.m_activeSosigs, __instance.M, ref __instance.m_isFirstWave);
-                __instance.m_hasThrownNadesInWave = false;
+                SpawnHoldEnemyGroup(___m_curPhase, ___m_phaseIndex, __instance.AttackVectors, __instance.SpawnPoints_Turrets, ___m_activeSosigs, __instance.M, ref ___m_isFirstWave);
+                ___m_hasThrownNadesInWave = false;
 
                 // Adjust spawn cadence depending on ammo mode
                 float ammoMult = (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo ? 1.35f : 1f);
                 float randomMult = (GM.TNHOptions.TNHSeed >= 0) ? 0.9f : UnityEngine.Random.Range(0.9f, 1.1f);
-                __instance.m_tickDownToNextGroupSpawn = __instance.m_curPhase.SpawnCadence * randomMult * ammoMult;
+                ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence * randomMult * ammoMult;
             }
 
 
@@ -1325,9 +1371,10 @@ namespace TNHFramework.Patches
         // Anton pls fix - Don't play line to advance to next node when completing last hold
         [HarmonyPatch(typeof(TNH_Manager), "HoldPointCompleted")]
         [HarmonyPostfix]
-        public static void HoldPointCompleted_LineFix(TNH_Manager __instance)
+        public static void HoldPointCompleted_LineFix(TNH_Manager __instance, int ___m_level, int ___m_maxLevels)
         {
-            if (__instance.m_level < __instance.m_maxLevels)
+            // Play this only if it's NOT the last level
+            if (___m_level < ___m_maxLevels)
             {
                 __instance.EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt);
             }
@@ -1353,9 +1400,10 @@ namespace TNHFramework.Patches
         /// <returns></returns>
         [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
         [HarmonyPrefix]
-        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, ref FireArmRoundClass __result, FireArmRoundType t)
+        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, ref FireArmRoundClass __result, Dictionary<FireArmRoundType, FireArmRoundClass> ___m_decidedTypes,
+            List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t)
         {
-            if (!__instance.m_decidedTypes.ContainsKey(t))
+            if (!___m_decidedTypes.ContainsKey(t))
             {
                 List<FireArmRoundClass> list = [];
                 CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
@@ -1363,7 +1411,7 @@ namespace TNHFramework.Patches
                 for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
                 {
                     FVRObject objectID = AM.SRoundDisplayDataDic[t].Classes[i].ObjectID;
-                    if (__instance.m_validEras.Contains(objectID.TagEra) && __instance.m_validSets.Contains(objectID.TagSet))
+                    if (___m_validEras.Contains(objectID.TagEra) && ___m_validSets.Contains(objectID.TagSet))
                     {
                         if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))
                         {
@@ -1373,15 +1421,15 @@ namespace TNHFramework.Patches
                 }
                 if (list.Count > 0)
                 {
-                    __instance.m_decidedTypes.Add(t, list[UnityEngine.Random.Range(0, list.Count)]);
+                    ___m_decidedTypes.Add(t, list[UnityEngine.Random.Range(0, list.Count)]);
                 }
                 else
                 {
-                    __instance.m_decidedTypes.Add(t, AM.GetRandomValidRoundClass(t));
+                    ___m_decidedTypes.Add(t, AM.GetRandomValidRoundClass(t));
                 }
             }
 
-            __result = __instance.m_decidedTypes[t];
+            __result = ___m_decidedTypes[t];
             return false;
         }
 
@@ -1389,11 +1437,13 @@ namespace TNHFramework.Patches
         // This is a patch for using a character's global ammo blacklist in the new ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "RefreshDisplayWithType")]
         [HarmonyPrefix]
-        public static bool RefreshDisplayWithTypeBlacklist(TNH_AmmoReloader2 __instance, FireArmRoundType t, int selectedEntry, bool confirmPurchase)
+        public static bool RefreshDisplayWithTypeBlacklist(TNH_AmmoReloader2 __instance, List<FireArmRoundType> ___m_detectedTypes, ref bool ___m_isConfirmingPurchase,
+            ref bool ___hasDisplayedType, ref FireArmRoundType ___m_displayedType, ref List<FireArmRoundClass> ___m_displayedClasses, int ___m_selectedClass,
+            int ___m_confirmingClass, List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t, int selectedEntry, bool confirmPurchase)
         {
             __instance.AmmoTypeField.text = AM.SRoundDisplayDataDic[t].DisplayName;
             
-            if (__instance.m_detectedTypes.Count > 1)
+            if (___m_detectedTypes.Count > 1)
             {
                 __instance.DisplayedTypeNext.enabled = true;
                 __instance.DisplayedTypePrevious.enabled = true;
@@ -1404,10 +1454,10 @@ namespace TNHFramework.Patches
                 __instance.DisplayedTypePrevious.enabled = false;
             }
 
-            __instance.m_isConfirmingPurchase = confirmPurchase;
-            __instance.hasDisplayedType = true;
-            __instance.m_displayedType = t;
-            __instance.m_displayedClasses.Clear();
+            ___m_isConfirmingPurchase = confirmPurchase;
+            ___hasDisplayedType = true;
+            ___m_displayedType = t;
+            ___m_displayedClasses.Clear();
 
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
 
@@ -1415,56 +1465,56 @@ namespace TNHFramework.Patches
             {
                 FVRObject objectID = AM.SRoundDisplayDataDic[t].Classes[i].ObjectID;
 
-                if (__instance.m_validEras.Contains(objectID.TagEra) && __instance.m_validSets.Contains(objectID.TagSet))
+                if (___m_validEras.Contains(objectID.TagEra) && ___m_validSets.Contains(objectID.TagSet))
                 {
                     if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))
                     {
-                        __instance.m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
+                        ___m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
                     }
                 }
             }
 
-            if (__instance.m_displayedClasses.Count == 0)
+            if (___m_displayedClasses.Count == 0)
             {
-                __instance.m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[0].Class);
+                ___m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[0].Class);
             }
 
             if (!__instance.M.UnlockedClassesByType.ContainsKey(t))
             {
                 List<FireArmRoundClass> list = new List<FireArmRoundClass>();
-                list.Add(__instance.m_displayedClasses[0]);
+                list.Add(___m_displayedClasses[0]);
                 __instance.M.UnlockedClassesByType.Add(t, list);
             }
 
             for (int j = 0; j < __instance.AmmoTokenFields.Count; j++)
             {
-                if (j < __instance.m_displayedClasses.Count)
+                if (j < ___m_displayedClasses.Count)
                 {
                     __instance.AmmoTokenButtons[j].enabled = true;
-                    int costByClass = AM.GetCostByClass(__instance.m_displayedType, __instance.m_displayedClasses[j]);
+                    int costByClass = AM.GetCostByClass(___m_displayedType, ___m_displayedClasses[j]);
 
-                    if (__instance.M.UnlockedClassesByType[__instance.m_displayedType].Contains(__instance.m_displayedClasses[j]) || costByClass < 1)
+                    if (__instance.M.UnlockedClassesByType[___m_displayedType].Contains(___m_displayedClasses[j]) || costByClass < 1)
                     {
-                        if (__instance.m_selectedClass == j)
+                        if (___m_selectedClass == j)
                         {
                             __instance.AmmoTokenButtons[j].sprite = __instance.Sprite_Arrow;
-                            __instance.AmmoTokenFields[j].text = "[Selected] " + AM.STypeDic[t][__instance.m_displayedClasses[j]].Name;
+                            __instance.AmmoTokenFields[j].text = "[Selected] " + AM.STypeDic[t][___m_displayedClasses[j]].Name;
                         }
                         else
                         {
                             __instance.AmmoTokenButtons[j].sprite = __instance.Sprite_Select;
-                            __instance.AmmoTokenFields[j].text = AM.STypeDic[t][__instance.m_displayedClasses[j]].Name;
+                            __instance.AmmoTokenFields[j].text = AM.STypeDic[t][___m_displayedClasses[j]].Name;
                         }
                     }
-                    else if (__instance.m_isConfirmingPurchase && j == __instance.m_confirmingClass)
+                    else if (___m_isConfirmingPurchase && j == ___m_confirmingClass)
                     {
                         __instance.AmmoTokenButtons[j].sprite = __instance.Sprite_Check;
-                        __instance.AmmoTokenFields[j].text = "[Confirm Purchase?] " + AM.STypeDic[t][__instance.m_displayedClasses[j]].Name;
+                        __instance.AmmoTokenFields[j].text = "[Confirm Purchase?] " + AM.STypeDic[t][___m_displayedClasses[j]].Name;
                     }
                     else
                     {
                         __instance.AmmoTokenButtons[j].sprite = __instance.Sprite_Token;
-                        __instance.AmmoTokenFields[j].text = "[Buy (" + costByClass.ToString() + ")] " + AM.STypeDic[t][__instance.m_displayedClasses[j]].Name;
+                        __instance.AmmoTokenFields[j].text = "[Buy (" + costByClass.ToString() + ")] " + AM.STypeDic[t][___m_displayedClasses[j]].Name;
                     }
                 }
                 else
@@ -1474,7 +1524,9 @@ namespace TNHFramework.Patches
                 }
             }
 
-            __instance.UpdateTokenDisplay(__instance.M.GetNumTokens());
+            //__instance.UpdateTokenDisplay(__instance.M.GetNumTokens());
+            var miUpdateTokenDisplay = __instance.GetType().GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateTokenDisplay.Invoke(__instance, [__instance.M.GetNumTokens()]);
             return false;
         }
 
@@ -1590,20 +1642,26 @@ namespace TNHFramework.Patches
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")]
         [HarmonyPriority(800)]
         [HarmonyPrefix]
-        public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, int i)
+        public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, bool ___allowEntry, List<EquipmentPoolDef.PoolEntry> ___m_poolEntries,
+            ref int ___m_selectedEntry, GameObject ___m_spawnedCase, ref int ___m_numTokensSelected, ref List<int> ___m_poolAddedCost, int i)
         {
-            __instance.UpdateRerollButtonState(false);
+            //__instance.UpdateRerollButtonState(false);
+            var miUpdateRerollButtonState = __instance.GetType().GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
+            miUpdateRerollButtonState.Invoke(__instance, [false]);
 
-            if (!__instance.allowEntry)
+            if (!___allowEntry)
                 return false;
+
+            var miSetState = __instance.GetType().GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (__instance.State == TNH_ObjectConstructor.ConstructorState.EntryList)
             {
-                int cost = __instance.m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + __instance.m_poolAddedCost[i];
+                int cost = ___m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[i];
 
                 if (__instance.M.GetNumTokens() >= cost)
                 {
-                    __instance.SetState(TNH_ObjectConstructor.ConstructorState.Confirm, i);
+                    //__instance.SetState(TNH_ObjectConstructor.ConstructorState.Confirm, i);
+                    miSetState.Invoke(__instance, [TNH_ObjectConstructor.ConstructorState.Confirm, i]);
                     SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Select, __instance.transform.position);
                 }
                 else
@@ -1615,30 +1673,32 @@ namespace TNHFramework.Patches
             {
                 if (i == 1)
                 {
-                    __instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
-                    __instance.m_selectedEntry = -1;
+                    //__instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
+                    miSetState.Invoke(__instance, [TNH_ObjectConstructor.ConstructorState.EntryList, 0]);
+                    ___m_selectedEntry = -1;
                     SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Back, __instance.transform.position);
                 }
                 else if (i == 3)
                 {
-                    int cost = __instance.m_poolEntries[__instance.m_selectedEntry].GetCost(__instance.M.EquipmentMode) + __instance.m_poolAddedCost[__instance.m_selectedEntry];
+                    int cost = ___m_poolEntries[___m_selectedEntry].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[___m_selectedEntry];
 
                     if (__instance.M.GetNumTokens() >= cost)
                     {
-                        if ((!__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInSmallCase && !__instance.m_poolEntries[__instance.m_selectedEntry].TableDef.SpawnsInLargeCase) || __instance.m_spawnedCase == null)
+                        if ((!___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInSmallCase && !___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInLargeCase) || ___m_spawnedCase == null)
                         {
-                            AnvilManager.Run(SpawnObjectAtConstructor(__instance.m_poolEntries[__instance.m_selectedEntry], __instance));
-                            __instance.m_numTokensSelected = 0;
+                            AnvilManager.Run(SpawnObjectAtConstructor(___m_poolEntries[___m_selectedEntry], __instance));
+                            ___m_numTokensSelected = 0;
                             __instance.M.SubtractTokens(cost);
                             SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Spawn, __instance.transform.position);
 
                             if (__instance.M.C.UsesPurchasePriceIncrement)
                             {
-                                __instance.m_poolAddedCost[__instance.m_selectedEntry] += 1;
+                                ___m_poolAddedCost[___m_selectedEntry] += 1;
                             }
 
-                            __instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
-                            __instance.m_selectedEntry = -1;
+                            //__instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
+                            miSetState.Invoke(__instance, [TNH_ObjectConstructor.ConstructorState.EntryList, 0]);
+                            ___m_selectedEntry = -1;
                         }
                         else
                         {
@@ -1660,7 +1720,8 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Spawning item at constructor", TNHFrameworkLogger.LogType.TNH);
 
-            constructor.allowEntry = false;
+            //constructor.allowEntry = false;
+            typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, false);
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
@@ -1676,7 +1737,8 @@ namespace TNHFramework.Patches
                 FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
                 GameObject itemCase = SpawnWeaponCase(constructor.M, selectedGroups[0].BespokeAttachmentChance, caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
-                constructor.m_spawnedCase = itemCase;
+                //constructor.m_spawnedCase = itemCase;
+                typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, itemCase);
                 itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
             }
 
@@ -1765,7 +1827,8 @@ namespace TNHFramework.Patches
                             mainSpawnCount += 1;
                         }
 
-                        TNHFrameworkLogger.Log("Level: " + constructor.M.m_level, TNHFrameworkLogger.LogType.TNH);
+                        int level = (int)typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(constructor.M);
+                        TNHFrameworkLogger.Log("Level: " + level, TNHFrameworkLogger.LogType.TNH);
 
                         // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
                         if (vaultFile != null)
@@ -1944,7 +2007,8 @@ namespace TNHFramework.Patches
                 }
             }
 
-            constructor.allowEntry = true;
+            //constructor.allowEntry = true;
+            typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, true);
             yield break;
         }
 
@@ -1961,10 +2025,14 @@ namespace TNHFramework.Patches
             }
         }
 
-        public static GameObject SpawnWeaponCase(TNH_Manager M, float bespokeAttachmentChance, GameObject caseFab, Vector3 position, Vector3 forward, FVRObject weapon, int numMag, int numRound, int minAmmo, int maxAmmo, FVRObject ammoObjOverride = null)
+        public static GameObject SpawnWeaponCase(TNH_Manager M, float bespokeAttachmentChance, GameObject caseFab, Vector3 position, Vector3 forward,
+            FVRObject weapon, int numMag, int numRound, int minAmmo, int maxAmmo, FVRObject ammoObjOverride = null)
         {
             GameObject caseObj = UnityEngine.Object.Instantiate<GameObject>(caseFab, position, Quaternion.LookRotation(forward, Vector3.up));
-            M.m_weaponCases.Add(caseObj);
+
+            //M.m_weaponCases.Add(caseObj);
+            var weaponCases = (List<GameObject>)typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
+            weaponCases.Add(caseObj);
 
             TNH_WeaponCrate createComp = caseObj.GetComponent<TNH_WeaponCrate>();
 
@@ -2065,12 +2133,12 @@ namespace TNHFramework.Patches
         // Anton pls fix - Pump action shotgun config not working
         [HarmonyPatch(typeof(TubeFedShotgun), "SetLoadedChambers")]
         [HarmonyPostfix]
-        public static void SetLoadedChambers_SetExtractor(TubeFedShotgun __instance)
+        public static void SetLoadedChambers_SetExtractor(TubeFedShotgun __instance, ref bool ___m_isChamberRoundOnExtractor, ref FVRFirearmMovingProxyRound ___m_proxy)
         {
             if (__instance.Chamber.IsFull)
             {
-                __instance.m_isChamberRoundOnExtractor = true;
-                __instance.m_proxy.ClearProxy();
+                ___m_isChamberRoundOnExtractor = true;
+                ___m_proxy.ClearProxy();
             }
 
         }
@@ -2078,11 +2146,11 @@ namespace TNHFramework.Patches
         // Anton pls fix - Pump action shotgun config not working
         [HarmonyPatch(typeof(TubeFedShotgun), "ConfigureFromFlagDic")]
         [HarmonyPostfix]
-        public static void ConfigureFromFlagDic_CheckLock(TubeFedShotgun __instance, Dictionary<string, string> f)
+        public static void ConfigureFromFlagDic_CheckLock(TubeFedShotgun __instance, bool ___m_isHammerCocked, ref bool ___m_isSafetyEngaged, Dictionary<string, string> f)
         {
             if (__instance.Mode == TubeFedShotgun.ShotgunMode.PumpMode)
             {
-                if (__instance.m_isHammerCocked)
+                if (___m_isHammerCocked)
                 {
                     if (__instance.HasHandle)
                         __instance.Handle.LockHandle();
@@ -2094,9 +2162,11 @@ namespace TNHFramework.Patches
                 if (f.ContainsKey("SafetyState"))
                 {
                     if (f["SafetyState"] == "Off")
-                        __instance.m_isSafetyEngaged = false;
+                        ___m_isSafetyEngaged = false;
 
-                    __instance.UpdateSafetyGeo();
+                    //__instance.UpdateSafetyGeo();
+                    var miUpdateSafetyGeo = __instance.GetType().GetMethod("UpdateSafetyGeo", BindingFlags.Instance | BindingFlags.NonPublic);
+                    miUpdateSafetyGeo.Invoke(__instance, []);
                 }
             }
         }
@@ -2110,7 +2180,9 @@ namespace TNHFramework.Patches
             // Note that a round will be taken from the magazine, so there's no actual +1 round.
             if (rounds.Count > 0)
             {
-                __instance.ToggleFireSelector();
+                //__instance.ToggleFireSelector();
+                var miToggleFireSelector = __instance.GetType().GetMethod("ToggleFireSelector", BindingFlags.Instance | BindingFlags.NonPublic);
+                miToggleFireSelector.Invoke(__instance, []);
                 __instance.Bolt.SetBoltToRear();
                 __instance.BeginChamberingRound();
                 __instance.ChamberRound();

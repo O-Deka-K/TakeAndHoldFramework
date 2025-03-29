@@ -221,17 +221,17 @@ namespace TNHFramework
 
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
         [HarmonyPrefix]
-        public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
+        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
         {
             TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
-            GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
+            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
 
-            __instance.m_hasCurrentScore = true;
-            __instance.m_currentScore = score;
+            ___m_hasCurrentScore = true;
+            ___m_currentScore = score;
 
             // Draw local scores
-            __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
+            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
 
             GM.Omni.SaveToFile();
 

@@ -9,9 +9,9 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
-        public static bool StartOfGamePatch(TNH_Manager __instance)
+        public static bool StartOfGamePatch(TNH_Manager __instance, bool ___m_hasInit)
         {
-            if (!__instance.m_hasInit && __instance.AIManager.HasInit)
+            if (!___m_hasInit && __instance.AIManager.HasInit)
             {
                 TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
             }
@@ -85,9 +85,9 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "TestVisited")]
         [HarmonyPrefix]
-        public static bool TrackSupplyVisitsPatch(TNH_SupplyPoint __instance, ref bool __result)
+        public static bool TrackSupplyVisitsPatch(TNH_SupplyPoint __instance, ref bool __result, ref bool ___m_hasBeenVisited, ref TAH_ReticleContact ___m_contact, bool ___m_isconfigured)
         {
-            if (!__instance.m_isconfigured)
+            if (!___m_isconfigured)
             {
                 __result = false;
                 return false;
@@ -96,12 +96,12 @@ namespace TNHFramework.Patches
             bool flag = __instance.TestVolumeBool(__instance.Bounds, GM.CurrentPlayerBody.transform.position);
             if (flag)
             {
-                if (!__instance.m_hasBeenVisited && __instance.m_contact != null)
+                if (!___m_hasBeenVisited && ___m_contact != null)
                 {
-                    __instance.m_contact.SetVisited(true);
+                    ___m_contact.SetVisited(true);
                     TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
                 }
-                __instance.m_hasBeenVisited = true;
+                ___m_hasBeenVisited = true;
             }
 
             __result = flag;
@@ -111,12 +111,12 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "UpdateHighScoreCallbacks")]
         [HarmonyPrefix]
-        public static bool RequestScores(TNH_ScoreDisplay __instance)
+        public static bool RequestScores(TNH_ScoreDisplay __instance, ref bool ___m_doRequestScoresTop, ref bool ___m_doRequestScoresPlayer)
         {
             // Custom TNH scoreboard is permanently offline, and official scoreboard doesn't support custom characters
             // Local scores still work
-            __instance.m_doRequestScoresTop = false;
-            __instance.m_doRequestScoresPlayer = false;
+            ___m_doRequestScoresTop = false;
+            ___m_doRequestScoresPlayer = false;
 
             return false;
         }

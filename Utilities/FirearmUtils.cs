@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
@@ -553,7 +554,10 @@ namespace TNHFramework.Utilities
                     component.LoadedRounds[i].LR_ObjectWrapper = magazine.LoadedRounds[i].LR_ObjectWrapper;
                 }
             }
-            component.m_numRounds = magazine.m_numRounds;
+
+            //component.m_numRounds = magazine.m_numRounds;
+            var fiNumRounds = typeof(FVRFireArmMagazine).GetField("m_numRounds", BindingFlags.Instance | BindingFlags.NonPublic);
+            fiNumRounds.SetValue(component, fiNumRounds.GetValue(magazine));
             component.UpdateBulletDisplay();
 
             return component;
