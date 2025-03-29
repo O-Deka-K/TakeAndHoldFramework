@@ -89,7 +89,7 @@ namespace TNHFramework
                     return;
                 }
 
-                //Now we want to load the icons for each pool
+                // Now we want to load the icons for each pool
                 foreach (IFileHandle iconFile in dir.GetFiles())
                 {
                     foreach (ObjectTemplates.V1.EquipmentPool pool in character.EquipmentPools)
@@ -105,7 +105,7 @@ namespace TNHFramework
 
                 LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TNHFrameworkLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
             }
@@ -137,7 +137,7 @@ namespace TNHFramework
 
                 LoadedTemplateManager.AddVaultFile(savedGun);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TNHFrameworkLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
             }

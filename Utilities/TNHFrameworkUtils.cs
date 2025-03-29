@@ -567,7 +567,7 @@ namespace TNHFramework.Utilities
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
             
-            //Loop through all outfit configs and remove any clothing objects that don't exist
+            // Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
                 for (int i = config.Headwear.Count - 1; i >= 0 ; i--)

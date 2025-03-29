@@ -34,7 +34,7 @@ namespace TNHFramework
             template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
-            //Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
+            // Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, NewSosigID);
@@ -46,10 +46,10 @@ namespace TNHFramework
                 return;
             }
 
-            //Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
+            // Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
             realTemplate.SosigEnemyID = (SosigEnemyID)SosigIDDict[template.SosigEnemyID];
 
-            //Finally add the templates to our global dictionary
+            // Finally, add the templates to our global dictionary
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
@@ -61,7 +61,7 @@ namespace TNHFramework
         {
             SosigTemplate template = new(realTemplate);
 
-            //This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+            // This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
@@ -72,7 +72,7 @@ namespace TNHFramework
                 return;
             }
 
-            //Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
+            // Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
@@ -105,7 +105,7 @@ namespace TNHFramework
 
             foreach (EquipmentPool pool in template.EquipmentPools)
             {
-                //Must check for this, since default characters can have references to the same pools
+                // Must check for this, since default characters can have references to the same pools
                 if (!EquipmentPoolDictionary.ContainsKey(pool.GetPoolEntry()))
                 {
                     EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);

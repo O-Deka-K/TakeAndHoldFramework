@@ -86,7 +86,7 @@ namespace TNHFramework
                 TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher finished!", TNHFrameworkLogger.LogType.General);
             }
 
-            //Now perform final steps of loading characters
+            // Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
             SavedCharacters = CharDatabase.Characters;
 
@@ -292,7 +292,7 @@ namespace TNHFramework
         {
             TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
 
-            //Load all of the default templates into our dictionaries
+            // Load all of the default templates into our dictionaries
             TNHFrameworkLogger.Log("Adding default sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultSosigs();
             TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
@@ -314,7 +314,7 @@ namespace TNHFramework
 
         public static void CreateTNHFiles(string path)
         {
-            //Create files relevant for character creation
+            // Create files relevant for character creation
             TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
             TNHFrameworkUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
             TNHFrameworkUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
@@ -393,10 +393,10 @@ namespace TNHFramework
                 {
                     TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
-                    //Find any characters that use this sosig, and remove them
+                    // Find any characters that use this sosig, and remove them
                     for (int j = LoadedTemplateManager.LoadedCharactersDict.Values.Count - 1; j >= 0; j--)
                     {
-                        //This is probably monsterously inefficient, but if you're at this point you're already fucked :)
+                        // This is probably monsterously inefficient, but if you're at this point you're already fucked :)
                         KeyValuePair<TNH_CharacterDef, CustomCharacter> value_pair = LoadedTemplateManager.LoadedCharactersDict.ToList()[j];
 
                         if (value_pair.Value.CharacterUsesSosig(sosig.SosigEnemyID))
@@ -414,7 +414,7 @@ namespace TNHFramework
         {
             TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
 
-            //Load all characters into the UI
+            // Load all characters into the UI
             foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
             {
                 bool flag = false;
@@ -443,7 +443,7 @@ namespace TNHFramework
                 }
             }
 
-            //Update the UI
+            // Update the UI
             Traverse instanceTraverse = Traverse.Create(instance);
             int selectedCategory = (int)instanceTraverse.Field("m_selectedCategory").GetValue();
             int selectedCharacter = (int)instanceTraverse.Field("m_selectedCharacter").GetValue();

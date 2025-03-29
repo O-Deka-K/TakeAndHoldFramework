@@ -72,7 +72,7 @@ namespace TNHFramework.Patches
             Text itemsText = CreateItemsText(__instance);
             ExpandCharacterUI(__instance);
 
-            //Perform first time setup of all files
+            // Perform first time setup of all files
             if (!TNHMenuInitializer.TNHInitialized)
             {
                 SceneLoader sceneHotDog = UnityEngine.Object.FindObjectOfType<SceneLoader>();
@@ -82,7 +82,7 @@ namespace TNHFramework.Patches
                     AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHFramework.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, __instance.Categories, __instance.CharDatabase, __instance, TNHFramework.BuildCharacterFiles.Value));
                 }
 
-                //If the magazine cache has previously failed, we shouldn't let the player continue
+                // If the magazine cache has previously failed, we shouldn't let the player continue
                 else
                 {
                     sceneHotDog.gameObject.SetActive(false);
@@ -143,7 +143,7 @@ namespace TNHFramework.Patches
         /// <param name="manager"></param>
         private static void ExpandCharacterUI(TNH_UIManager manager)
         {
-            //Add additional character buttons
+            // Add additional character buttons
             OptionsPanel_ButtonSet buttonSet = manager.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
             List<FVRPointableButton> buttonList = new(buttonSet.ButtonsInSet);
             for (int i = 0; i < 3; i++)
@@ -155,7 +155,7 @@ namespace TNHFramework.Patches
             }
             buttonSet.ButtonsInSet = buttonList.ToArray();
 
-            //Adjust buttons to be tighter together
+            // Adjust buttons to be tighter together
             float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
             for (int i = 0; i < manager.LBL_CharacterName.Count; i++)
             {
@@ -646,7 +646,7 @@ namespace TNHFramework.Patches
             {
                 TNHFrameworkLogger.Log("Panel index : " + i, TNHFrameworkLogger.LogType.TNH);
 
-                //Go through the panels, and loop if we have gone too far 
+                // Go through the panels, and loop if we have gone too far 
                 if (panelIndex >= level.PossiblePanelTypes.Count) panelIndex = 0;
                 PanelType panelType = level.PossiblePanelTypes[panelIndex];
                 panelIndex += 1;
@@ -702,7 +702,7 @@ namespace TNHFramework.Patches
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
 
-                //If we spawned a panel, add it to the global list
+                // If we spawned a panel, add it to the global list
                 if (panel != null)
                 {
                     TNHFrameworkLogger.Log("Panel spawned successfully", TNHFrameworkLogger.LogType.TNH);
@@ -970,13 +970,13 @@ namespace TNHFramework.Patches
         {
             int index;
 
-            //If we haven't gone through all the hold points, we just select the next one we haven't been to
+            // If we haven't gone through all the hold points, we just select the next one we haven't been to
             if (currLevel < pointSequence.HoldPoints.Count)
             {
                 index = pointSequence.HoldPoints[currLevel];
             }
 
-            //If we have been to all the points, then we just select a random safe one
+            // If we have been to all the points, then we just select a random safe one
             else
             {
                 List<int> pointIndexes = [];
@@ -1126,7 +1126,7 @@ namespace TNHFramework.Patches
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
             Phase currentPhase = character.GetCurrentPhase(__instance.m_curPhase);
 
-            //If we shouldn't spawn any targets, we exit out early
+            // If we shouldn't spawn any targets, we exit out early
             if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
                 (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
             {
@@ -1202,16 +1202,16 @@ namespace TNHFramework.Patches
             {
                 TNHFrameworkLogger.Log($"Throwing grenade [{grenadeType}]", TNHFrameworkLogger.LogType.TNH);
 
-                //Get a random grenade vector to spawn a grenade at
+                // Get a random grenade vector to spawn a grenade at
                 AttackVectors.Shuffle();
                 TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
 
-                //Instantiate the grenade object
+                // Instantiate the grenade object
                 if (IM.OD.ContainsKey(grenadeType))
                 {
                     GameObject grenadeObject = UnityEngine.Object.Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
 
-                    //Give the grenade an initial velocity based on the grenade vector
+                    // Give the grenade an initial velocity based on the grenade vector
                     grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
                     grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
                 }
@@ -1224,16 +1224,16 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Spawning enemy wave", TNHFrameworkLogger.LogType.TNH);
 
-            //TODO add custom property form MinDirections
+            // TODO: Add custom property form MinDirections
             int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
-            //Get the custom character data
+            // Get the custom character data
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
             Level currLevel = character.GetCurrentLevel(M.m_curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
-            //Set first enemy to be spawned as leader
+            // Set first enemy to be spawned as leader
             SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
             int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
 
@@ -1249,7 +1249,7 @@ namespace TNHFramework.Patches
 
                 if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
 
-                //Set the sosig's target position
+                // Set the sosig's target position
                 if (currPhase.SwarmPlayer)
                 {
                     targetVector = GM.CurrentPlayerBody.TorsoTransform.position;
@@ -1263,7 +1263,7 @@ namespace TNHFramework.Patches
 
                 ActiveSosigs.Add(enemy);
 
-                //At this point, the leader has been spawned, so always set enemy to be regulars
+                // At this point, the leader has been spawned, so always set enemy to be regulars
                 enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
                 sosigsSpawned += 1;
 
@@ -1559,7 +1559,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
         {
-            //Collect all pools that could spawn based on level and type, and sum up their rarities
+            // Collect all pools that could spawn based on level and type, and sum up their rarities
             List<EquipmentPoolDef.PoolEntry> validPools = [];
             float summedRarity = 0;
             foreach (EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
@@ -1571,7 +1571,7 @@ namespace TNHFramework.Patches
                 }
             }
 
-            //If we didn't find a single pool, we cry about it
+            // If we didn't find a single pool, we cry about it
             if (validPools.Count == 0)
             {
                 TNHFrameworkLogger.LogWarning("No valid pool could spawn at constructor for type (" + t + ")");
@@ -1579,7 +1579,7 @@ namespace TNHFramework.Patches
                 return false;
             }
 
-            //Go back through and remove pools that have already spawned, unless there is only one entry left
+            // Go back through and remove pools that have already spawned, unless there is only one entry left
             validPools.Shuffle();
             for (int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
             {
@@ -1590,7 +1590,7 @@ namespace TNHFramework.Patches
                 }
             }
 
-            //Select a random value within the summed rarity, and select a pool based on that value
+            // Select a random value within the summed rarity, and select a pool based on that value
             float selectValue = UnityEngine.Random.Range(0, summedRarity);
             float currentSum = 0;
             foreach (EquipmentPoolDef.PoolEntry entry in validPools)
@@ -1767,7 +1767,7 @@ namespace TNHFramework.Patches
                             }
                         }
 
-                        //Assign spawn points based on the type of item we are spawning
+                        // Assign spawn points based on the type of item we are spawning
                         if (mainObject.Category == FVRObject.ObjectCategory.Firearm)
                         {
                             primarySpawn = constructor.SpawnPoints_GunsSize[Mathf.Clamp(mainObject.TagFirearmSize - FVRObject.OTagFirearmSize.Pocket, 0, constructor.SpawnPoints_GunsSize.Count - 1)];
@@ -1798,7 +1798,7 @@ namespace TNHFramework.Patches
                             TNHFrameworkLogger.Log("Spawning vault gun", TNHFrameworkLogger.LogType.TNH);
                             SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero, del, false);
                         }
-                        //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
+                        // If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         else if (vaultFileLegacy != null)
                         {
                             TNHFrameworkLogger.Log("Spawning legacy vaulted gun", TNHFrameworkLogger.LogType.TNH);
@@ -1817,7 +1817,7 @@ namespace TNHFramework.Patches
                         }
 
                         
-                        //Spawn any required objects
+                        // Spawn any required objects
                         if (mainObject.RequiredSecondaryPieces != null)
                         {
                             for (int j = 0; j < mainObject.RequiredSecondaryPieces.Count; j++)
@@ -1840,19 +1840,19 @@ namespace TNHFramework.Patches
                         }
                         
 
-                        //Handle spawning for ammo objects if the main object has any
+                        // Handle spawning for ammo objects if the main object has any
                         if (FirearmUtils.FVRObjectHasAmmoObject(mainObject))
                         {
                             Dictionary<string, MagazineBlacklistEntry> blacklist = character.GetMagazineBlacklist();
                             MagazineBlacklistEntry blacklistEntry = null;
                             if (blacklist.ContainsKey(mainObject.ItemID)) blacklistEntry = blacklist[mainObject.ItemID];
 
-                            //Get lists of ammo objects for this firearm with filters and blacklists applied
+                            // Get lists of ammo objects for this firearm with filters and blacklists applied
                             List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleRounds(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry);
                             List<FVRObject> compatibleClips = mainObject.CompatibleClips;
 
-                            //If we are supposed to spawn magazines and clips, perform special logic for that
+                            // If we are supposed to spawn magazines and clips, perform special logic for that
                             if (group.SpawnMagAndClip && compatibleMagazines.Count > 0 && compatibleClips.Count > 0 && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
                             {
                                 TNHFrameworkLogger.Log("Spawning with both magazine and clips", TNHFrameworkLogger.LogType.TNH);
@@ -1880,7 +1880,7 @@ namespace TNHFramework.Patches
                                     ammoSpawnCount += 1;
                                 }
                             }
-                            //Otherwise, perform normal logic for spawning ammo objects from current group
+                            // Otherwise, perform normal logic for spawning ammo objects from current group
                             else
                             {
                                 FVRObject ammoObject;
@@ -1925,7 +1925,7 @@ namespace TNHFramework.Patches
                             }
                         }
 
-                        //If this object requires picatinny sights, we should try to spawn one
+                        // If this object requires picatinny sights, we should try to spawn one
                         if (mainObject.RequiresPicatinnySight && character.RequireSightTable != null)
                         {
                             TNHFrameworkLogger.Log("Spawning required sights", TNHFrameworkLogger.LogType.TNH);
@@ -1951,7 +1951,7 @@ namespace TNHFramework.Patches
                             objectSpawnCount += 1;
                         }
 
-                        //If this object has bespoke attachments we'll try to spawn one
+                        // If this object has bespoke attachments we'll try to spawn one
                         else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < group.BespokeAttachmentChance)
                         {
                             TNHFrameworkLogger.Log("Spawning bespoke attachment", TNHFrameworkLogger.LogType.TNH);

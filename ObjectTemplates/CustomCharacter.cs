@@ -14,7 +14,7 @@ namespace TNHFramework.ObjectTemplates
         public string DisplayName;
         public string Description;
         public CategoryInfo CategoryData;
-        // public int CharacterGroup;
+        //public int CharacterGroup;
         public string TableID;
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
@@ -1010,11 +1010,11 @@ namespace TNHFramework.ObjectTemplates
         /// <returns> Returns true if valid, and false if empty </returns>
         public bool DelayedInit(List<string> globalObjectBlacklist)
         {
-            //Before we add anything from the IDOverride list, remove anything that isn't loaded
+            // Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
 
-            //Every item in IDOverride gets added to the list of spawnable objects
+            // Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
                 foreach (var objectID in IDOverride)
@@ -1025,14 +1025,14 @@ namespace TNHFramework.ObjectTemplates
             }
 
 
-            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+            // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
                 Initialise(globalObjectBlacklist);
             }
 
 
-            //Perform delayed init on all subgroups. If they are empty, we remove them
+            // Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
                 for (int i = SubGroups.Count - 1; i >= 0; i--)
@@ -1051,7 +1051,7 @@ namespace TNHFramework.ObjectTemplates
                 Rarity = 1;
             }
 
-            //The table is valid if it has items in it, or is a compatible magazine
+            // The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
 
@@ -1319,7 +1319,7 @@ namespace TNHFramework.ObjectTemplates
 
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
-                //If we have just one pool, then the primary pool becomes that pool
+                // If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
                 {
                     PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0])
@@ -1586,7 +1586,7 @@ namespace TNHFramework.ObjectTemplates
 
         public void DelayedInit(bool isCustom, int levelIndex)
         {
-            //If this is a level for a default character, we should try to replicate the vanilla layout
+            // If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
@@ -1691,7 +1691,7 @@ namespace TNHFramework.ObjectTemplates
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                 {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
@@ -1815,7 +1815,7 @@ namespace TNHFramework.ObjectTemplates
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
@@ -1923,7 +1923,7 @@ namespace TNHFramework.ObjectTemplates
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];

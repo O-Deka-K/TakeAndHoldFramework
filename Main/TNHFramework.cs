@@ -42,7 +42,7 @@ namespace TNHFramework
         public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
         public static Dictionary<FireArmRoundType, List<FVRObject>> SpeedloaderDictionary = [];
 
-        //Variables used by various patches
+        // Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
         public static List<int> PatrolIndexPool = [];
@@ -230,7 +230,7 @@ namespace TNHFramework
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
 
-            //Draw local scores
+            // Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
 
             GM.Omni.SaveToFile();
