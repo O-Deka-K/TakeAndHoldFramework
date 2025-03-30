@@ -2092,6 +2092,28 @@ namespace TNHFramework.Patches
         //////////////////////////
 
 
+        // Clean up references so they can be garbage collected. This normally happens during the Hold phase,
+        // but we should do this during the Take phase too. It won't delete existing any objects.
+        [HarmonyPatch(typeof(TNH_Manager), "Update_Take")]
+        [HarmonyPostfix]
+        public static void TakeCleanup(TNH_Manager __instance, ref HashSet<FVRPhysicalObject> ___m_knownObjsHash, ref List<FVRPhysicalObject> ___m_knownObjs,
+            ref int ___knownObjectCheckIndex)
+        {
+            if (___m_knownObjs.Count <= 0)
+                return;
+
+            ___knownObjectCheckIndex++;
+            if (___knownObjectCheckIndex >= ___m_knownObjs.Count)
+                ___knownObjectCheckIndex = 0;
+
+            if (___m_knownObjs[___knownObjectCheckIndex] == null)
+            {
+                ___m_knownObjsHash.Remove(___m_knownObjs[___knownObjectCheckIndex]);
+                ___m_knownObjs.RemoveAt(___knownObjectCheckIndex);
+            }
+        }
+
+
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Hold")]
         [HarmonyPostfix]
         public static void AfterSetHold()
