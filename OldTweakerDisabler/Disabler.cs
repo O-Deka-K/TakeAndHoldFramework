@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Logging;
 using Mono.Cecil;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace TweakerDisabler
 {
@@ -29,11 +25,33 @@ namespace TweakerDisabler
             foreach (string dir in directories)
             {
                 Logger.LogInfo($"Found directory {dir}");
-                if (dir.Contains("devyndamonster-TakeAndHoldTweaker") && File.Exists(Path.Combine(dir, "TakeAndHoldTweaker.deli")))
+                if (dir.Contains("devyndamonster-TakeAndHoldTweaker"))
                 {
-                    File.Move(Path.Combine(dir, "TakeAndHoldTweaker.deli"), Path.Combine(dir, "TakeAndHoldTweaker.deli.bak"));
-                    Logger.LogInfo("Disabled old Take & Hold Tweaker install. Re-enable it via reinstalling or renaming the DLL. Will break compatibility with TNH Framework.");
+                    ModifyTNHTweakerFiles(dir);
+                    break;
                 }
+            }
+        }
+
+        public static void ModifyTNHTweakerFiles(string dir)
+        {
+            string deli = Path.Combine(dir, "TakeAndHoldTweaker.deli");
+            string deliBak = Path.Combine(dir, "TakeAndHoldTweaker.deli.bak");
+            string deliOld = Path.Combine(dir, "TakeAndHoldTweaker.deli.old");
+
+            if (File.Exists(deliBak))
+            {
+                if (File.Exists(deli))
+                    File.Delete(deliBak);
+                else
+                    File.Move(deliBak, deli);
+            }
+
+            if (File.Exists(deli))
+            {
+                File.Copy(deli, deliOld, true);
+                File.Delete(deli);
+                Logger.LogInfo("Disabled old TakeAndHoldTweaker install. To re-enable it, you must disable TNHFramework, and then disable and enable TakeAndHoldFramework");
             }
         }
     }

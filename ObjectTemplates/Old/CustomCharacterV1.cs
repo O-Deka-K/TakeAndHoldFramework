@@ -64,6 +64,13 @@ namespace TNHFramework.ObjectTemplates.V1
 
         public CustomCharacter()
         {
+            HasPrimaryWeapon = true;
+            HasSecondaryWeapon = true;
+            HasTertiaryWeapon = true;
+            HasPrimaryItem = true;
+            HasSecondaryItem = true;
+            HasTertiaryItem = true;
+            HasShield = true;
             ValidAmmoEras = new List<TagEra>();
             ValidAmmoSets = new List<TagSet>();
             GlobalAmmoBlacklist = new List<string>();
@@ -653,7 +660,6 @@ namespace TNHFramework.ObjectTemplates.V1
             IsCompatibleMagazine = false;
             AutoPopulateGroup = !objectTableDef.UseIDListOverride;
             IDOverride = new List<string>(objectTableDef.IDOverride);
-            objectTableDef.IDOverride.Clear();
             Eras = objectTableDef.Eras.Select(o => (TagEra)o).ToList();
             Sets = objectTableDef.Sets.Select(o => (TagSet)o).ToList();
             Sizes = objectTableDef.Sizes.Select(o => (TagFirearmSize)o).ToList();

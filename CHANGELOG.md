@@ -12,7 +12,7 @@
 - Removed "RequiredQuest", as it was an unfinished feature that didn't do anything.
 - Stratum only: Added "DespawnBetweenWaves" and "UsesVFX" booleans.
   - DespawnBetweeenWaves (default=true): Causes any remaining sosigs to explode when the encryption phase in a Hold is completed.
-  - UsesVFX (default=true): Plays the "Encryption neatralized" announcer line when the encryption phase in a Hold is completed.
+  - UsesVFX (default=true): Plays the "Encryption neutralized" announcer line when the encryption phase in a Hold is completed.
 - Prevent round types that cost tokens from being chosen when purchasing a firearm from the object constructor. Ammo that is spawned with the firearm is chosen from the list of "free" ones.
 - Expanded the character selection UI to allow more characters per category.
 - Fixed the bug where selecting past the 6th character wouldn't work.
@@ -36,7 +36,7 @@
 
 ### Features
 
-- Implemented sentry patrols (used in Institution) with loot and custom configs. Previously, it was only using non-Institution patrol behavior.
+- Implemented sentry patrols (used in Institution) with loot and custom configs.
 - Added scanbox effect to all new panels when you place a valid item in the scan area.
 - Show total tokens and token cost on new panels when possible.
 - Added config file option to always change Mag Duplicator panel to Mag Upgrade panel, which was the default behavior in TNHTweaker.
@@ -84,11 +84,13 @@
 - Remove dead sosigs BEFORE checking squads, instead of during the check itself.
 - Changed spawning method of vault guns to hopefully load them a little quicker.
 
-## [0.1.6] - 2025-XX-XX
+## [0.2.1] - 2025-03-07
 
+- Fixed missing equipment pools in vanilla characters.
 - Fixed patrol algorithm from skipping patrol types occassionally.
 - Fixed the case where the ammo blacklist removes all compatible rounds. It will now leave at least one type of round for each gun at the ammo spawner.
 - Fixed panels (ammo reloader, etc.) sometimes breaking when being used a lot.
 - Fixed the case where the secondary or tertiary starting item spawn point is missing from the map. This caused some characters to not work on certain maps (e.g. Aporkalypse Now).
+- Fixed compatibility with Ammo Pouch mod.
 - Respect the HasPrimaryWeapon, HasSecondaryWeapon, etc. booleans. Some mod characters have an equipment pool populated, but disabled via boolean. This makes it consistent with old behavior.
 - Don't play the announcer line to advance to the next node after finishing the last hold (vanilla bug).
