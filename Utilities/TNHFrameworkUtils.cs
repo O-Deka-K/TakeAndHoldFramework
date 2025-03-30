@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
@@ -179,14 +180,21 @@ namespace TNHFramework.Utilities
         }
 
 
-        public static void CreateDefaultCharacterFiles(List<CustomCharacter> characters, string path)
+        public static string CleanFilename(string filename)
+        {
+            // Remove illegal characters
+            return Regex.Replace(filename, @"(<|>|:|""|/|\\|\||\?|\*)", "");
+        }
+
+
+        public static void CreateCharacterFiles(List<CustomCharacter> characters, string path, bool isCustom)
         {
 
             try
             {
-                TNHFrameworkLogger.Log("Creating default character template files", TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Creating " + (isCustom ? "custom" : "default") + " character template files", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/DefaultCharacters";
+                path += isCustom ? "/CustomCharacters" : "/DefaultCharacters";
 
                 if (!Directory.Exists(path))
                 {
@@ -195,39 +203,45 @@ namespace TNHFramework.Utilities
                 
                 foreach (CustomCharacter charDef in characters)
                 {
-                    if (File.Exists(path + "/" + charDef.DisplayName + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(charDef.DisplayName + ".json");
+
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + charDef.DisplayName + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
 
-                    if (File.Exists(path + "/" + charDef.DisplayName + ".yaml"))
+                    if (TNHFramework.ConvertFilesToYAML.Value)
                     {
-                        File.Delete(path + "/" + charDef.DisplayName + ".yaml");
-                    }
+                        string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
 
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".yaml"))
-                    {
-                        // i am learning this yaml stuff. it is goofy.
-                        var serializerBuilder = new SerializerBuilder();
-
-                        serializerBuilder.WithIndentedSequences();
-                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                        if (File.Exists(yamlPath))
                         {
-                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                            File.Delete(yamlPath);
                         }
-                        var serializer = serializerBuilder.Build();
-                        string characterString = serializer.Serialize(charDef);
-                        sw.WriteLine(characterString);
-                        sw.Close();
+
+                        // Create a new file     
+                        using (StreamWriter sw = File.CreateText(yamlPath))
+                        {
+                            var serializerBuilder = new SerializerBuilder();
+
+                            serializerBuilder.WithIndentedSequences();
+                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                            {
+                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                            }
+                            var serializer = serializerBuilder.Build();
+                            string characterString = serializer.Serialize(charDef);
+                            sw.WriteLine(characterString);
+                            sw.Close();
+                        }
                     }
                 }
             }
@@ -245,7 +259,7 @@ namespace TNHFramework.Utilities
             {
                 TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/PopulatedCharacterTemplate.json";
+                path += "/PopulatedCharacterTemplate.json";
 
                 if (!File.Exists(path))
                 {
@@ -268,13 +282,13 @@ namespace TNHFramework.Utilities
         }
 
 
-        public static void CreateDefaultSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
+        public static void CreateSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
         {
             try
             {
                 TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/DefaultSosigTemplates";
+                path += "/DefaultSosigTemplates";
 
                 if (!Directory.Exists(path))
                 {
@@ -283,18 +297,111 @@ namespace TNHFramework.Utilities
 
                 foreach (SosigEnemyTemplate template in sosigs)
                 {
-                    if (File.Exists(path + "/" + template.SosigEnemyID + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + template.SosigEnemyID + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + template.SosigEnemyID + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         SosigTemplate sosig = new(template);
-                        string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(characterString);
+                        string sosigString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
+                        sw.WriteLine(sosigString);
                         sw.Close();
+                    }
+
+                    if (TNHFramework.ConvertFilesToYAML.Value)
+                    {
+                        string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                        if (File.Exists(yamlPath))
+                        {
+                            File.Delete(yamlPath);
+                        }
+
+                        // Create a new file     
+                        using (StreamWriter sw = File.CreateText(yamlPath))
+                        {
+                            var serializerBuilder = new SerializerBuilder();
+
+                            serializerBuilder.WithIndentedSequences();
+                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                            {
+                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                            }
+                            var serializer = serializerBuilder.Build();
+                            SosigTemplate sosig = new(template);
+                            string sosigString = serializer.Serialize(sosig);
+                            sw.WriteLine(sosigString);
+                            sw.Close();
+                        }
+                    }
+                }
+
+            }
+
+            catch (Exception ex)
+            {
+                TNHFrameworkLogger.LogError(ex.ToString());
+            }
+        }
+
+        public static void CreateSosigTemplateFiles(List<SosigTemplate> sosigs, string path)
+        {
+            try
+            {
+                TNHFrameworkLogger.Log("Creating custom sosig template files", TNHFrameworkLogger.LogType.File);
+
+                path += "/CustomSosigTemplates";
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                foreach (SosigTemplate template in sosigs)
+                {
+                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+
+                    if (File.Exists(jsonPath))
+                    {
+                        File.Delete(jsonPath);
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(jsonPath))
+                    {
+                        string sosigString = JsonConvert.SerializeObject(template, Formatting.Indented, new StringEnumConverter());
+                        sw.WriteLine(sosigString);
+                        sw.Close();
+                    }
+
+                    if (TNHFramework.ConvertFilesToYAML.Value)
+                    {
+                        string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                        if (File.Exists(yamlPath))
+                        {
+                            File.Delete(yamlPath);
+                        }
+
+                        // Create a new file     
+                        using (StreamWriter sw = File.CreateText(yamlPath))
+                        {
+                            var serializerBuilder = new SerializerBuilder();
+
+                            serializerBuilder.WithIndentedSequences();
+                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                            {
+                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                            }
+                            var serializer = serializerBuilder.Build();
+                            string sosigString = serializer.Serialize(template);
+                            sw.WriteLine(sosigString);
+                            sw.Close();
+                        }
                     }
                 }
 
@@ -336,19 +443,20 @@ namespace TNHFramework.Utilities
                     }
                     catch
                     {
-                        TNHFrameworkLogger.LogError("Vault File could not be loaded");
+                        TNHFrameworkLogger.LogError($"Vault File {name} could not be loaded");
                     }
                 }
                 
                 foreach (SavedGunSerializable savedGun in savedGuns)
                 {
-                    if (File.Exists(path + "/" + savedGun.FileName + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(savedGun.FileName + ".json");
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + savedGun.FileName + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + savedGun.FileName + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string characterString = JsonConvert.SerializeObject(savedGun, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
@@ -391,7 +499,7 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                path = path + "/GeneratedEquipmentPools";
+                path += "/GeneratedEquipmentPools";
 
                 if (!Directory.Exists(path))
                 {
@@ -401,8 +509,10 @@ namespace TNHFramework.Utilities
                 var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
                 foreach (CustomCharacter character in characters)
                 {
+                    string txtPath = path + "/" + CleanFilename(character.DisplayName + ".txt");
+
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))
+                    using (StreamWriter sw = File.CreateText(txtPath))
                     {
                         sw.WriteLine("Primary Starting Weapon");
                         if (character.PrimaryWeapon != null)

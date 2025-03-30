@@ -316,8 +316,10 @@ namespace TNHFramework
         {
             // Create files relevant for character creation
             TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
-            TNHFrameworkUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
-            TNHFrameworkUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.CustomSosigs, path);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.DefaultCharacters, path, false);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.CustomCharacters, path, true);
             TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
             TNHFrameworkUtils.CreateObjectIDFile(path);
             TNHFrameworkUtils.CreateSosigIDFile(path);

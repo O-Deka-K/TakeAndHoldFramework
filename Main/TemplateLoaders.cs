@@ -100,28 +100,7 @@ namespace TNHFramework
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         };
-                        // Convert old JSON character files to the newer YAML format.
                         character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
-
-                        if (TNHFramework.ConvertFilesToYAML.Value)
-                        {
-                            using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
-                            {
-                                var serializerBuilder = new SerializerBuilder();
-
-                                serializerBuilder.WithIndentedSequences();
-                                foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                                {
-                                    serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                                }
-                                var serializer = serializerBuilder.Build();
-                                string characterString = serializer.Serialize(character);
-                                sw.WriteLine(characterString);
-                                sw.Close();
-                            }
-
-                            File.Delete(file.FullName);
-                        }
 
                         TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);
                     }
