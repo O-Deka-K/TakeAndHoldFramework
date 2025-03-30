@@ -1342,6 +1342,21 @@ namespace TNHFramework.Patches
             return false;
         }
 
+        // Anton pls fix - When you click the unlock button, it should unlock the category on ALL spawned constructors, not just one
+        [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked_Unlock")]
+        [HarmonyPostfix]
+        public static void ButtonClicked_UnlockOnAll()
+        {
+            var miUpdateLockUnlockButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateLockUnlockButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (GameObject constructorObject in TNHFramework.SpawnedConstructors)
+            {
+                //constructorObject?.GetComponent<TNH_ObjectConstructor>()?.UpdateLockUnlockButtonState(false);
+                var constructor = constructorObject?.GetComponent<TNH_ObjectConstructor>();
+                if (constructor != null)
+                    miUpdateLockUnlockButtonState.Invoke(constructor, [false]);
+            }
+        }
+
         // Anton pls fix - Don't play line to advance to next node when completing last hold
         [HarmonyPatch(typeof(TNH_HoldPoint), "CompleteHold")]
         [HarmonyTranspiler]
