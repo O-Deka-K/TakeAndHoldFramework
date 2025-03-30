@@ -71,14 +71,15 @@ namespace TNHFramework
             LoadConfigFile();
             LoadPanelSprites();
 
-            Harmony.CreateAndPatchAll(typeof(TNHFramework));
-            Harmony.CreateAndPatchAll(typeof(TNHPatches));
-            Harmony.CreateAndPatchAll(typeof(PatrolPatches));
-            Harmony.CreateAndPatchAll(typeof(HoldPatches));
-            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
-
+            var harmony = new Harmony("h3vr.tnhframework");
+            harmony.PatchAll(typeof(TNHFramework));
+            harmony.PatchAll(typeof(TNHPatches));
+            harmony.PatchAll(typeof(PatrolPatches));
+            harmony.PatchAll(typeof(HoldPatches));
+            harmony.PatchAll(typeof(HighScorePatches));
+            
             if (EnableDebugText.Value)
-                Harmony.CreateAndPatchAll(typeof(DebugPatches));
+                harmony.PatchAll(typeof(DebugPatches));
         }
 
         public override void OnSetup(IStageContext<Empty> ctx)
