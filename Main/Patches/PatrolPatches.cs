@@ -355,11 +355,17 @@ namespace TNHFramework.Patches
 
                             TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigName}]", TNHFrameworkLogger.LogType.TNH);
                         }
-                        else
+                        else if (patrol.EnemyType.Count > 0)
                         {
                             SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()];
                             template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
                             allowAllWeapons = false;
+                        }
+                        else
+                        {
+                            TNHFrameworkLogger.Log($"Cannot spawn sosigs for Patrol. EnemyType list is empty!", TNHFrameworkLogger.LogType.TNH);
+                            patrolSquad.NumLeftToSpawn = 0;
+                            return false;
                         }
 
                         Vector3 spawnPos = patrolSquad.SpawnPoints[patrolSquad.IndexOfNextSpawn];
@@ -717,37 +723,37 @@ namespace TNHFramework.Patches
             // Equip clothing to the sosig
             OutfitConfig outfitConfig = customTemplate.OutfitConfigs.GetRandom<OutfitConfig>();
 
-            if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
+            if (outfitConfig.Headwear.Count > 0 && outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Headwear, sosigComponent.Links[0], outfitConfig.ForceWearAllHead);
             }
 
-            if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
+            if (outfitConfig.Facewear.Count > 0 && outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Facewear, sosigComponent.Links[0], outfitConfig.ForceWearAllFace);
             }
 
-            if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
+            if (outfitConfig.Eyewear.Count > 0 && outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Eyewear, sosigComponent.Links[0], outfitConfig.ForceWearAllEye);
             }
 
-            if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
+            if (outfitConfig.Torsowear.Count > 0 && outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Torsowear, sosigComponent.Links[1], outfitConfig.ForceWearAllTorso);
             }
 
-            if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
+            if (outfitConfig.Pantswear.Count > 0 && outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Pantswear, sosigComponent.Links[2], outfitConfig.ForceWearAllPants);
             }
 
-            if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
+            if (outfitConfig.Pantswear_Lower.Count > 0 && outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Pantswear_Lower, sosigComponent.Links[3], outfitConfig.ForceWearAllPantsLower);
             }
 
-            if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
+            if (outfitConfig.Backpacks.Count > 0 && outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
             {
                 EquipSosigClothing(outfitConfig.Backpacks, sosigComponent.Links[1], outfitConfig.ForceWearAllBackpacks);
             }
