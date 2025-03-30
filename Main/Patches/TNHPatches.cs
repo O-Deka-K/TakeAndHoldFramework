@@ -256,6 +256,8 @@ namespace TNHFramework.Patches
             buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
 
             TNH_Char character = __instance.Categories[___m_selectedCategory].Characters[___m_selectedCharacter];
+            if (LoadedTemplateManager.LoadedCharacterDict.ContainsKey(character))
+                LoadedTemplateManager.CurrentCharacter = LoadedTemplateManager.LoadedCharacterDict[character].Custom;
 
             //__instance.SetCharacter(character);
             var miSetCharacter = __instance.GetType().GetMethod("SetCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -315,7 +317,7 @@ namespace TNHFramework.Patches
                 ___m_trackedObjects.Add(item);
             }
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             if (character.PrimaryWeapon != null)
             {
                 EquipmentGroup selectedGroup = character.PrimaryWeapon.PrimaryGroup ?? character.PrimaryWeapon.BackupGroup;
@@ -441,7 +443,7 @@ namespace TNHFramework.Patches
             __instance.ResetHasGuardBeenKilledThatWasAltered();
             ___m_activeSupplyPointIndicies.Clear();
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             Level level = character.GetCurrentLevel(___m_curLevel);
 
             TNHFramework.SpawnedBossIndexes.Clear();
@@ -483,8 +485,7 @@ namespace TNHFramework.Patches
 
             // For default characters, only a single supply point spawns in each level of Institution
             // We will allow multiple supply points for custom characters
-            bool isCustomCharacter = ((int)__instance.C.CharacterID >= 1000);
-            bool allowExplicitSingleSupplyPoints = !isCustomCharacter;
+            bool allowExplicitSingleSupplyPoints = !character.isCustom;
 
             // Now spawn and set up all of the supply points
             int panelIndex = 0;
@@ -731,7 +732,7 @@ namespace TNHFramework.Patches
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 //point.m_activeSosigs.Add(enemy);
                 var activeSosigs = (List<Sosig>)typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
@@ -1059,7 +1060,7 @@ namespace TNHFramework.Patches
                 Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
 
@@ -1082,7 +1083,7 @@ namespace TNHFramework.Patches
                 //Debug.Log("Take challenge sosig ID : " + __instance.T.GID);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(template, LoadedTemplateManager.LoadedCharactersDict[__instance.M.C], transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(template, transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
 
                 ___m_activeSosigs.Add(enemy);
                 __instance.M.RegisterGuard(enemy);
@@ -1137,8 +1138,7 @@ namespace TNHFramework.Patches
         public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, ref TNH_HoldPoint.HoldState ___m_state,
             ref float ___m_tickDownToFailure, ref TNH_HoldPointSystemNode ___m_systemNode)
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
-            Phase currentPhase = character.GetCurrentPhase(___m_curPhase);
+            Phase currentPhase = LoadedTemplateManager.CurrentCharacter.GetCurrentPhase(___m_curPhase);
 
             // If we shouldn't spawn any targets, we exit out early
             if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
@@ -1211,8 +1211,7 @@ namespace TNHFramework.Patches
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int phaseIndex)
         {
             var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel(curLevel);
+            Level currLevel = LoadedTemplateManager.CurrentCharacter.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             float grenadeChance = currPhase.GrenadeChance;
@@ -1250,8 +1249,7 @@ namespace TNHFramework.Patches
 
             // Get the custom character data
             var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel(curLevel);
+            Level currLevel = LoadedTemplateManager.CurrentCharacter.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             // Set first enemy to be spawned as leader
@@ -1280,7 +1278,7 @@ namespace TNHFramework.Patches
                     targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
                 }
 
-                Sosig enemy = PatrolPatches.SpawnEnemy(enemyTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M, curPhase.IFFUsed, true, targetVector, true);
+                Sosig enemy = PatrolPatches.SpawnEnemy(enemyTemplate, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M, curPhase.IFFUsed, true, targetVector, true);
 
                 ActiveSosigs.Add(enemy);
 
@@ -1415,13 +1413,13 @@ namespace TNHFramework.Patches
         /// <returns></returns>
         [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
         [HarmonyPrefix]
-        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, ref FireArmRoundClass __result, Dictionary<FireArmRoundType, FireArmRoundClass> ___m_decidedTypes,
+        public static bool AmmoReloaderGetAmmo(ref FireArmRoundClass __result, Dictionary<FireArmRoundType, FireArmRoundClass> ___m_decidedTypes,
             List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t)
         {
             if (!___m_decidedTypes.ContainsKey(t))
             {
                 List<FireArmRoundClass> list = [];
-                CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+                CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
 
                 for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
                 {
@@ -1474,7 +1472,7 @@ namespace TNHFramework.Patches
             ___m_displayedType = t;
             ___m_displayedClasses.Clear();
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
 
             for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
             {
@@ -1738,7 +1736,7 @@ namespace TNHFramework.Patches
             //constructor.allowEntry = false;
             typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, false);
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
             AnvilCallback<GameObject> gameObjectCallback;
 

@@ -6,10 +6,22 @@ using UnityEngine;
 
 namespace TNHFramework
 {
+    public class CharacterTemplate
+    {
+        public TNH_CharacterDef Def;
+        public CustomCharacter Custom;
+
+        public CharacterTemplate(TNH_CharacterDef def, CustomCharacter custom)
+        {
+            Def = def;
+            Custom = custom;
+        }
+    }
+
     public static class LoadedTemplateManager
     {
-
-        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = [];
+        public static CustomCharacter CurrentCharacter;
+        public static Dictionary<TNH_Char, CharacterTemplate> LoadedCharacterDict = [];
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = [];
         public static Dictionary<string, VaultFile> LoadedVaultFiles = [];
@@ -82,18 +94,18 @@ namespace TNHFramework
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
+            template.isCustom = true;
             template.Validate();
             CustomCharacters.Add(template);
-            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
+            LoadedCharacterDict.Add((TNH_Char)NewCharacterID, new CharacterTemplate(template.GetCharacter(NewCharacterID, thumbnail), template));
+            NewCharacterID++;
 
             foreach (EquipmentPool pool in template.EquipmentPools)
             {
                 EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
             }
 
-            NewCharacterID += 1;
-
-            TNHFrameworkLogger.Log("Character added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log($"Character added successfully ({NewCharacterID - 1}) : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
@@ -101,7 +113,7 @@ namespace TNHFramework
             CustomCharacter template = new CustomCharacter(realTemplate);
 
             DefaultCharacters.Add(template);
-            LoadedCharactersDict.Add(realTemplate, template);
+            LoadedCharacterDict.Add(realTemplate.CharacterID, new CharacterTemplate(realTemplate, template));
 
             foreach (EquipmentPool pool in template.EquipmentPools)
             {
@@ -112,7 +124,7 @@ namespace TNHFramework
                 }
             }
 
-            TNHFrameworkLogger.Log("Character added successfully : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log($"Character added successfully ({realTemplate.CharacterID}) : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddVaultFile(VaultFile template)

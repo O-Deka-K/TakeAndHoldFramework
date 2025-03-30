@@ -16,7 +16,7 @@ namespace TNHFramework.Patches
             float ___m_tickDownToFailure, ref List<Transform> ___m_validSpawnPoints, ref TNH_HoldPoint.HoldState ___m_state, ref float ___m_tickDownTransition,
             bool ___m_hasBeenDamagedThisPhase)
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.M);
 
             if (character.GetCurrentLevel(curLevel).HoldPhases[___m_phaseIndex].DespawnBetweenWaves)

@@ -398,8 +398,8 @@ namespace TNHFramework.Utilities
                     Directory.CreateDirectory(path);
                 }
 
-
-                foreach (CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
+                var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
+                foreach (CustomCharacter character in characters)
                 {
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))

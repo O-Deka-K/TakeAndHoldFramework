@@ -45,6 +45,8 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private Dictionary<string, MagazineBlacklistEntry> magazineBlacklistDict;
 
+        [JsonIgnore]
+        public bool isCustom = false;
 
         public CustomCharacter()
         {
@@ -68,6 +70,7 @@ namespace TNHFramework.ObjectTemplates
 
         public CustomCharacter(TNH_CharacterDef character)
         {
+            isCustom = false;
             DisplayName = character.DisplayName;
             CategoryData = new CategoryInfo();
             switch (character.Group)
@@ -122,6 +125,7 @@ namespace TNHFramework.ObjectTemplates
 
         public CustomCharacter(V1.CustomCharacter character)
         {
+            isCustom = character.isCustom;
             DisplayName = character.DisplayName;
             Description = character.Description;
             CategoryData = new CategoryInfo();
@@ -381,7 +385,7 @@ namespace TNHFramework.ObjectTemplates
             return false;
         }
 
-        public void DelayedInit(bool isCustom)
+        public void DelayedInit()
         {
             TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
