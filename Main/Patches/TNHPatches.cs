@@ -1048,10 +1048,18 @@ namespace TNHFramework.Patches
             __instance.SpawnPoints_Sosigs_Defense.Shuffle();
             //__instance.SpawnPoints_Sosigs_Defense.Shuffle();
 
-            int numGuards = UnityEngine.Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
-            numGuards += ___numSpawnBonus;
-            numGuards = Mathf.Clamp(numGuards, 0, 5);
-            ___numSpawnBonus++;
+            int numGuards;
+            if (LoadedTemplateManager.CurrentCharacter.isCustom)
+            {
+                numGuards = __instance.T.NumGuards;
+            }
+            else
+            {
+                numGuards = UnityEngine.Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
+                numGuards += ___numSpawnBonus;
+                numGuards = Mathf.Clamp(numGuards, 0, 5);
+                ___numSpawnBonus++;
+            }
 
             TNHFrameworkLogger.Log($"Spawning {__instance.T.NumGuards} supply guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
 
