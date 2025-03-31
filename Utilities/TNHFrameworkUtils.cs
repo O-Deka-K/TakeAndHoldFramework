@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
@@ -467,13 +468,20 @@ namespace TNHFramework.Utilities
                 var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
                 string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
 
+                var miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Instance | BindingFlags.NonPublic);
+                var miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Instance | BindingFlags.NonPublic);
+                var miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Instance | BindingFlags.NonPublic);
+
                 string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
-                vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
-                vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
+                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+                vaultPath = Path.Combine(vaultPath, (string)miGetCatFolderName.Invoke(null, [mode]));
+                vaultPath = Path.Combine(vaultPath, (string)miGetSubcatFolderName.Invoke(null, [mode]));
 
                 foreach (string vaultFileName in vaultFileList)
                 {
-                    string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+                    //string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+                    string filename = vaultFileName + (string)miGetSuffix.Invoke(null, [mode]);
 
                     try
                     {
