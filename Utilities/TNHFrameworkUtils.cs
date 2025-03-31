@@ -468,9 +468,9 @@ namespace TNHFramework.Utilities
                 var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
                 string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
 
-                var miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Instance | BindingFlags.NonPublic);
-                var miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Instance | BindingFlags.NonPublic);
-                var miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Instance | BindingFlags.NonPublic);
+                var miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+                var miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+                var miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
 
                 string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
                 //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
