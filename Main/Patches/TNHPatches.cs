@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -56,6 +57,7 @@ namespace TNHFramework.Patches
             Text magazineCacheText = CreateMagazineCacheText(__instance);
             Text itemsText = CreateItemsText(__instance);
             ExpandCharacterUI(__instance);
+            FixModAttachmentTags();
 
             // Perform first time setup of all files
             if (!TNHMenuInitializer.TNHInitialized)
@@ -156,6 +158,243 @@ namespace TNHFramework.Patches
                 {
                     prevY -= 35f;
                     manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+                }
+            }
+        }
+
+        // This is pretty much a manual process of tagging mods that are incorrectly tagged or missing tags
+        private static void FixModAttachmentTags()
+        {
+            List<FVRObject> attachments = new(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Attachment]);
+            Regex regexSup = new(@"^Sup(SLX|SRD|TI|AA|DD|DeadAir|Gemtech|HUXWRX|KAC|Surefire|Hexagon|Silencer)");
+            Regex regexMWORus = new(@"^DotRusSight(NPZPK1|SurplusOKP7D|AxionKobraEKPD)");
+            Regex regexMWOMicroMount = new(@"^Dot(Geissele|Micro)(GBRS|Leap|Mounts|Offset|Shim|Short|SIGShort|SIGTall|Tall|Unity)");
+            Regex regexMWOMicroSight = new(@"^DotMicro(Aimpoint|Holosun|SIGRomeo|Vortex)");
+
+            foreach (FVRObject attachment in attachments)
+            {
+                if (attachment == null)
+                    continue;
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.None || attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.None)
+                {
+                    // Meats ModulShotguns chokes
+                    if (attachment.ItemID.StartsWith("AttSuppChoke") || attachment.ItemID.StartsWith("Choke"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulShotguns barrels
+                    else if (attachment.ItemID.ToLower().StartsWith("attsuppbar") || attachment.ItemID.StartsWith("AttSuppressorBarrel"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.OSple = false;
+                    }
+                    // Meats ModulAK suppressors
+                    else if (attachment.ItemID.StartsWith("AttSuppressor"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("AR15Muzzle") || attachment.ItemID == "AttSuppCookie")
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR suppressors
+                    else if (attachment.ItemID.StartsWith("AR15Sup") || attachment.ItemID.StartsWith("AttSupp"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR iron sights
+                    else if (attachment.ItemID.Contains("IronSight") && (attachment.ItemID.Contains("Front") || attachment.ItemID.Contains("Rear")))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulAR handle sights
+                    else if (attachment.ItemID.StartsWith("IronSightGooseneck") || attachment.ItemID.EndsWith("HandleSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulAero muzzle brakes
+                    else if (attachment.ItemID.StartsWith("Aero_Muzzle"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MCXMB") || attachment.ItemID.StartsWith("MuzzleMPX"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG suppressors
+                    else if (attachment.ItemID.StartsWith("MCXSRD") || attachment.ItemID.StartsWith("MCXSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2 muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzleBrake_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2/ModulShotguns suppressors
+                    else if (regexSup.IsMatch(attachment.ItemID))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCXSpear scopes
+                    else if (attachment.ItemID.StartsWith("Scope_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulSIG/ModulMCX2/ModulSCAR iron sights
+                    else if ((attachment.ItemID.StartsWith("MCX") || attachment.ItemID.StartsWith("SIG") || attachment.ItemID.StartsWith("SCAR")) && attachment.ItemID.Contains("Sight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulSCAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzSCAR"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSCAR underbarrel grenade launchers
+                    else if (attachment.ItemID.StartsWith("EGLM"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.ProjectileWeapon;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats NGSW suppressors
+                    else if (attachment.ItemID.StartsWith("NGSWSpearSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModernWarfighterOptics magnifiers
+                    else if (attachment.ItemID.StartsWith("DotPicSight") && attachment.name.Contains("Magnifier"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics red dot
+                    else if (attachment.ItemID.StartsWith("DotPicSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Russian
+                    else if (attachment.ItemID.StartsWith("DotRusSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+
+                        // Only some of the Russian-made sights use the Russian mount; the rest are Picatinny
+                        if (regexMWORus.IsMatch(attachment.ItemID))
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Russian;
+                        else
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO mounts
+                    else if (attachment.ItemID.StartsWith("DotACROMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO sights
+                    else if (attachment.ItemID.StartsWith("DotACROSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics Micro mounts
+                    else if (regexMWOMicroMount.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Micro sights
+                    else if (regexMWOMicroSight.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics MRD mounts
+                    else if (attachment.ItemID.StartsWith("DotMRDMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics MRD sights
+                    else if (attachment.ItemID.StartsWith("DotMRDSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                }
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Magnification && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE ModernWarfighterRemake Optics
+                    if (attachment.ItemID.StartsWith("FSCE") && (attachment.name.Contains("30mm Mount") || attachment.name.Contains("Adapter")))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                }
+                else if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Adapter && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE 30mm mounts
+                    if (attachment.ItemID.StartsWith("FSCE.LPVO") || attachment.name.Contains("30mm Mount"))
+                    {
+                        attachment.OSple = false;
+                    }
                 }
             }
         }
