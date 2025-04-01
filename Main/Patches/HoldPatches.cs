@@ -10,6 +10,12 @@ namespace TNHFramework.Patches
     [HarmonyPatch(typeof(TNH_HoldPoint))]
     public class HoldPatches
     {
+        private static readonly MethodInfo miDeletionBurst = typeof(TNH_HoldPoint).GetMethod("DeletionBurst", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miIdentifyEncryption = typeof(TNH_HoldPoint).GetMethod("IdentifyEncryption", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miLowerAllBarriers = typeof(TNH_HoldPoint).GetMethod("LowerAllBarriers", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo fiCurLevel = typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic);
+
         [HarmonyPatch("CompletePhase")]
         [HarmonyPrefix]
         public static bool NextPhasePatch(TNH_HoldPoint __instance, ref int ___m_phaseIndex, ref TNH_HoldPointSystemNode ___m_systemNode,
@@ -17,12 +23,11 @@ namespace TNHFramework.Patches
             bool ___m_hasBeenDamagedThisPhase)
         {
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
-            var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(__instance.M);
+            var curLevel = (TNH_Progression.Level)fiCurLevel.GetValue(__instance.M);
 
             if (character.GetCurrentLevel(curLevel).HoldPhases[___m_phaseIndex].DespawnBetweenWaves)
             {
                 //__instance.DeletionBurst();
-                var miDeletionBurst = __instance.GetType().GetMethod("DeletionBurst", BindingFlags.Instance | BindingFlags.NonPublic);
                 miDeletionBurst.Invoke(__instance, []);
                 __instance.M.ClearMiscEnemies();
                 UnityEngine.Object.Instantiate(__instance.VFX_HoldWave, ___m_systemNode.NodeCenter.position, ___m_systemNode.NodeCenter.rotation);
@@ -44,7 +49,6 @@ namespace TNHFramework.Patches
                 __instance.SpawnPoints_Targets.Shuffle();
                 ___m_validSpawnPoints.Shuffle();
                 //__instance.IdentifyEncryption();
-                var miIdentifyEncryption = __instance.GetType().GetMethod("IdentifyEncryption", BindingFlags.Instance | BindingFlags.NonPublic);
                 miIdentifyEncryption.Invoke(__instance, []);
             }
             else
@@ -55,7 +59,6 @@ namespace TNHFramework.Patches
             }
 
             //__instance.LowerAllBarriers();
-            var miLowerAllBarriers = __instance.GetType().GetMethod("LowerAllBarriers", BindingFlags.Instance | BindingFlags.NonPublic);
             miLowerAllBarriers.Invoke(__instance, []);
 
             if (!___m_hasBeenDamagedThisPhase)

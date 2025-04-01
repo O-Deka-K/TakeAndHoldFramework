@@ -17,6 +17,35 @@ namespace TNHFramework.Patches
 {
     public class TNHPatches
     {
+        private static readonly MethodInfo miPlayButtonSound = typeof(TNH_UIManager).GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSetCharacter = typeof(TNH_UIManager).GetMethod("SetCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo miGenerateValidPatrol = typeof(TNH_Manager).GetMethod("GenerateValidPatrol", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGenerateInitialTakeSentryPatrols = typeof(TNH_Manager).GetMethod("GenerateInitialTakeSentryPatrols", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiCurLevel = typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiLevel = typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiWeaponCases = typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo miCompletePhase = typeof(TNH_HoldPoint).GetMethod("CompletePhase", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miDeleteAllActiveWarpIns = typeof(TNH_HoldPoint).GetMethod("DeleteAllActiveWarpIns", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiValidSpawnPoints = typeof(TNH_HoldPoint).GetField("m_validSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo fiIsConfigured = typeof(TNH_SupplyPoint).GetField("m_isconfigured", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiHasBeenVisited = typeof(TNH_SupplyPoint).GetField("m_hasBeenVisited", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiActiveSosigs = typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiActiveTurrets = typeof(TNH_SupplyPoint).GetField("m_activeTurrets", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiSpawnBoxes = typeof(TNH_SupplyPoint).GetField("m_spawnBoxes", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo miUpdateLockUnlockButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateLockUnlockButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSetState = typeof(TNH_ObjectConstructor).GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miUpdateRerollButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiAllowEntry = typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiSpawnedCase = typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo miUpdateTokenDisplay = typeof(TNH_AmmoReloader2).GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miUpdateSafetyGeo = typeof(TubeFedShotgun).GetMethod("UpdateSafetyGeo", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miToggleFireSelector = typeof(OpenBoltReceiver).GetMethod("ToggleFireSelector", BindingFlags.Instance | BindingFlags.NonPublic);
+
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
         public static bool InitTNH(TNH_Manager __instance, bool ___m_hasInit)
@@ -45,7 +74,6 @@ namespace TNHFramework.Patches
         //////////////////////////////////
         //INITIALIZING TAKE AND HOLD SCENE
         //////////////////////////////////
-
 
         // Performs initial setup of the TNH Scene when loaded
         [HarmonyPatch(typeof(TNH_UIManager), "Start")]
@@ -433,7 +461,6 @@ namespace TNHFramework.Patches
             buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
 
             //__instance.PlayButtonSound(0);
-            var miPlayButtonSound = __instance.GetType().GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
             miPlayButtonSound.Invoke(__instance, [0]);
 
             for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
@@ -499,11 +526,8 @@ namespace TNHFramework.Patches
                 LoadedTemplateManager.CurrentCharacter = LoadedTemplateManager.LoadedCharacterDict[character].Custom;
 
             //__instance.SetCharacter(character);
-            var miSetCharacter = __instance.GetType().GetMethod("SetCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
-            miSetCharacter.Invoke(__instance, [character]);
-
             //__instance.PlayButtonSound(1);
-            var miPlayButtonSound = __instance.GetType().GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
+            miSetCharacter.Invoke(__instance, [character]);
             miPlayButtonSound.Invoke(__instance, [1]);
 
             // now i don't know what to name this. fuck this, it's getting a j. you did this to me, anton.
@@ -670,8 +694,6 @@ namespace TNHFramework.Patches
         }
 
 
-
-
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")]
         [HarmonyPrefix]
         public static bool SetPhase_Take_Replacement(TNH_Manager __instance, ref List<int> ___m_activeSupplyPointIndicies, ref TNH_Progression.Level ___m_curLevel,
@@ -782,8 +804,6 @@ namespace TNHFramework.Patches
             // Spawn the initial patrol
             if (__instance.UsesClassicPatrolBehavior)
             {
-                var miGenerateValidPatrol = __instance.GetType().GetMethod("GenerateValidPatrol", BindingFlags.Instance | BindingFlags.NonPublic);
-
                 if (___m_level == 0)
                 {
                     //__instance.GenerateValidPatrol(___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, ___m_curHoldIndex, true);
@@ -797,8 +817,6 @@ namespace TNHFramework.Patches
             }
             else
             {
-                var miGenerateInitialTakeSentryPatrols = __instance.GetType().GetMethod("GenerateInitialTakeSentryPatrols", BindingFlags.Instance | BindingFlags.NonPublic);
-
                 if (___m_level == 0)
                 {
                     //__instance.GenerateInitialTakeSentryPatrols(___m_curLevel.PatrolChallenge, ___m_curPointSequence.StartSupplyPointIndex, -1, ___m_curHoldIndex, true);
@@ -842,7 +860,7 @@ namespace TNHFramework.Patches
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
             //supplyPoint.m_isconfigured = true;
-            typeof(TNH_SupplyPoint).GetField("m_isconfigured", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(supplyPoint, true);
+            fiIsConfigured.SetValue(supplyPoint, true);
 
             SpawnSupplyGroup(supplyPoint, level);
 
@@ -857,7 +875,7 @@ namespace TNHFramework.Patches
             SpawnSupplyBoxes(supplyPoint, level, minBoxPiles, maxBoxPiles, spawnToken);
 
             //supplyPoint.m_hasBeenVisited = false;
-            typeof(TNH_SupplyPoint).GetField("m_hasBeenVisited", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(supplyPoint, false);
+            fiHasBeenVisited.SetValue(supplyPoint, false);
         }
 
 
@@ -974,7 +992,7 @@ namespace TNHFramework.Patches
                 Sosig enemy = PatrolPatches.SpawnEnemy(template, transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 //point.m_activeSosigs.Add(enemy);
-                var activeSosigs = (List<Sosig>)typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
+                var activeSosigs = (List<Sosig>)fiActiveSosigs.GetValue(point);
                 activeSosigs.Add(enemy);
             }
         }
@@ -991,7 +1009,7 @@ namespace TNHFramework.Patches
                 AutoMeater turret = UnityEngine.Object.Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, point.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
 
                 //point.m_activeTurrets.Add(turret);
-                var activeTurrets = (List<AutoMeater>)typeof(TNH_SupplyPoint).GetField("m_activeTurrets", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
+                var activeTurrets = (List<AutoMeater>)fiActiveTurrets.GetValue(point);
                 activeTurrets.Add(turret);
             }
 
@@ -1003,7 +1021,7 @@ namespace TNHFramework.Patches
             point.SpawnPoints_Boxes.Shuffle();
 
             bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
-            var spawnBoxes = (List<GameObject>)typeof(TNH_SupplyPoint).GetField("m_spawnBoxes", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(point);
+            var spawnBoxes = (List<GameObject>)fiSpawnBoxes.GetValue(point);
 
             // Custom Character behavior:
             // - Every supply point has the same min and max number of boxes
@@ -1378,8 +1396,6 @@ namespace TNHFramework.Patches
         //PATCHES FOR DURING HOLD POINT
         ///////////////////////////////
 
-
-
         [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")]
         [HarmonyPrefix]
         public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, ref TNH_HoldPoint.HoldState ___m_state,
@@ -1392,15 +1408,12 @@ namespace TNHFramework.Patches
                 (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
             {
                 //__instance.CompletePhase();
-                var miCompletePhase = __instance.GetType().GetMethod("CompletePhase", BindingFlags.Instance | BindingFlags.NonPublic);
                 miCompletePhase.Invoke(__instance, []);
                 return false;
             }
 
             ___m_state = TNH_HoldPoint.HoldState.Hacking;
             ___m_tickDownToFailure = 120f;
-
-            var miDeleteAllActiveWarpIns = __instance.GetType().GetMethod("DeleteAllActiveWarpIns", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
             {
@@ -1444,7 +1457,7 @@ namespace TNHFramework.Patches
                 encryptions = currentPhase.Encryptions.Select(o => holdPoint.M.GetEncryptionPrefab(o)).ToList();
             }
 
-            var validSpawnPoints = (List<Transform>)typeof(TNH_HoldPoint).GetField("m_validSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(holdPoint);
+            var validSpawnPoints = (List<Transform>)fiValidSpawnPoints.GetValue(holdPoint);
 
             for (int i = 0; i < numTargets && i < validSpawnPoints.Count; i++)
             {
@@ -1457,7 +1470,7 @@ namespace TNHFramework.Patches
 
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int phaseIndex)
         {
-            var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
+            var curLevel = (TNH_Progression.Level)fiCurLevel.GetValue(M);
             Level currLevel = LoadedTemplateManager.CurrentCharacter.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
@@ -1495,7 +1508,7 @@ namespace TNHFramework.Patches
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
             // Get the custom character data
-            var curLevel = (TNH_Progression.Level)typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
+            var curLevel = (TNH_Progression.Level)fiCurLevel.GetValue(M);
             Level currLevel = LoadedTemplateManager.CurrentCharacter.GetCurrentLevel(curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
@@ -1587,12 +1600,12 @@ namespace TNHFramework.Patches
             return false;
         }
 
+
         // Anton pls fix - When you click the unlock button, it should unlock the category on ALL spawned constructors, not just one
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked_Unlock")]
         [HarmonyPostfix]
         public static void ButtonClicked_UnlockOnAll()
         {
-            var miUpdateLockUnlockButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateLockUnlockButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
             foreach (GameObject constructorObject in TNHFramework.SpawnedConstructors)
             {
                 //constructorObject?.GetComponent<TNH_ObjectConstructor>()?.UpdateLockUnlockButtonState(false);
@@ -1693,7 +1706,6 @@ namespace TNHFramework.Patches
             return false;
         }
 
-
         // This is a patch for using a character's global ammo blacklist in the new ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "RefreshDisplayWithType")]
         [HarmonyPrefix]
@@ -1785,7 +1797,6 @@ namespace TNHFramework.Patches
             }
 
             //__instance.UpdateTokenDisplay(__instance.M.GetNumTokens());
-            var miUpdateTokenDisplay = __instance.GetType().GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateTokenDisplay.Invoke(__instance, [__instance.M.GetNumTokens()]);
             return false;
         }
@@ -1842,7 +1853,6 @@ namespace TNHFramework.Patches
             return code;
         }
 
-
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]
         [HarmonyPrefix]
         public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
@@ -1898,7 +1908,6 @@ namespace TNHFramework.Patches
             return false;
         }
 
-
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")]
         [HarmonyPriority(800)]
         [HarmonyPrefix]
@@ -1906,13 +1915,10 @@ namespace TNHFramework.Patches
             ref int ___m_selectedEntry, GameObject ___m_spawnedCase, ref int ___m_numTokensSelected, ref List<int> ___m_poolAddedCost, int i)
         {
             //__instance.UpdateRerollButtonState(false);
-            var miUpdateRerollButtonState = __instance.GetType().GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateRerollButtonState.Invoke(__instance, [false]);
 
             if (!___allowEntry)
                 return false;
-
-            var miSetState = __instance.GetType().GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (__instance.State == TNH_ObjectConstructor.ConstructorState.EntryList)
             {
@@ -1981,7 +1987,7 @@ namespace TNHFramework.Patches
             TNHFrameworkLogger.Log("Spawning item at constructor", TNHFrameworkLogger.LogType.TNH);
 
             //constructor.allowEntry = false;
-            typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, false);
+            fiAllowEntry.SetValue(constructor, false);
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
@@ -1998,7 +2004,7 @@ namespace TNHFramework.Patches
                 GameObject itemCase = SpawnWeaponCase(constructor.M, selectedGroups[0].BespokeAttachmentChance, caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 //constructor.m_spawnedCase = itemCase;
-                typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, itemCase);
+                fiSpawnedCase.SetValue(constructor, itemCase);
                 itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
             }
 
@@ -2087,7 +2093,7 @@ namespace TNHFramework.Patches
                             mainSpawnCount += 1;
                         }
 
-                        int level = (int)typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(constructor.M);
+                        int level = (int)fiLevel.GetValue(constructor.M);
                         TNHFrameworkLogger.Log("Level: " + level, TNHFrameworkLogger.LogType.TNH);
 
                         // J: New vault files have a method for spawning them. Thank god. Or, y'know, thank Anton.
@@ -2268,7 +2274,7 @@ namespace TNHFramework.Patches
             }
 
             //constructor.allowEntry = true;
-            typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(constructor, true);
+            fiAllowEntry.SetValue(constructor, true);
             yield break;
         }
 
@@ -2291,7 +2297,7 @@ namespace TNHFramework.Patches
             GameObject caseObj = UnityEngine.Object.Instantiate<GameObject>(caseFab, position, Quaternion.LookRotation(forward, Vector3.up));
 
             //M.m_weaponCases.Add(caseObj);
-            var weaponCases = (List<GameObject>)typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(M);
+            var weaponCases = (List<GameObject>)fiWeaponCases.GetValue(M);
             weaponCases.Add(caseObj);
 
             TNH_WeaponCrate createComp = caseObj.GetComponent<TNH_WeaponCrate>();
@@ -2447,7 +2453,6 @@ namespace TNHFramework.Patches
                         ___m_isSafetyEngaged = false;
 
                     //__instance.UpdateSafetyGeo();
-                    var miUpdateSafetyGeo = __instance.GetType().GetMethod("UpdateSafetyGeo", BindingFlags.Instance | BindingFlags.NonPublic);
                     miUpdateSafetyGeo.Invoke(__instance, []);
                 }
             }
@@ -2463,7 +2468,6 @@ namespace TNHFramework.Patches
             if (rounds.Count > 0)
             {
                 //__instance.ToggleFireSelector();
-                var miToggleFireSelector = __instance.GetType().GetMethod("ToggleFireSelector", BindingFlags.Instance | BindingFlags.NonPublic);
                 miToggleFireSelector.Invoke(__instance, []);
                 __instance.Bolt.SetBoltToRear();
                 __instance.BeginChamberingRound();

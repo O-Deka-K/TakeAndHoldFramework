@@ -21,6 +21,10 @@ namespace TNHFramework.Utilities
 {
     static class TNHFrameworkUtils
     {
+        private static readonly MethodInfo miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
+
         public static void CreateObjectIDFile(string path)
         {
             try
@@ -467,10 +471,6 @@ namespace TNHFramework.Utilities
 
                 var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
                 string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
-
-                var miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-                var miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-                var miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
 
                 string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
                 //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));

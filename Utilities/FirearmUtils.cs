@@ -9,6 +9,7 @@ namespace TNHFramework.Utilities
 {
     static class FirearmUtils
     {
+        private static readonly FieldInfo fiNumRounds = typeof(FVRFireArmMagazine).GetField("m_numRounds", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
         /// Returns a list of magazines, clips, or speedloaders compatible with the firearm, and also within any of the optional criteria
@@ -556,7 +557,6 @@ namespace TNHFramework.Utilities
             }
 
             //component.m_numRounds = magazine.m_numRounds;
-            var fiNumRounds = typeof(FVRFireArmMagazine).GetField("m_numRounds", BindingFlags.Instance | BindingFlags.NonPublic);
             fiNumRounds.SetValue(component, fiNumRounds.GetValue(magazine));
             component.UpdateBulletDisplay();
 

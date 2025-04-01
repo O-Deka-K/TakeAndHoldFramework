@@ -50,6 +50,7 @@ namespace TNHFramework
         private FVRObject upgradeMag = null;
 
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -387,7 +388,6 @@ namespace TNHFramework
             //DupeIcon.UpdateIconDisplay();
             //UpgradeIcon.UpdateIconDisplay();
             //PurchaseIcon.UpdateIconDisplay();
-            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateIconDisplay.Invoke(DupeIcon, []);
             miUpdateIconDisplay.Invoke(UpgradeIcon, []);
             miUpdateIconDisplay.Invoke(PurchaseIcon, []);
@@ -435,6 +435,7 @@ namespace TNHFramework
         private FVRPhysicalObject selectedObject = null;
         private FVRFireArm detectedFirearm = null;
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -642,7 +643,6 @@ namespace TNHFramework
             }
 
             //PurchaseIcon.UpdateIconDisplay();
-            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
@@ -688,6 +688,7 @@ namespace TNHFramework
         public OpenBoltReceiver detectedOpenBolt = null;
 
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -1036,7 +1037,6 @@ namespace TNHFramework
             }
 
             //PurchaseIcon.UpdateIconDisplay();
-            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
@@ -1085,6 +1085,7 @@ namespace TNHFramework
         private int PanelCost = 1;
         private int numTokensSelected = 0;
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private float fireRateMultiplier = 1.5f;
 
@@ -1371,7 +1372,6 @@ namespace TNHFramework
 
             //PlusIcon.UpdateIconDisplay();
             //MinusIcon.UpdateIconDisplay();
-            var miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
             miUpdateIconDisplay.Invoke(PlusIcon, []);
             miUpdateIconDisplay.Invoke(MinusIcon, []);
             UpdateTokenDisplay(numTokens);

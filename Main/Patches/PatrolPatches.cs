@@ -12,6 +12,18 @@ namespace TNHFramework.Patches
 {
     public static class PatrolPatches
     {
+        private static readonly MethodInfo miGetSpawnPoints = typeof(TNH_Manager).GetMethod("GetSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetForwardVectors = typeof(TNH_Manager).GetMethod("GetForwardVectors", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetPatrolPoints = typeof(TNH_Manager).GetMethod("GetPatrolPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetRandomSafeHoldIndexFromSupplyPoint = typeof(TNH_Manager).GetMethod("GetRandomSafeHoldIndexFromSupplyPoint", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetRandomSafeSupplyIndexFromSupplyPoint = typeof(TNH_Manager).GetMethod("GetRandomSafeSupplyIndexFromSupplyPoint", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetRandomSafeHoldIndexFromHoldPoint = typeof(TNH_Manager).GetMethod("GetRandomSafeHoldIndexFromHoldPoint", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetRandomSafeSupplyIndexFromHoldPoint = typeof(TNH_Manager).GetMethod("GetRandomSafeSupplyIndexFromHoldPoint", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo fiTimeTilPatrolCanSpawn = typeof(TNH_Manager).GetField("m_timeTilPatrolCanSpawn", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiPatrolSquads = typeof(TNH_Manager).GetField("m_patrolSquads", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiCurClothes = typeof(PlayerSosigBody).GetField("m_curClothes", BindingFlags.Instance | BindingFlags.NonPublic);
+
         /////////////////////////////
         //PATCHES FOR PATROL SPAWNING
         /////////////////////////////
@@ -57,12 +69,12 @@ namespace TNHFramework.Patches
             if (instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
                 //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
-                typeof(TNH_Manager).GetField("m_timeTilPatrolCanSpawn", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(instance, patrol.PatrolCadence);
+                fiTimeTilPatrolCanSpawn.SetValue(instance, patrol.PatrolCadence);
             }
             else
             {
                 //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
-                typeof(TNH_Manager).GetField("m_timeTilPatrolCanSpawn", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(instance, patrol.PatrolCadenceLimited);
+                fiTimeTilPatrolCanSpawn.SetValue(instance, patrol.PatrolCadenceLimited);
             }
         }
 
@@ -75,7 +87,6 @@ namespace TNHFramework.Patches
             __result = __instance.DicSafeSupplyIndiciesForHoldPoint[index][UnityEngine.Random.Range(0, __instance.DicSafeSupplyIndiciesForHoldPoint[index].Count)];
             return false;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "UpdatePatrols")]
         [HarmonyPrefix]
@@ -127,10 +138,6 @@ namespace TNHFramework.Patches
                     }
                 }
 
-                var miGetSpawnPoints = __instance.GetType().GetMethod("GetSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
-                var miGetForwardVectors = __instance.GetType().GetMethod("GetForwardVectors", BindingFlags.Instance | BindingFlags.NonPublic);
-                var miGetPatrolPoints = __instance.GetType().GetMethod("GetPatrolPoints", BindingFlags.Instance | BindingFlags.NonPublic);
-
                 // Player is in a supply point
                 if (supplyIndex > -1)
                 {
@@ -150,7 +157,6 @@ namespace TNHFramework.Patches
                         if (UnityEngine.Random.value >= 0.5f)
                         {
                             //firstPoint = __instance.GetRandomSafeHoldIndexFromSupplyPoint(supplyIndex);
-                            var miGetRandomSafeHoldIndexFromSupplyPoint = __instance.GetType().GetMethod("GetRandomSafeHoldIndexFromSupplyPoint", BindingFlags.Instance | BindingFlags.NonPublic);
                             firstPoint = (int)miGetRandomSafeHoldIndexFromSupplyPoint.Invoke(__instance, [supplyIndex]);
                             firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Hold;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSHold;
@@ -158,7 +164,6 @@ namespace TNHFramework.Patches
                         else
                         {
                             //firstPoint = __instance.GetRandomSafeSupplyIndexFromSupplyPoint(supplyIndex);
-                            var miGetRandomSafeSupplyIndexFromSupplyPoint = __instance.GetType().GetMethod("GetRandomSafeSupplyIndexFromSupplyPoint", BindingFlags.Instance | BindingFlags.NonPublic);
                             firstPoint = (int)miGetRandomSafeSupplyIndexFromSupplyPoint.Invoke(__instance, [supplyIndex]);
                             firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Supply;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSSupply;
@@ -197,7 +202,6 @@ namespace TNHFramework.Patches
                         if (UnityEngine.Random.value >= 0.5f)
                         {
                             //firstPoint = __instance.GetRandomSafeHoldIndexFromHoldPoint(holdIndex);
-                            var miGetRandomSafeHoldIndexFromHoldPoint = __instance.GetType().GetMethod("GetRandomSafeHoldIndexFromHoldPoint", BindingFlags.Instance | BindingFlags.NonPublic);
                             firstPoint = (int)miGetRandomSafeHoldIndexFromHoldPoint.Invoke(__instance, [holdIndex]);
                             firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Hold;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSHold;
@@ -205,7 +209,6 @@ namespace TNHFramework.Patches
                         else
                         {
                             //firstPoint = __instance.GetRandomSafeSupplyIndexFromHoldPoint(holdIndex);
-                            var miGetRandomSafeSupplyIndexFromHoldPoint = __instance.GetType().GetMethod("GetRandomSafeSupplyIndexFromHoldPoint", BindingFlags.Instance | BindingFlags.NonPublic);
                             firstPoint = (int)miGetRandomSafeSupplyIndexFromHoldPoint.Invoke(__instance, [holdIndex]);
                             firstSpawnPointType = TNH_Manager.SentryPatrolPointType.Supply;
                             firstPatrolPointType = TNH_Manager.SentryPatrolPointType.SPSSupply;
@@ -406,7 +409,6 @@ namespace TNHFramework.Patches
             return false;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "GenerateInitialTakeSentryPatrols")]
         [HarmonyPrefix]
         private static bool GenerateInitialTakeSentryPatrolsReplacement(TNH_Manager __instance, ref List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, List<int> ___m_activeSupplyPointIndicies, TNH_Progression.Level ___m_curLevel, TNH_PatrolChallenge P, int curSupplyPoint, int lastHoldIndex, int curHoldIndex, bool isStart)
@@ -424,10 +426,6 @@ namespace TNHFramework.Patches
 
             int maxPatrols = (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ?
                 currLevel.Patrols[0].MaxPatrols : currLevel.Patrols[0].MaxPatrolsLimited;
-
-            var miGetSpawnPoints = __instance.GetType().GetMethod("GetSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
-            var miGetForwardVectors = __instance.GetType().GetMethod("GetForwardVectors", BindingFlags.Instance | BindingFlags.NonPublic);
-            var miGetPatrolPoints = __instance.GetType().GetMethod("GetPatrolPoints", BindingFlags.Instance | BindingFlags.NonPublic);
 
             if (isStart)
             {
@@ -489,7 +487,7 @@ namespace TNHFramework.Patches
 
         public static TNH_Manager.SosigPatrolSquad GenerateSentryPatrol(TNH_Manager instance, Patrol patrol, List<Vector3> SpawnPoints, List<Vector3> ForwardVectors, List<Vector3> PatrolPoints, int patrolIndex)
         {
-            var patrolSquads = (List<TNH_Manager.SosigPatrolSquad>)typeof(TNH_Manager).GetField("m_patrolSquads", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
+            var patrolSquads = (List<TNH_Manager.SosigPatrolSquad>)fiPatrolSquads.GetValue(instance);
             TNHFrameworkLogger.Log($"Generating a sentry patrol -- There are currently {patrolSquads.Count} patrols active", TNHFrameworkLogger.LogType.TNH);
 
             return GeneratePatrol(patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
@@ -557,7 +555,7 @@ namespace TNHFramework.Patches
         /// </summary>
         public static TNH_Manager.SosigPatrolSquad GeneratePatrol(TNH_Manager instance, int HoldPointStart, Patrol patrol, int patrolIndex)
         {
-            var patrolSquads = (List<TNH_Manager.SosigPatrolSquad>)typeof(TNH_Manager).GetField("m_patrolSquads", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
+            var patrolSquads = (List<TNH_Manager.SosigPatrolSquad>)fiPatrolSquads.GetValue(instance);
             TNHFrameworkLogger.Log($"Generating a patrol -- There are currently {patrolSquads.Count} patrols active", TNHFrameworkLogger.LogType.TNH);
 
             List<int> list = [];
@@ -802,7 +800,7 @@ namespace TNHFramework.Patches
                 {
                     OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigsDict[tem].OutfitConfigs.GetRandom();
 
-                    var curClothes = (List<GameObject>)typeof(PlayerSosigBody).GetField("m_curClothes", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(___m_sosigPlayerBody);
+                    var curClothes = (List<GameObject>)fiCurClothes.GetValue(___m_sosigPlayerBody);
                     foreach (GameObject item in curClothes)
                     {
                         UnityEngine.Object.Destroy(item);
