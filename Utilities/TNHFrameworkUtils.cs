@@ -223,30 +223,27 @@ namespace TNHFramework.Utilities
                         sw.Close();
                     }
 
-                    if (TNHFramework.ConvertFilesToYAML.Value)
+                    string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
+
+                    if (File.Exists(yamlPath))
                     {
-                        string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
+                        File.Delete(yamlPath);
+                    }
 
-                        if (File.Exists(yamlPath))
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(yamlPath))
+                    {
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
-                            File.Delete(yamlPath);
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
-
-                        // Create a new file     
-                        using (StreamWriter sw = File.CreateText(yamlPath))
-                        {
-                            var serializerBuilder = new SerializerBuilder();
-
-                            serializerBuilder.WithIndentedSequences();
-                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                            {
-                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                            }
-                            var serializer = serializerBuilder.Build();
-                            string characterString = serializer.Serialize(charDef);
-                            sw.WriteLine(characterString);
-                            sw.Close();
-                        }
+                        var serializer = serializerBuilder.Build();
+                        string characterString = serializer.Serialize(charDef);
+                        sw.WriteLine(characterString);
+                        sw.Close();
                     }
                 }
             }
@@ -318,31 +315,28 @@ namespace TNHFramework.Utilities
                         sw.Close();
                     }
 
-                    if (TNHFramework.ConvertFilesToYAML.Value)
+                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                    if (File.Exists(yamlPath))
                     {
-                        string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+                        File.Delete(yamlPath);
+                    }
 
-                        if (File.Exists(yamlPath))
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(yamlPath))
+                    {
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
-                            File.Delete(yamlPath);
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
-
-                        // Create a new file     
-                        using (StreamWriter sw = File.CreateText(yamlPath))
-                        {
-                            var serializerBuilder = new SerializerBuilder();
-
-                            serializerBuilder.WithIndentedSequences();
-                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                            {
-                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                            }
-                            var serializer = serializerBuilder.Build();
-                            SosigTemplate sosig = new(template);
-                            string sosigString = serializer.Serialize(sosig);
-                            sw.WriteLine(sosigString);
-                            sw.Close();
-                        }
+                        var serializer = serializerBuilder.Build();
+                        SosigTemplate sosig = new(template);
+                        string sosigString = serializer.Serialize(sosig);
+                        sw.WriteLine(sosigString);
+                        sw.Close();
                     }
                 }
 
@@ -383,30 +377,27 @@ namespace TNHFramework.Utilities
                         sw.Close();
                     }
 
-                    if (TNHFramework.ConvertFilesToYAML.Value)
+                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                    if (File.Exists(yamlPath))
                     {
-                        string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+                        File.Delete(yamlPath);
+                    }
 
-                        if (File.Exists(yamlPath))
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(yamlPath))
+                    {
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
-                            File.Delete(yamlPath);
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
-
-                        // Create a new file     
-                        using (StreamWriter sw = File.CreateText(yamlPath))
-                        {
-                            var serializerBuilder = new SerializerBuilder();
-
-                            serializerBuilder.WithIndentedSequences();
-                            foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                            {
-                                serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                            }
-                            var serializer = serializerBuilder.Build();
-                            string sosigString = serializer.Serialize(template);
-                            sw.WriteLine(sosigString);
-                            sw.Close();
-                        }
+                        var serializer = serializerBuilder.Build();
+                        string sosigString = serializer.Serialize(template);
+                        sw.WriteLine(sosigString);
+                        sw.Close();
                     }
                 }
 
