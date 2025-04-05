@@ -2,7 +2,7 @@
 A successor to DevynDaMonster's [TNH Tweaker](https://thunderstore.io/c/h3vr/p/devyndamonster/TakeAndHoldTweaker/), TNH Framework aims to act as a base for anyone who wants to implement custom content for [Hot Dogs, Horseshoes & Hand Grenades](https://store.steampowered.com/app/450540/Hot_Dogs_Horseshoes__Hand_Grenades/)'s Take & Hold gamemode.
 
 ## Note
-This is an Early Test Release version. While completely functional, and maintaining most of the functionality of the original TNH Tweaker, it's lacking in features intended for the mod's official, full release. The ETR versions serve as a beta/stopgap for fixing & improving TNH Tweaker.
+This is an Extended Beta Release (AKA perpetual beta) version. It is completely functional and maintains most of the functionality of the original TNH Tweaker. Starting with version 0.3.0, it will begin to have new features. As H3VR is constantly evolving, TNH Framework will evolve with it.
 
 ## What is this?
 This is a successor to TNH Tweaker. It originally started as an update to it, making it compatible with Institution and whatnot. It still is largely based upon TNH Tweaker, and I would like to massively thank Devyn for his work on it. I would've simply pushed this out as TNH Tweaker (updated) or whatever, but I have grander ambitions for the future that would ideally do with a rebrand, and for compatibility's sake, it's best if I rebrand now. 
