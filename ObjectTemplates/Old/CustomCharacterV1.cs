@@ -1,21 +1,11 @@
 ﻿using ADepIn;
-using Deli.Immediate;
-using Valve.Newtonsoft.Json;
-using Deli.Setup;
-using Deli.VFS;
 using FistVR;
-using MagazinePatcher;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Security.Policy;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates.V1
 {
@@ -61,6 +51,8 @@ namespace TNHFramework.ObjectTemplates.V1
         [JsonIgnore]
         private Dictionary<string, MagazineBlacklistEntry> magazineBlacklistDict;
 
+        [JsonIgnore]
+        public bool isCustom = false;
 
         public CustomCharacter()
         {
@@ -328,7 +320,7 @@ namespace TNHFramework.ObjectTemplates.V1
             return false;
         }
 
-        public void DelayedInit(bool isCustom)
+        public void DelayedInit()
         {
             TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
@@ -405,7 +397,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 }
             }
 
-            for (int i = 0; i < EquipmentPools.Count; i++)
+            for (int i = EquipmentPools.Count - 1; i >= 0; i--)
             {
                 EquipmentPool pool = EquipmentPools[i];
                 if (!pool.DelayedInit())
@@ -413,7 +405,6 @@ namespace TNHFramework.ObjectTemplates.V1
                     TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
-                    i -= 1;
                 }
             }
 
@@ -833,7 +824,7 @@ namespace TNHFramework.ObjectTemplates.V1
         /// <returns> Returns true if valid, and false if empty </returns>
         public bool DelayedInit(List<string> completedQuests = null)
         {
-            //Start off by checking if this pool is even unlocked from a quest
+            // Start off by checking if this pool is even unlocked from a quest
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
                 if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
@@ -842,18 +833,18 @@ namespace TNHFramework.ObjectTemplates.V1
                 }
             }
 
-            //Before we add anything from the IDOverride list, remove anything that isn't loaded
+            // Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
 
-            //Every item in IDOverride gets added to the list of spawnable objects
+            // Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
             {
                 objects.AddRange(IDOverride);
             }
 
 
-            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+            // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
                 ObjectTable objectTable = new ObjectTable();
@@ -865,16 +856,15 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
 
-            //Perform delayed init on all subgroups. If they are empty, we remove them
+            // Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {
-                for (int i = 0; i < SubGroups.Count; i++)
+                for (int i = SubGroups.Count - 1; i >= 0; i--)
                 {
                     if (!SubGroups[i].DelayedInit(completedQuests))
                     {
                         //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
-                        i -= 1;
                     }
                 }
             }
@@ -885,7 +875,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 Rarity = 1;
             }
 
-            //The table is valid if it has items in it, or is a compatible magazine
+            // The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
 
@@ -961,7 +951,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
-                //If we have just one pool, then the primary pool becomes that pool
+                // If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
                 {
                     PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0]);
@@ -1107,10 +1097,12 @@ namespace TNHFramework.ObjectTemplates.V1
             SupplyChallenge = new TakeChallenge(level.TakeChallenge);
             HoldPhases = level.HoldChallenge.Phases.Select(o => new Phase(o)).ToList();
             Patrols = level.PatrolChallenge.Patrols.Select(o => new Patrol(o)).ToList();
-            PossiblePanelTypes = new List<PanelType>();
-            PossiblePanelTypes.Add(PanelType.AmmoReloader);
-            PossiblePanelTypes.Add(PanelType.MagDuplicator);
-            PossiblePanelTypes.Add(PanelType.Recycler);
+            PossiblePanelTypes =
+            [
+                PanelType.AmmoReloader,
+                PanelType.MagDuplicator,
+                PanelType.Recycler,
+            ];
             MinConstructors = 1;
             MaxConstructors = 1;
             MinPanels = 1;
@@ -1184,7 +1176,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
         public void DelayedInit(bool isCustom, int levelIndex)
         {
-            //If this is a level for a default character, we should try to replicate the vanilla layout
+            // If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
@@ -1279,7 +1271,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                 {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
@@ -1377,7 +1369,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
@@ -1469,7 +1461,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
 
-                //Try to get the necessary SosigEnemyIDs
+                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                 {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];

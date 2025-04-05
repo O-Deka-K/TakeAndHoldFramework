@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace TNHFramework
         private FVRObject upgradeMag = null;
 
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -58,7 +60,7 @@ namespace TNHFramework
                 TNHFrameworkLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
 
             original.enabled = false;
-            blacklist = LoadedTemplateManager.LoadedCharactersDict[original.M.C].GetMagazineBlacklist();
+            blacklist = LoadedTemplateManager.CurrentCharacter.GetMagazineBlacklist();
 
             InitPanel();
             UpdateIcons();
@@ -257,7 +259,7 @@ namespace TNHFramework
 
         private void Scan()
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
 
             if (selectedObject != null)
             {
@@ -353,7 +355,7 @@ namespace TNHFramework
 
         private void UpdateIcons()
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
 
             DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
@@ -383,9 +385,12 @@ namespace TNHFramework
                 }
             }
 
-            DupeIcon.UpdateIconDisplay();
-            UpgradeIcon.UpdateIconDisplay();
-            PurchaseIcon.UpdateIconDisplay();
+            //DupeIcon.UpdateIconDisplay();
+            //UpgradeIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            miUpdateIconDisplay.Invoke(DupeIcon, []);
+            miUpdateIconDisplay.Invoke(UpgradeIcon, []);
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -430,6 +435,7 @@ namespace TNHFramework
         private FVRPhysicalObject selectedObject = null;
         private FVRFireArm detectedFirearm = null;
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -504,7 +510,7 @@ namespace TNHFramework
 
                 TNHFrameworkLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHFrameworkLogger.LogType.General);
 
-                CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+                CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
                 MagazineBlacklistEntry blacklistEntry = null;
                 if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
 
@@ -636,7 +642,8 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PurchaseIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -681,6 +688,7 @@ namespace TNHFramework
         public OpenBoltReceiver detectedOpenBolt = null;
 
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
@@ -752,7 +760,7 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
 
-                if(detectedHandgun != null)
+                if (detectedHandgun != null)
                 {
                     AddFullAutoToHandgun(detectedHandgun);
                     ClearSelection();
@@ -764,7 +772,7 @@ namespace TNHFramework
                     ClearSelection();
                 }
 
-                else if(detectedOpenBolt != null)
+                else if (detectedOpenBolt != null)
                 {
                     AddFullAutoToOpenBolt(detectedOpenBolt);
                     ClearSelection();
@@ -1028,7 +1036,8 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PurchaseIcon.UpdateIconDisplay();
+            //PurchaseIcon.UpdateIconDisplay();
+            miUpdateIconDisplay.Invoke(PurchaseIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 
@@ -1076,6 +1085,7 @@ namespace TNHFramework
         private int PanelCost = 1;
         private int numTokensSelected = 0;
         private Collider[] colBuffer = new Collider[50];
+        private readonly MethodInfo miUpdateIconDisplay = typeof(TNH_ObjectConstructorIcon).GetMethod("UpdateIconDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private float fireRateMultiplier = 1.5f;
 
@@ -1211,7 +1221,7 @@ namespace TNHFramework
 
         public void DecreaseFireRate()
         {
-            if(detectedHandgun != null)
+            if (detectedHandgun != null)
             {
                 detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
@@ -1219,7 +1229,7 @@ namespace TNHFramework
                 return;
             }
 
-            else if(detectedClosedBolt != null)
+            else if (detectedClosedBolt != null)
             {
                 detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);
@@ -1360,8 +1370,10 @@ namespace TNHFramework
                 if (numTokens >= PanelCost) numTokensSelected = PanelCost;
             }
 
-            PlusIcon.UpdateIconDisplay();
-            MinusIcon.UpdateIconDisplay();
+            //PlusIcon.UpdateIconDisplay();
+            //MinusIcon.UpdateIconDisplay();
+            miUpdateIconDisplay.Invoke(PlusIcon, []);
+            miUpdateIconDisplay.Invoke(MinusIcon, []);
             UpdateTokenDisplay(numTokens);
         }
 

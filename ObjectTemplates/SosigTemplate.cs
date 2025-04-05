@@ -1,12 +1,9 @@
-﻿using BepInEx.Logging;
-using Valve.Newtonsoft.Json;
-using FistVR;
-using System;
+﻿using FistVR;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
@@ -89,7 +86,7 @@ namespace TNHFramework.ObjectTemplates
 
         public SosigEnemyTemplate GetSosigEnemyTemplate()
         {
-            if(template == null)
+            if (template == null)
             {
 
                 TNHFrameworkLogger.Log("Getting sosig template", TNHFrameworkLogger.LogType.Character);
@@ -103,9 +100,9 @@ namespace TNHFramework.ObjectTemplates
 
                 TNHFrameworkLogger.Log("Getting sosig config", TNHFrameworkLogger.LogType.Character);
                 template.ConfigTemplates = [];
-                foreach(SosigConfig temp in Configs)
+                foreach (SosigConfig temp in Configs)
                 {
-                    if(temp == null)
+                    if (temp == null)
                     {
                         TNHFrameworkLogger.LogError("One of the sosig configs is null!");
                         continue;
@@ -134,12 +131,12 @@ namespace TNHFramework.ObjectTemplates
                 template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
                 template.WeaponOptions_Tertiary = WeaponOptionsTertiary.Select(o => IM.OD[o]).ToList();
 
-                foreach(OutfitConfig outfit in OutfitConfigs)
+                foreach (OutfitConfig outfit in OutfitConfigs)
                 {
                     outfit.DelayedInit();
                 }
 
-                if(DroppedObjectPool != null)
+                if (DroppedObjectPool != null)
                 {
                     DroppedObjectPool.DelayedInit();
                 }
@@ -294,7 +291,7 @@ namespace TNHFramework.ObjectTemplates
 
         public SosigConfigTemplate GetConfigTemplate()
         {
-            if(template == null)
+            if (template == null)
             {
                 template = (SosigConfigTemplate)ScriptableObject.CreateInstance(typeof(SosigConfigTemplate));
 
@@ -436,7 +433,7 @@ namespace TNHFramework.ObjectTemplates
 
         public SosigOutfitConfig GetOutfitConfig()
         {
-            if(template == null)
+            if (template == null)
             {
                 template = (SosigOutfitConfig)ScriptableObject.CreateInstance(typeof(SosigOutfitConfig));
                 

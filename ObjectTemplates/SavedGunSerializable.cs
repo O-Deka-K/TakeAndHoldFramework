@@ -1,11 +1,10 @@
-﻿using Valve.Newtonsoft.Json;
-using FistVR;
+﻿using FistVR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
@@ -59,7 +58,7 @@ namespace TNHFramework.ObjectTemplates
 
         public SavedGun GetSavedGun()
         {
-            if(gun == null)
+            if (gun == null)
             {
                 gun = new SavedGun();
                 gun.FileName = FileName;
@@ -95,7 +94,7 @@ namespace TNHFramework.ObjectTemplates
 
         public FVRObject GetGunObject()
         {
-            foreach(SavedGunComponentSerializable component in Components)
+            foreach (SavedGunComponentSerializable component in Components)
             {
                 if (component.IsFirearm) return IM.OD[component.ObjectID];
             }
@@ -108,9 +107,9 @@ namespace TNHFramework.ObjectTemplates
             GameObject gunObject = GetGunObject().GetGameObject();
 
             Handgun handgunComp = gunObject.GetComponent<Handgun>();
-            if(handgunComp != null)
+            if (handgunComp != null)
             {
-                foreach(Handgun.FireSelectorMode mode in handgunComp.FireSelectorModes)
+                foreach (Handgun.FireSelectorMode mode in handgunComp.FireSelectorModes)
                 {
                     FireSelectorModes.Add(new FireSelectorMode(mode));
                 }
@@ -276,7 +275,7 @@ namespace TNHFramework.ObjectTemplates
 
         public SavedGunComponent GetGunComponent()
         {
-            if(component == null)
+            if (component == null)
             {
                 component = new SavedGunComponent();
                 component.Index = Index;

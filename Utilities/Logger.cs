@@ -1,9 +1,4 @@
 ﻿using BepInEx.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
 
 namespace TNHFramework.Utilities
 {
@@ -42,7 +37,7 @@ namespace TNHFramework.Utilities
                 {
                     BepLog.LogInfo(log);
                 }
-                else if(type == LogType.Character && LogCharacter)
+                else if (type == LogType.Character && LogCharacter)
                 {
                     BepLog.LogInfo(log);
                 }

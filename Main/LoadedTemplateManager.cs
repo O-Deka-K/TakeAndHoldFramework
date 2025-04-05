@@ -1,18 +1,27 @@
 ﻿using FistVR;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
 
 namespace TNHFramework
 {
+    public class CharacterTemplate
+    {
+        public TNH_CharacterDef Def;
+        public CustomCharacter Custom;
+
+        public CharacterTemplate(TNH_CharacterDef def, CustomCharacter custom)
+        {
+            Def = def;
+            Custom = custom;
+        }
+    }
+
     public static class LoadedTemplateManager
     {
-
-        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = [];
+        public static CustomCharacter CurrentCharacter;
+        public static Dictionary<TNH_Char, CharacterTemplate> LoadedCharacterDict = [];
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = [];
         public static Dictionary<string, VaultFile> LoadedVaultFiles = [];
@@ -37,7 +46,7 @@ namespace TNHFramework
             template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
-            //Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
+            // Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, NewSosigID);
@@ -49,14 +58,14 @@ namespace TNHFramework
                 return;
             }
 
-            //Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
+            // Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
             realTemplate.SosigEnemyID = (SosigEnemyID)SosigIDDict[template.SosigEnemyID];
 
-            //Finally add the templates to our global dictionary
+            // Finally, add the templates to our global dictionary
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
@@ -64,7 +73,7 @@ namespace TNHFramework
         {
             SosigTemplate template = new(realTemplate);
 
-            //This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+            // This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
@@ -75,28 +84,28 @@ namespace TNHFramework
                 return;
             }
 
-            //Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
+            // Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
+            template.isCustom = true;
             template.Validate();
             CustomCharacters.Add(template);
-            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
+            LoadedCharacterDict.Add((TNH_Char)NewCharacterID, new CharacterTemplate(template.GetCharacter(NewCharacterID, thumbnail), template));
+            NewCharacterID++;
 
-            foreach(EquipmentPool pool in template.EquipmentPools)
+            foreach (EquipmentPool pool in template.EquipmentPools)
             {
                 EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
             }
 
-            NewCharacterID += 1;
-
-            TNHFrameworkLogger.Log("Character added successfuly : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log($"Character added successfully ({NewCharacterID - 1}) : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
@@ -104,18 +113,18 @@ namespace TNHFramework
             CustomCharacter template = new CustomCharacter(realTemplate);
 
             DefaultCharacters.Add(template);
-            LoadedCharactersDict.Add(realTemplate, template);
+            LoadedCharacterDict.Add(realTemplate.CharacterID, new CharacterTemplate(realTemplate, template));
 
             foreach (EquipmentPool pool in template.EquipmentPools)
             {
-                //Must check for this, since default characters can have references to the same pools
+                // Must check for this, since default characters can have references to the same pools
                 if (!EquipmentPoolDictionary.ContainsKey(pool.GetPoolEntry()))
                 {
                     EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
                 }
             }
 
-            TNHFrameworkLogger.Log("Character added successfuly : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log($"Character added successfully ({realTemplate.CharacterID}) : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddVaultFile(VaultFile template)

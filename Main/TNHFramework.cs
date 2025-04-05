@@ -9,7 +9,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using TNHFramework.ObjectTemplates;
 using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -43,7 +42,7 @@ namespace TNHFramework
         public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
         public static Dictionary<FireArmRoundType, List<FVRObject>> SpeedloaderDictionary = [];
 
-        //Variables used by various patches
+        // Variables used by various patches
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
         public static List<int> PatrolIndexPool = [];
@@ -65,21 +64,22 @@ namespace TNHFramework
                 TNHFrameworkLogger.Init();
             }
 
-            TNHFrameworkLogger.Log("Hello World (from TNH Tweaker)", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log("Hello World (from TNHFramework)", TNHFrameworkLogger.LogType.General);
 
             SetupOutputDirectory();
 
             LoadConfigFile();
             LoadPanelSprites();
 
-            Harmony.CreateAndPatchAll(typeof(TNHFramework));
-            Harmony.CreateAndPatchAll(typeof(TNHPatches));
-            Harmony.CreateAndPatchAll(typeof(PatrolPatches));
-            Harmony.CreateAndPatchAll(typeof(HoldPatches));
-            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
-
+            var harmony = new Harmony("h3vr.tnhframework");
+            harmony.PatchAll(typeof(TNHFramework));
+            harmony.PatchAll(typeof(TNHPatches));
+            harmony.PatchAll(typeof(PatrolPatches));
+            harmony.PatchAll(typeof(HoldPatches));
+            harmony.PatchAll(typeof(HighScorePatches));
+            
             if (EnableDebugText.Value)
-                Harmony.CreateAndPatchAll(typeof(DebugPatches));
+                harmony.PatchAll(typeof(DebugPatches));
         }
 
         public override void OnSetup(IStageContext<Empty> ctx)
@@ -220,19 +220,19 @@ namespace TNHFramework
 
 
 
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
         [HarmonyPrefix]
-        public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
+        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
         {
             TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
-            GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
+            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
 
-            __instance.m_hasCurrentScore = true;
-            __instance.m_currentScore = score;
+            ___m_hasCurrentScore = true;
+            ___m_currentScore = score;
 
-            //Draw local scores
-            __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
+            // Draw local scores
+            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
 
             GM.Omni.SaveToFile();
 

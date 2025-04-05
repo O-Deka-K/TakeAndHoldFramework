@@ -1,9 +1,5 @@
 ﻿using FistVR;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,9 +11,9 @@ namespace TNHFramework
 
         [HarmonyPatch(typeof(TNH_Manager), "Start")]
         [HarmonyPrefix]
-        public static bool AddPointDebugText(TNH_Manager __instance)
+        public static void AddPointDebugText(TNH_Manager __instance)
         {
-            foreach(TNH_HoldPoint hold in __instance.HoldPoints)
+            foreach (TNH_HoldPoint hold in __instance.HoldPoints)
             {
 
                 TNHFrameworkLogger.Log("Adding text!", TNHFrameworkLogger.LogType.TNH);
@@ -47,13 +43,11 @@ namespace TNHFramework
                 textComp.font = ArialFont;
                 textComp.horizontalOverflow = HorizontalWrapMode.Overflow;
             }
-
-            return true;
         }
 
 
         /*
-        [HarmonyPatch(typeof(ObjectTable))] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(ObjectTable))]
         [HarmonyPatch("Initialize")]
         [HarmonyPatch(new Type[] { typeof(ObjectTableDef), typeof(FVRObject.ObjectCategory), typeof(List<FVRObject.OTagEra>), typeof(List<FVRObject.OTagSet>), typeof(List<FVRObject.OTagFirearmSize>), typeof(List<FVRObject.OTagFirearmAction>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFeedOption>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagFirearmRoundPower>), typeof(List<FVRObject.OTagAttachmentFeature>), typeof(List<FVRObject.OTagMeleeStyle>), typeof(List<FVRObject.OTagMeleeHandedness>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagPowerupType>), typeof(List<FVRObject.OTagThrownType>), typeof(List<FVRObject.OTagThrownDamageType>), typeof(int), typeof(int), typeof(int), typeof(bool)})]
         [HarmonyPrefix]

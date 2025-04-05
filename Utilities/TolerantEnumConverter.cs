@@ -1,13 +1,11 @@
-﻿using Valve.Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
+using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.Utilities
 {
 
-    //This code is taken from this stack overflow page: https://stackoverflow.com/questions/22752075/how-can-i-ignore-unknown-enum-values-during-json-deserialization
+    // This code is taken from this stack overflow page: https://stackoverflow.com/questions/22752075/how-can-i-ignore-unknown-enum-values-during-json-deserialization
     public class TolerantEnumConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)

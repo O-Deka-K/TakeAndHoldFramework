@@ -4,9 +4,7 @@ using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -88,7 +86,7 @@ namespace TNHFramework
                 TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher finished!", TNHFrameworkLogger.LogType.General);
             }
 
-            //Now perform final steps of loading characters
+            // Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
             SavedCharacters = CharDatabase.Characters;
 
@@ -278,7 +276,7 @@ namespace TNHFramework
         {
             List<string> loading = OtherLoader.LoaderStatus.LoadingItems;
 
-            for(int i = 0; i < loading.Count; i++)
+            for (int i = 0; i < loading.Count; i++)
             {
                 string colorHex = ColorUtility.ToHtmlStringRGBA(new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp(((float)loading.Count - i) / loading.Count, 0, 1)));
                 loading[i] = "<color=#" + colorHex + ">Loading Assets (" + loading[i] + ")</color>";
@@ -294,7 +292,7 @@ namespace TNHFramework
         {
             TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
 
-            //Load all of the default templates into our dictionaries
+            // Load all of the default templates into our dictionaries
             TNHFrameworkLogger.Log("Adding default sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultSosigs();
             TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
@@ -303,10 +301,10 @@ namespace TNHFramework
             LoadedTemplateManager.DefaultIconSprites = TNHFrameworkUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
             TNHFrameworkLogger.Log("Delayed Init of default characters", TNHFrameworkLogger.LogType.General);
-            InitCharacters(LoadedTemplateManager.DefaultCharacters, false);
+             InitCharacters(LoadedTemplateManager.DefaultCharacters);
 
             TNHFrameworkLogger.Log("Delayed Init of custom characters", TNHFrameworkLogger.LogType.General);
-            InitCharacters(LoadedTemplateManager.CustomCharacters, true);
+            InitCharacters(LoadedTemplateManager.CustomCharacters);
 
             TNHFrameworkLogger.Log("Delayed Init of custom sosigs", TNHFrameworkLogger.LogType.General);
             InitSosigs(LoadedTemplateManager.CustomSosigs);
@@ -316,10 +314,12 @@ namespace TNHFramework
 
         public static void CreateTNHFiles(string path)
         {
-            //Create files relevant for character creation
+            // Create files relevant for character creation
             TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
-            TNHFrameworkUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
-            TNHFrameworkUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, path);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.CustomSosigs, path);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.DefaultCharacters, path, false);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.CustomCharacters, path, true);
             TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
             TNHFrameworkUtils.CreateObjectIDFile(path);
             TNHFrameworkUtils.CreateSosigIDFile(path);
@@ -357,23 +357,22 @@ namespace TNHFramework
         /// Performs a delayed init on the sent list of custom characters, and removes any characters that failed to init
         /// </summary>
         /// <param name="characters"></param>
-        /// <param name="isCustom"></param>
-        private static void InitCharacters(List<CustomCharacter> characters, bool isCustom)
+        private static void InitCharacters(List<CustomCharacter> characters)
         {
-            for (int i = 0; i < characters.Count; i++)
+            for (int i = characters.Count - 1; i >= 0; i--)
             {
                 CustomCharacter character = characters[i];
 
                 try
                 {
-                    character.DelayedInit(isCustom);
+                    character.DelayedInit();
                 }
                 catch (Exception e)
                 {
                     TNHFrameworkLogger.LogError("Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
                     characters.RemoveAt(i);
-                    LoadedTemplateManager.LoadedCharactersDict.Remove(character.GetCharacter());
-                    i -= 1;
+                    var item = LoadedTemplateManager.LoadedCharacterDict.Single(o => o.Value.Custom == character).Value;
+                    LoadedTemplateManager.LoadedCharacterDict.Remove(item.Def.CharacterID);
                 }
             }
         }
@@ -396,18 +395,12 @@ namespace TNHFramework
                 {
                     TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
-                    //Find any characters that use this sosig, and remove them
-                    for (int j = 0; j < LoadedTemplateManager.LoadedCharactersDict.Values.Count; j++)
+                    // Find any characters that use this sosig, and remove them
+                    KeyValuePair<TNH_Char, CharacterTemplate>[] removeList = LoadedTemplateManager.LoadedCharacterDict.Where(o => o.Value.Custom.CharacterUsesSosig(sosig.SosigEnemyID)).ToArray();
+                    foreach (KeyValuePair<TNH_Char, CharacterTemplate> item in removeList)
                     {
-                        //This is probably monsterously inefficient, but if you're at this point you're already fucked :)
-                        KeyValuePair<TNH_CharacterDef, CustomCharacter> value_pair = LoadedTemplateManager.LoadedCharactersDict.ToList()[j];
-
-                        if (value_pair.Value.CharacterUsesSosig(sosig.SosigEnemyID))
-                        {
-                            TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + value_pair.Value.DisplayName);
-                            LoadedTemplateManager.LoadedCharactersDict.Remove(value_pair.Key);
-                            j -= 1;
-                        }
+                        TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + item.Value.Custom.DisplayName);
+                        LoadedTemplateManager.LoadedCharacterDict.Remove(item.Key);
                     }
                 }
             }
@@ -418,13 +411,13 @@ namespace TNHFramework
         {
             TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
 
-            //Load all characters into the UI
-            foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
+            // Load all characters into the UI
+            foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
             {
                 bool flag = false;
                 foreach (TNH_UIManager.CharacterCategory category in Categories)
                 {
-                    if (category.CategoryName == LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Name)
+                    if (category.CategoryName == character.Value.Custom.CategoryData.Name)
                     {
                         flag = true; 
                         break;
@@ -433,21 +426,21 @@ namespace TNHFramework
 
                 if (!flag)
                 {
-                    Categories.Insert(LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Priority, new TNH_UIManager.CharacterCategory()
+                    Categories.Insert(character.Value.Custom.CategoryData.Priority, new TNH_UIManager.CharacterCategory()
                     {
-                        CategoryName = LoadedTemplateManager.LoadedCharactersDict[character].CategoryData.Name,
+                        CategoryName = character.Value.Custom.CategoryData.Name,
                         Characters = []
                     });
                 }
 
-                if (!Categories[(int)character.Group].Characters.Contains(character.CharacterID))
+                if (!Categories[(int)character.Value.Def.Group].Characters.Contains(character.Key))
                 {
-                    Categories[(int)character.Group].Characters.Add(character.CharacterID);
-                    CharDatabase.Characters.Add(character);
+                    Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
+                    CharDatabase.Characters.Add(character.Value.Def);
                 }
             }
 
-            //Update the UI
+            // Update the UI
             Traverse instanceTraverse = Traverse.Create(instance);
             int selectedCategory = (int)instanceTraverse.Field("m_selectedCategory").GetValue();
             int selectedCharacter = (int)instanceTraverse.Field("m_selectedCharacter").GetValue();

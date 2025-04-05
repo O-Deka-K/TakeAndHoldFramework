@@ -1,23 +1,30 @@
-﻿using ADepIn;
-using Deli.VFS;
+﻿using Deli.VFS;
 using FistVR;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Xml.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using YamlDotNet.Serialization;
+using CustomCharacter = TNHFramework.ObjectTemplates.CustomCharacter;
+using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
+using EquipmentPool = TNHFramework.ObjectTemplates.EquipmentPool;
+using Type = System.Type;
 
 namespace TNHFramework.Utilities
 {
     static class TNHFrameworkUtils
     {
+        private static readonly MethodInfo miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
+
         public static void CreateObjectIDFile(string path)
         {
             try
@@ -35,9 +42,9 @@ namespace TNHFramework.Utilities
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
-                            obj.DisplayName.Replace(",", ".") + "," +  // ODK - Added
+                            obj.DisplayName.Replace(",", ".") + "," +
                             obj.ItemID.Replace(",", ".") + "," + 
-                            obj.IsModContent.ToString() + "," +  // ODK - Added
+                            obj.IsModContent.ToString() + "," +
                             obj.Category + "," +
                             obj.TagEra + "," +
                             obj.TagSet + "," +
@@ -162,9 +169,9 @@ namespace TNHFramework.Utilities
         {
             Dictionary<string, Sprite> icons = [];
 
-            foreach(CustomCharacter character in characters)
+            foreach (CustomCharacter character in characters)
             {
-                foreach(EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
+                foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
@@ -178,14 +185,21 @@ namespace TNHFramework.Utilities
         }
 
 
-        public static void CreateDefaultCharacterFiles(List<CustomCharacter> characters, string path)
+        public static string CleanFilename(string filename)
+        {
+            // Remove illegal characters
+            return Regex.Replace(filename, @"(<|>|:|""|/|\\|\||\?|\*)", "");
+        }
+
+
+        public static void CreateCharacterFiles(List<CustomCharacter> characters, string path, bool isCustom)
         {
 
             try
             {
-                TNHFrameworkLogger.Log("Creating default character template files", TNHFrameworkLogger.LogType.File);
+                TNHFrameworkLogger.Log("Creating " + (isCustom ? "custom" : "default") + " character template files", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/DefaultCharacters";
+                path += isCustom ? "/CustomCharacters" : "/DefaultCharacters";
 
                 if (!Directory.Exists(path))
                 {
@@ -194,28 +208,31 @@ namespace TNHFramework.Utilities
                 
                 foreach (CustomCharacter charDef in characters)
                 {
-                    if (File.Exists(path + "/" + charDef.DisplayName + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(charDef.DisplayName + ".json");
+
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + charDef.DisplayName + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
 
-                    if (File.Exists(path + "/" + charDef.DisplayName + ".yaml"))
+                    string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
+
+                    if (File.Exists(yamlPath))
                     {
-                        File.Delete(path + "/" + charDef.DisplayName + ".yaml");
+                        File.Delete(yamlPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".yaml"))
+                    using (StreamWriter sw = File.CreateText(yamlPath))
                     {
-                        // i am learning this yaml stuff. it is goofy.
                         var serializerBuilder = new SerializerBuilder();
 
                         serializerBuilder.WithIndentedSequences();
@@ -244,7 +261,7 @@ namespace TNHFramework.Utilities
             {
                 TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/PopulatedCharacterTemplate.json";
+                path += "/PopulatedCharacterTemplate.json";
 
                 if (!File.Exists(path))
                 {
@@ -267,13 +284,13 @@ namespace TNHFramework.Utilities
         }
 
 
-        public static void CreateDefaultSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
+        public static void CreateSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
         {
             try
             {
                 TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
 
-                path = path + "/DefaultSosigTemplates";
+                path += "/DefaultSosigTemplates";
 
                 if (!Directory.Exists(path))
                 {
@@ -282,17 +299,104 @@ namespace TNHFramework.Utilities
 
                 foreach (SosigEnemyTemplate template in sosigs)
                 {
-                    if (File.Exists(path + "/" + template.SosigEnemyID + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + template.SosigEnemyID + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + template.SosigEnemyID + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         SosigTemplate sosig = new(template);
-                        string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(characterString);
+                        string sosigString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
+                        sw.WriteLine(sosigString);
+                        sw.Close();
+                    }
+
+                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                    if (File.Exists(yamlPath))
+                    {
+                        File.Delete(yamlPath);
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(yamlPath))
+                    {
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                        {
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                        }
+                        var serializer = serializerBuilder.Build();
+                        SosigTemplate sosig = new(template);
+                        string sosigString = serializer.Serialize(sosig);
+                        sw.WriteLine(sosigString);
+                        sw.Close();
+                    }
+                }
+
+            }
+
+            catch (Exception ex)
+            {
+                TNHFrameworkLogger.LogError(ex.ToString());
+            }
+        }
+
+        public static void CreateSosigTemplateFiles(List<SosigTemplate> sosigs, string path)
+        {
+            try
+            {
+                TNHFrameworkLogger.Log("Creating custom sosig template files", TNHFrameworkLogger.LogType.File);
+
+                path += "/CustomSosigTemplates";
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                foreach (SosigTemplate template in sosigs)
+                {
+                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+
+                    if (File.Exists(jsonPath))
+                    {
+                        File.Delete(jsonPath);
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(jsonPath))
+                    {
+                        string sosigString = JsonConvert.SerializeObject(template, Formatting.Indented, new StringEnumConverter());
+                        sw.WriteLine(sosigString);
+                        sw.Close();
+                    }
+
+                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
+
+                    if (File.Exists(yamlPath))
+                    {
+                        File.Delete(yamlPath);
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(yamlPath))
+                    {
+                        var serializerBuilder = new SerializerBuilder();
+
+                        serializerBuilder.WithIndentedSequences();
+                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
+                        {
+                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
+                        }
+                        var serializer = serializerBuilder.Build();
+                        string sosigString = serializer.Serialize(template);
+                        sw.WriteLine(sosigString);
                         sw.Close();
                     }
                 }
@@ -318,7 +422,7 @@ namespace TNHFramework.Utilities
 
                 string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
                 List<SavedGunSerializable> savedGuns = [];
-                foreach(string name in vaultFiles)
+                foreach (string name in vaultFiles)
                 {
                     try
                     {
@@ -335,19 +439,20 @@ namespace TNHFramework.Utilities
                     }
                     catch
                     {
-                        TNHFrameworkLogger.LogError("Vault File could not be loaded");
+                        TNHFrameworkLogger.LogError($"Vault File {name} could not be loaded");
                     }
                 }
                 
                 foreach (SavedGunSerializable savedGun in savedGuns)
                 {
-                    if (File.Exists(path + "/" + savedGun.FileName + ".json"))
+                    string jsonPath = path + "/" + CleanFilename(savedGun.FileName + ".json");
+                    if (File.Exists(jsonPath))
                     {
-                        File.Delete(path + "/" + savedGun.FileName + ".json");
+                        File.Delete(jsonPath);
                     }
 
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + savedGun.FileName + ".json"))
+                    using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string characterString = JsonConvert.SerializeObject(savedGun, Formatting.Indented, new StringEnumConverter());
                         sw.WriteLine(characterString);
@@ -359,12 +464,15 @@ namespace TNHFramework.Utilities
                 string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
 
                 string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
-                vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
-                vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
+                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
+                vaultPath = Path.Combine(vaultPath, (string)miGetCatFolderName.Invoke(null, [mode]));
+                vaultPath = Path.Combine(vaultPath, (string)miGetSubcatFolderName.Invoke(null, [mode]));
 
                 foreach (string vaultFileName in vaultFileList)
                 {
-                    string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+                    //string filename = vaultFileName + VaultSystem.GetSuffix(mode);
+                    string filename = vaultFileName + (string)miGetSuffix.Invoke(null, [mode]);
 
                     try
                     {
@@ -390,21 +498,23 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                path = path + "/GeneratedEquipmentPools";
+                path += "/GeneratedEquipmentPools";
 
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
                 }
 
-
-                foreach(CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
+                var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
+                foreach (CustomCharacter character in characters)
                 {
+                    string txtPath = path + "/" + CleanFilename(character.DisplayName + ".txt");
+
                     // Create a new file     
-                    using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))
+                    using (StreamWriter sw = File.CreateText(txtPath))
                     {
                         sw.WriteLine("Primary Starting Weapon");
-                        if(character.PrimaryWeapon != null)
+                        if (character.PrimaryWeapon != null)
                         {
                             sw.WriteLine(character.PrimaryWeapon.ToString());
                         }
@@ -445,7 +555,7 @@ namespace TNHFramework.Utilities
                             sw.WriteLine(character.Shield.ToString());
                         }
 
-                        foreach(EquipmentPool pool in character.EquipmentPools)
+                        foreach (EquipmentPool pool in character.EquipmentPools)
                         {
                             sw.WriteLine("\n\n" + pool.ToString());
                         }
@@ -490,36 +600,33 @@ namespace TNHFramework.Utilities
         {
             if (group.IDOverride != null)
             {
-                for (int i = 0; i < group.IDOverride.Count; i++)
+                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
-                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
-                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
                             if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
-                        //If this is not a vaulted gun, remove it
+                        // If this is not a vaulted gun, remove it
                         else
                         {
                             TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i--;
                         }
                     }
                 }
@@ -532,7 +639,7 @@ namespace TNHFramework.Utilities
         {
             if (group.IDOverride != null)
             {
-                for (int i = 0; i < group.IDOverride.Count; i++)
+                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
@@ -542,7 +649,6 @@ namespace TNHFramework.Utilities
                             if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -552,7 +658,6 @@ namespace TNHFramework.Utilities
                             if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
                             {
                                 group.IDOverride.RemoveAt(i);
-                                i--;
                             }
                         }
 
@@ -561,7 +666,6 @@ namespace TNHFramework.Utilities
                         {
                             TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
                             group.IDOverride.RemoveAt(i);
-                            i--;
                         }
                     }
                 }
@@ -572,82 +676,75 @@ namespace TNHFramework.Utilities
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
             
-            //Loop through all outfit configs and remove any clothing objects that don't exist
+            // Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
-                for(int i = 0; i < config.Headwear.Count; i++)
+                for (int i = config.Headwear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Headwear.Count == 0) config.Chance_Headwear = 0;
 
-                for (int i = 0; i < config.Facewear.Count; i++)
+                for (int i = config.Facewear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Facewear.Count == 0) config.Chance_Facewear = 0;
 
-                for (int i = 0; i < config.Eyewear.Count; i++)
+                for (int i = config.Eyewear.Count - 1; i >= 0 ; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Eyewear.Count == 0) config.Chance_Eyewear = 0;
 
-                for (int i = 0; i < config.Torsowear.Count; i++)
+                for (int i = config.Torsowear.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Torsowear.Count == 0) config.Chance_Torsowear = 0;
 
-                for (int i = 0; i < config.Pantswear.Count; i++)
+                for (int i = config.Pantswear.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Pantswear.Count == 0) config.Chance_Pantswear = 0;
 
-                for (int i = 0; i < config.Pantswear_Lower.Count; i++)
+                for (int i = config.Pantswear_Lower.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Pantswear_Lower.Count == 0) config.Chance_Pantswear_Lower = 0;
 
-                for (int i = 0; i < config.Backpacks.Count; i++)
+                for (int i = config.Backpacks.Count - 1; i >= 0; i--)
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
                         TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
-                        i -= 1;
                     }
                 }
                 if (config.Backpacks.Count == 0) config.Chance_Backpacks = 0;
@@ -933,41 +1030,23 @@ namespace TNHFramework.Utilities
                 {
                     if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
                     {
-                        //First, async get the game object to spawn
+                        // First, async get the game object to spawn
                         AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
                         yield return objectCallback;
 
-                        //Next calculate the height needed for this item
+                        // Next calculate the height needed for this item
                         GameObject gameObject = selectedFVR.GetGameObject();
                         float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
                         currentHeight += heightNeeded;
 
-                        //Finally spawn the item and call the callback if it's not null
+                        // Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
-                        // ODK - This is added to the tracked object list after we return
-                        if(callback != null) callback.Invoke(spawnedObject);
+                        // This is added to the tracked object list after we return
+                        if (callback != null) callback.Invoke(spawnedObject);
                         yield return null;
                     }
                 }
             }
         }
-
-
-
     }
-
-
-
-
-    public static class Globals
-    {
-        public static bool DebugFlag { get; set; }
-        public static readonly string Accept = "Accept";
-        public static readonly string Content_Type = "Content-Type";
-        public static readonly string ApplicationJson = "application/json";
-        public static readonly string ErrorOccurred = "Error occurred";
-        public static readonly string PrincipalID = "x-ms-client-principal-id";
-        public static readonly string PrincipalName = "x-ms-client-principal-name";
-    }
-
 }
