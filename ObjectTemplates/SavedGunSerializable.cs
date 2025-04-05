@@ -8,7 +8,6 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-
     public class SavedGunSerializable
     {
         public string FileName;
@@ -96,7 +95,8 @@ namespace TNHFramework.ObjectTemplates
         {
             foreach (SavedGunComponentSerializable component in Components)
             {
-                if (component.IsFirearm) return IM.OD[component.ObjectID];
+                if (component.IsFirearm)
+                    return IM.OD[component.ObjectID];
             }
 
             return null;
@@ -154,7 +154,8 @@ namespace TNHFramework.ObjectTemplates
 
         public void ApplyFirearmProperties(FVRFireArm firearm)
         {
-            if (!OverrideFireRate && !OverrideFireSelectors) return;
+            if (!OverrideFireRate && !OverrideFireSelectors)
+                return;
 
             Handgun handgunComp = firearm.gameObject.GetComponent<Handgun>();
             if (handgunComp != null)
@@ -228,9 +229,6 @@ namespace TNHFramework.ObjectTemplates
         }
 
     }
-
-
-
 
     public class SavedGunComponentSerializable
     {
@@ -362,5 +360,4 @@ namespace TNHFramework.ObjectTemplates
         FullAuto,
         SuperFastBurst
     }
-
 }

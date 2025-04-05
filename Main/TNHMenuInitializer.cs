@@ -14,7 +14,6 @@ namespace TNHFramework
 {
     public static class TNHMenuInitializer
     {
-
         public static bool TNHInitialized = false;
         public static bool MagazineCacheFailed = false;
         public static List<TNH_CharacterDef> SavedCharacters;
@@ -102,9 +101,6 @@ namespace TNHFramework
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
         }
-
-
-
 
         public static void InternalMagPatcher()
         {
@@ -287,7 +283,6 @@ namespace TNHFramework
             return string.Join("\n", loading.ToArray());
         }
 
-
         public static void LoadTNHTemplates(TNH_CharacterDatabase CharDatabase)
         {
             TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
@@ -310,8 +305,6 @@ namespace TNHFramework
             InitSosigs(LoadedTemplateManager.CustomSosigs);
         }
 
-
-
         public static void CreateTNHFiles(string path)
         {
             // Create files relevant for character creation
@@ -327,8 +320,6 @@ namespace TNHFramework
             TNHFrameworkUtils.CreateGeneratedTables(path);
             TNHFrameworkUtils.CreatePopulatedCharacterTemplate(path);
         }
-
-
 
         /// <summary>
         /// Loads all default sosigs into the template manager
@@ -405,7 +396,6 @@ namespace TNHFramework
                 }
             }
         }
-
 
         public static void RefreshTNHUI(TNH_UIManager instance, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase)
         {

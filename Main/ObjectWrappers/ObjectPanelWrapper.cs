@@ -133,7 +133,6 @@ namespace TNHFramework
             priceText_2.text = "x" + PurchaseCost;
         }
 
-
         private Text AddPriceText(Transform iconTransform, Vector3 localPosition)
         {
             GameObject canvas = new GameObject("PriceCanvas");
@@ -172,7 +171,6 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -182,7 +180,6 @@ namespace TNHFramework
                 {
                     FirearmUtils.SpawnDuplicateMagazine(original.M, detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
-
                 else
                 {
                     FirearmUtils.SpawnDuplicateSpeedloader(original.M, detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
@@ -199,7 +196,6 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -219,7 +215,6 @@ namespace TNHFramework
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -231,7 +226,6 @@ namespace TNHFramework
                 UpdateIcons();
             }
         }
-
 
         private void Update()
         {
@@ -347,7 +341,8 @@ namespace TNHFramework
                         }
 
                         // If at this point we have a valid ammo container and firearm, we can stop looping
-                        if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
+                        if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null))
+                            break;
                     }
                 }
             }
@@ -366,13 +361,15 @@ namespace TNHFramework
             if (detectedMag != null || detectedSpeedLoader != null)
             {
                 DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                if (numTokens >= DupeCost) numTokensSelected = DupeCost;
+                if (numTokens >= DupeCost)
+                    numTokensSelected = DupeCost;
             }
 
             if (purchaseMag != null)
             {
                 PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                if (numTokens >= PurchaseCost) numTokensSelected = PurchaseCost;
+                if (numTokens >= PurchaseCost)
+                    numTokensSelected = PurchaseCost;
             }
 
             if (detectedMag != null)
@@ -381,7 +378,8 @@ namespace TNHFramework
                 if (upgradeMag != null)
                 {
                     UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                    if (numTokens >= UpgradeCost) numTokensSelected = UpgradeCost;
+                    if (numTokens >= UpgradeCost)
+                        numTokensSelected = UpgradeCost;
                 }
             }
 
@@ -417,8 +415,6 @@ namespace TNHFramework
             }
         }
     }
-
-
 
 
     public class AmmoPurchasePanel : MonoBehaviour
@@ -491,7 +487,6 @@ namespace TNHFramework
             button_0.onClick.AddListener(() => { PurchaseAmmoButton(); });
         }
 
-
         public void PurchaseAmmoButton()
         {
             if (detectedFirearm == null || original.M.GetNumTokens() < PanelCost)
@@ -499,7 +494,6 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -512,7 +506,8 @@ namespace TNHFramework
 
                 CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
                 MagazineBlacklistEntry blacklistEntry = null;
-                if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
+                if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID))
+                    blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
 
                 FVRObject compatibleRound = FirearmUtils.GetCompatibleRounds(detectedFirearm.ObjectWrapper, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry).GetRandom();
 
@@ -639,7 +634,8 @@ namespace TNHFramework
             if (detectedFirearm != null)
             {
                 PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+                if (numTokens >= PanelCost)
+                    numTokensSelected = PanelCost;
             }
 
             //PurchaseIcon.UpdateIconDisplay();
@@ -753,7 +749,6 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
-
             else
             {
                 //Debug.Log("Adding full auto!");
@@ -765,13 +760,11 @@ namespace TNHFramework
                     AddFullAutoToHandgun(detectedHandgun);
                     ClearSelection();
                 }
-
                 else if (detectedClosedBolt != null)
                 {
                     AddFullAutoToClosedBolt(detectedClosedBolt);
                     ClearSelection();
                 }
-
                 else if (detectedOpenBolt != null)
                 {
                     AddFullAutoToOpenBolt(detectedOpenBolt);
@@ -813,6 +806,7 @@ namespace TNHFramework
                 {
                     fullAuto
                 };
+
                 gun.FireSelectorModes = modes.ToArray();
 
                 //Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
@@ -832,7 +826,6 @@ namespace TNHFramework
                     gun.FireSelectorInterpStyle = gun.Safety_Interp;
                     gun.FireSelector = gun.Safety;
                 }
-
                 else if (gun.FireSelector == null)
                 {
                     //Debug.Log("Creating dummy game object for fire selector");
@@ -849,7 +842,6 @@ namespace TNHFramework
                 gun.HasSafety = false;
             }
         }
-
 
         private void AddFullAutoToClosedBolt(ClosedBoltWeapon gun)
         {
@@ -1033,7 +1025,8 @@ namespace TNHFramework
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
             {
                 PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+                if (numTokens >= PanelCost)
+                    numTokensSelected = PanelCost;
             }
 
             //PurchaseIcon.UpdateIconDisplay();
@@ -1160,7 +1153,6 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -1178,7 +1170,6 @@ namespace TNHFramework
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
-
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
@@ -1199,7 +1190,6 @@ namespace TNHFramework
                 detectedHandgun.Slide.Speed_Forward *= fireRateMultiplier;
                 return;
             }
-
             else if (detectedClosedBolt != null)
             {
                 detectedClosedBolt.Bolt.SpringStiffness *= fireRateMultiplier;
@@ -1207,7 +1197,6 @@ namespace TNHFramework
                 detectedClosedBolt.Bolt.Speed_Rearward *= fireRateMultiplier;
                 return;
             }
-
             else
             {
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= fireRateMultiplier;
@@ -1215,8 +1204,6 @@ namespace TNHFramework
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= fireRateMultiplier;
                 return;
             }
-
-
         }
 
         public void DecreaseFireRate()
@@ -1228,7 +1215,6 @@ namespace TNHFramework
                 detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
                 return;
             }
-
             else if (detectedClosedBolt != null)
             {
                 detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
@@ -1236,7 +1222,6 @@ namespace TNHFramework
                 detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
                 return;
             }
-
             else
             {
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= (1f / fireRateMultiplier);
@@ -1245,7 +1230,6 @@ namespace TNHFramework
                 return;
             }
         }
-
 
         private void Update()
         {
@@ -1367,7 +1351,8 @@ namespace TNHFramework
             {
                 PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
                 MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                if (numTokens >= PanelCost) numTokensSelected = PanelCost;
+                if (numTokens >= PanelCost)
+                    numTokensSelected = PanelCost;
             }
 
             //PlusIcon.UpdateIconDisplay();

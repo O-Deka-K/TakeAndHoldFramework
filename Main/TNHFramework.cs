@@ -72,12 +72,16 @@ namespace TNHFramework
             LoadPanelSprites();
 
             var harmony = new Harmony("h3vr.tnhframework");
-            harmony.PatchAll(typeof(TNHFramework));
-            harmony.PatchAll(typeof(TNHPatches));
-            harmony.PatchAll(typeof(PatrolPatches));
-            harmony.PatchAll(typeof(HoldPatches));
+            harmony.PatchAll(typeof(ConstructorPatches));
             harmony.PatchAll(typeof(HighScorePatches));
-            
+            harmony.PatchAll(typeof(HoldPatches));
+            harmony.PatchAll(typeof(MiscPatches));
+            harmony.PatchAll(typeof(PatrolPatches));
+            harmony.PatchAll(typeof(SosigPatches));
+            harmony.PatchAll(typeof(SupplyPatches));
+            harmony.PatchAll(typeof(TNHManagerPatches));
+            harmony.PatchAll(typeof(UIManagerPatches));
+
             if (EnableDebugText.Value)
                 harmony.PatchAll(typeof(DebugPatches));
         }
@@ -95,8 +99,6 @@ namespace TNHFramework
         {
             yield break;
         }
-
-
 
         /// <summary>
         /// Loads the sprites used in secondary panels in TNH
@@ -196,14 +198,11 @@ namespace TNHFramework
                                     false,
                                     "If true, some text will appear in TNH maps showing additional info");
 
-            
-
             TNHFrameworkLogger.AllowLogging = allowLog.Value;
             TNHFrameworkLogger.LogCharacter = printCharacters.Value;
             TNHFrameworkLogger.LogTNH = logTNH.Value;
             TNHFrameworkLogger.LogFile = logFileReads.Value;
         }
-
 
         /// <summary>
         /// Creates the main TNH Tweaker file folder
@@ -217,28 +216,8 @@ namespace TNHFramework
                 Directory.CreateDirectory(OutputFilePath);
             }
         }
-
-
-
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
-        [HarmonyPrefix]
-        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
-        {
-            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
-
-            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
-
-            ___m_hasCurrentScore = true;
-            ___m_currentScore = score;
-
-            // Draw local scores
-            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
-
-            GM.Omni.SaveToFile();
-
-            return false;
-        }
     }
+
 
     public class TNHTweakerDeli : DeliBehaviour
     {

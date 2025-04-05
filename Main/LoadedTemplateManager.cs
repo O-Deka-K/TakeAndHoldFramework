@@ -68,7 +68,6 @@ namespace TNHFramework
             TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
-
         public static void AddSosigTemplate(SosigEnemyTemplate realTemplate)
         {
             SosigTemplate template = new(realTemplate);
@@ -90,7 +89,6 @@ namespace TNHFramework
 
             TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
-
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
@@ -143,7 +141,6 @@ namespace TNHFramework
                 LoadedLegacyVaultFiles.Add(template.FileName, template);
             }
         }
-
     }
 
 

@@ -5,7 +5,6 @@ namespace TNHFramework.Utilities
 {  
     public static class Extensions
     {
-
         public static T GetRandom<T>(this List<T> list)
         {
             if (list.Count < 1)
@@ -21,8 +20,10 @@ namespace TNHFramework.Utilities
         {
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i] == null) return true;
+                if (list[i] == null)
+                    return true;
             }
+            
             return false;
         }
         
@@ -34,10 +35,12 @@ namespace TNHFramework.Utilities
         public static Bounds GetMaxBounds(this GameObject g)
         {
             var b = new Bounds(g.transform.position, Vector3.zero);
+
             foreach (Renderer r in g.GetComponentsInChildren<Renderer>())
             {
                 b.Encapsulate(r.bounds);
             }
+
             return b;
         }
     }

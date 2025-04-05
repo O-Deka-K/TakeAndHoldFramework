@@ -11,7 +11,6 @@ namespace TNHFramework.Utilities
         public static bool LogFile = false;
         public static bool LogTNH = false;
 
-
         public enum LogType
         {
             General,
@@ -55,14 +54,12 @@ namespace TNHFramework.Utilities
         public static void LogWarning(string log)
         {
             log = "TNHFramework -- " + log;
-
             BepLog.LogWarning(log);
         }
 
         public static void LogError(string log)
         {
             log = "TNHFramework -- " + log;
-
             BepLog.LogError(log);
         }
 

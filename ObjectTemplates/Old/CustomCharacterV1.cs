@@ -309,12 +309,14 @@ namespace TNHFramework.ObjectTemplates.V1
         {
             foreach (Level level in Levels)
             {
-                if (level.LevelUsesSosig(id)) return true;
+                if (level.LevelUsesSosig(id))
+                    return true;
             }
 
             foreach (Level level in LevelsEndless)
             {
-                if (level.LevelUsesSosig(id)) return true;
+                if (level.LevelUsesSosig(id))
+                    return true;
             }
 
             return false;
@@ -525,7 +527,9 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!BackupGroup.DelayedInit())
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null)
+                            TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        
                         BackupGroup = null;
                     }
                 }
@@ -543,7 +547,6 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
             }
-
             else if (BackupGroup != null)
             {
                 return BackupGroup.GetSpawnedEquipmentGroups();
@@ -764,7 +767,6 @@ namespace TNHFramework.ObjectTemplates.V1
                 result.Add(this);
                 return result;
             }
-
             else if (ForceSpawnAllSubPools)
             {
                 result = new List<EquipmentGroup>();
@@ -781,7 +783,6 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 return result;
             }
-
             else
             {
                 float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
@@ -891,7 +892,6 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 output += prefix + "Compatible Magazine";
             }
-
             else
             {
                 foreach (string item in objects)
@@ -935,7 +935,6 @@ namespace TNHFramework.ObjectTemplates.V1
                 loadout.TableDefs = new List<ObjectTableDef>();
                 loadout.ListOverride = new List<FVRObject>();
             }
-
             else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
             {
                 PrimaryGroup = new EquipmentGroup();
@@ -948,7 +947,6 @@ namespace TNHFramework.ObjectTemplates.V1
                 PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
                 PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
             }
-
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
                 // If we have just one pool, then the primary pool becomes that pool
@@ -960,7 +958,6 @@ namespace TNHFramework.ObjectTemplates.V1
                     PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
                     PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
                 }
-
                 else
                 {
                     PrimaryGroup = new EquipmentGroup();
@@ -1025,7 +1022,9 @@ namespace TNHFramework.ObjectTemplates.V1
                 {
                     if (!BackupGroup.DelayedInit())
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null)
+                            TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        
                         BackupGroup = null;
                     }
                 }
@@ -1195,7 +1194,6 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 return true;
             }
-
             else if (SupplyChallenge.EnemyType == id)
             {
                 return true;

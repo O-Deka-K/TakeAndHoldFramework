@@ -6,7 +6,6 @@ namespace TNHFramework.Patches
 {
     public static class HighScorePatches
     {
-
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
         public static bool StartOfGamePatch(TNH_Manager __instance, bool ___m_hasInit)
@@ -19,15 +18,13 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "InitPlayerPosition")]
         [HarmonyPrefix]
-        public static bool TrackPlayerSpawnPatch(TNH_Manager __instance)
+        public static bool TrackPlayerSpawnPatch()
         {
             TNHFrameworkLogger.Log("Spawned Player", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "HoldPointCompleted")]
         [HarmonyPrefix]
@@ -37,7 +34,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "SetLevel")]
         [HarmonyPrefix]
         public static bool TrackNextLevel()
@@ -45,7 +41,6 @@ namespace TNHFramework.Patches
             TNHFrameworkLogger.Log("Set Level", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")]
         [HarmonyPrefix]
@@ -55,7 +50,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")]
         [HarmonyPrefix]
         public static bool TrackVictory()
@@ -64,24 +58,21 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_HoldPoint), "BeginHoldChallenge")]
         [HarmonyPrefix]
-        public static bool TrackHoldStart(TNH_HoldPoint __instance)
+        public static bool TrackHoldStart()
         {
             TNHFrameworkLogger.Log("Hold Start", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_GunRecycler), "Button_Recycler")]
         [HarmonyPrefix]
-        public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
+        public static bool TrackRecyclePatch()
         {
             TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "TestVisited")]
         [HarmonyPrefix]
@@ -107,7 +98,7 @@ namespace TNHFramework.Patches
             __result = flag;
             return false;
         }
-        
+
 
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "UpdateHighScoreCallbacks")]
         [HarmonyPrefix]
@@ -117,6 +108,25 @@ namespace TNHFramework.Patches
             // Local scores still work
             ___m_doRequestScoresTop = false;
             ___m_doRequestScoresPlayer = false;
+
+            return false;
+        }
+
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
+        [HarmonyPrefix]
+        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
+        {
+            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
+
+            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
+
+            ___m_hasCurrentScore = true;
+            ___m_currentScore = score;
+
+            // Draw local scores
+            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
+
+            GM.Omni.SaveToFile();
 
             return false;
         }

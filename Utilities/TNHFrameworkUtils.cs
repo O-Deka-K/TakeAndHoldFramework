@@ -66,7 +66,6 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -98,7 +97,6 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -126,7 +124,6 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -184,17 +181,14 @@ namespace TNHFramework.Utilities
             return icons;
         }
 
-
         public static string CleanFilename(string filename)
         {
             // Remove illegal characters
             return Regex.Replace(filename, @"(<|>|:|""|/|\\|\||\?|\*)", "");
         }
 
-
         public static void CreateCharacterFiles(List<CustomCharacter> characters, string path, bool isCustom)
         {
-
             try
             {
                 TNHFrameworkLogger.Log("Creating " + (isCustom ? "custom" : "default") + " character template files", TNHFrameworkLogger.LogType.File);
@@ -211,9 +205,7 @@ namespace TNHFramework.Utilities
                     string jsonPath = path + "/" + CleanFilename(charDef.DisplayName + ".json");
 
                     if (File.Exists(jsonPath))
-                    {
                         File.Delete(jsonPath);
-                    }
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(jsonPath))
@@ -226,9 +218,7 @@ namespace TNHFramework.Utilities
                     string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
 
                     if (File.Exists(yamlPath))
-                    {
                         File.Delete(yamlPath);
-                    }
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(yamlPath))
@@ -247,7 +237,6 @@ namespace TNHFramework.Utilities
                     }
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -264,9 +253,7 @@ namespace TNHFramework.Utilities
                 path += "/PopulatedCharacterTemplate.json";
 
                 if (!File.Exists(path))
-                {
                     File.Delete(path);
-                }
 
                 using (StreamWriter sw = File.CreateText(path))
                 {
@@ -276,13 +263,11 @@ namespace TNHFramework.Utilities
                     sw.Close();
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
-
 
         public static void CreateSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
         {
@@ -293,18 +278,14 @@ namespace TNHFramework.Utilities
                 path += "/DefaultSosigTemplates";
 
                 if (!Directory.Exists(path))
-                {
                     Directory.CreateDirectory(path);
-                }
 
                 foreach (SosigEnemyTemplate template in sosigs)
                 {
                     string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
 
                     if (File.Exists(jsonPath))
-                    {
                         File.Delete(jsonPath);
-                    }
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(jsonPath))
@@ -318,30 +299,28 @@ namespace TNHFramework.Utilities
                     string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
 
                     if (File.Exists(yamlPath))
-                    {
                         File.Delete(yamlPath);
-                    }
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(yamlPath))
                     {
                         var serializerBuilder = new SerializerBuilder();
-
                         serializerBuilder.WithIndentedSequences();
+
                         foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
                             serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
+
                         var serializer = serializerBuilder.Build();
                         SosigTemplate sosig = new(template);
                         string sosigString = serializer.Serialize(sosig);
+
                         sw.WriteLine(sosigString);
                         sw.Close();
                     }
                 }
-
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -357,19 +336,16 @@ namespace TNHFramework.Utilities
                 path += "/CustomSosigTemplates";
 
                 if (!Directory.Exists(path))
-                {
                     Directory.CreateDirectory(path);
-                }
+
                 foreach (SosigTemplate template in sosigs)
                 {
                     string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
 
                     if (File.Exists(jsonPath))
-                    {
                         File.Delete(jsonPath);
-                    }
 
-                    // Create a new file     
+                    // Create a new file
                     using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string sosigString = JsonConvert.SerializeObject(template, Formatting.Indented, new StringEnumConverter());
@@ -380,29 +356,27 @@ namespace TNHFramework.Utilities
                     string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
 
                     if (File.Exists(yamlPath))
-                    {
                         File.Delete(yamlPath);
-                    }
 
-                    // Create a new file     
+                    // Create a new file
                     using (StreamWriter sw = File.CreateText(yamlPath))
                     {
                         var serializerBuilder = new SerializerBuilder();
-
                         serializerBuilder.WithIndentedSequences();
+
                         foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
                         {
                             serializerBuilder.WithTagMapping(thing.Key, thing.Value);
                         }
+
                         var serializer = serializerBuilder.Build();
                         string sosigString = serializer.Serialize(template);
+
                         sw.WriteLine(sosigString);
                         sw.Close();
                     }
                 }
-
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
@@ -413,12 +387,10 @@ namespace TNHFramework.Utilities
         {
             try
             {
-                path = path + "/VaultFiles";
+                path += "/VaultFiles";
 
                 if (!Directory.Exists(path))
-                {
                     Directory.CreateDirectory(path);
-                }
 
                 string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
                 List<SavedGunSerializable> savedGuns = [];
@@ -426,14 +398,11 @@ namespace TNHFramework.Utilities
                 {
                     try
                     {
-                        if (name.Contains("DONTREMOVETHISPARTOFFILENAMEV02a"))
+                        if (name.Contains("DONTREMOVETHISPARTOFFILENAMEV02a") && ES2.Exists(name))
                         {
-                            if (ES2.Exists(name))
+                            using (ES2Reader reader = ES2Reader.Create(name))
                             {
-                                using (ES2Reader reader = ES2Reader.Create(name))
-                                {
-                                    savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
-                                }
+                                savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
                             }
                         }
                     }
@@ -446,10 +415,9 @@ namespace TNHFramework.Utilities
                 foreach (SavedGunSerializable savedGun in savedGuns)
                 {
                     string jsonPath = path + "/" + CleanFilename(savedGun.FileName + ".json");
+
                     if (File.Exists(jsonPath))
-                    {
                         File.Delete(jsonPath);
-                    }
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(jsonPath))
@@ -478,21 +446,17 @@ namespace TNHFramework.Utilities
                     {
                         File.Copy(Path.Combine(vaultPath, filename), Path.Combine(path, filename), true);
                     }
-
                     catch (Exception ex)
                     {
                         TNHFrameworkLogger.LogError($"Vault File {filename} could not be copied: {ex}");
                     }
                 }
             }
-
             catch (Exception ex)
             {
                 TNHFrameworkLogger.LogError(ex.ToString());
             }
         }
-
-
 
         public static void CreateGeneratedTables(string path)
         {
@@ -501,9 +465,7 @@ namespace TNHFramework.Utilities
                 path += "/GeneratedEquipmentPools";
 
                 if (!Directory.Exists(path))
-                {
                     Directory.CreateDirectory(path);
-                }
 
                 var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
                 foreach (CustomCharacter character in characters)
@@ -564,13 +526,11 @@ namespace TNHFramework.Utilities
                     }
                 }
             }
-
             catch
             {
                 //Debug.LogError(ex.ToString());
             }
         }
-
 
         public static bool VaultFileComponentsLoaded(VaultFile template)
         {
@@ -612,7 +572,6 @@ namespace TNHFramework.Utilities
                                 group.IDOverride.RemoveAt(i);
                             }
                         }
-
                         // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
@@ -621,7 +580,6 @@ namespace TNHFramework.Utilities
                                 group.IDOverride.RemoveAt(i);
                             }
                         }
-
                         // If this is not a vaulted gun, remove it
                         else
                         {
@@ -651,7 +609,6 @@ namespace TNHFramework.Utilities
                                 group.IDOverride.RemoveAt(i);
                             }
                         }
-
                         // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
@@ -660,7 +617,6 @@ namespace TNHFramework.Utilities
                                 group.IDOverride.RemoveAt(i);
                             }
                         }
-
                         // If this is not a vaulted gun, remove it
                         else
                         {
@@ -671,7 +627,6 @@ namespace TNHFramework.Utilities
                 }
             }
         }
-
 
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
@@ -687,7 +642,9 @@ namespace TNHFramework.Utilities
                         config.Headwear.RemoveAt(i);
                     }
                 }
-                if (config.Headwear.Count == 0) config.Chance_Headwear = 0;
+
+                if (config.Headwear.Count == 0)
+                    config.Chance_Headwear = 0;
 
                 for (int i = config.Facewear.Count - 1; i >= 0 ; i--)
                 {
@@ -697,7 +654,9 @@ namespace TNHFramework.Utilities
                         config.Facewear.RemoveAt(i);
                     }
                 }
-                if (config.Facewear.Count == 0) config.Chance_Facewear = 0;
+                
+                if (config.Facewear.Count == 0)
+                    config.Chance_Facewear = 0;
 
                 for (int i = config.Eyewear.Count - 1; i >= 0 ; i--)
                 {
@@ -707,7 +666,9 @@ namespace TNHFramework.Utilities
                         config.Eyewear.RemoveAt(i);
                     }
                 }
-                if (config.Eyewear.Count == 0) config.Chance_Eyewear = 0;
+                
+                if (config.Eyewear.Count == 0)
+                    config.Chance_Eyewear = 0;
 
                 for (int i = config.Torsowear.Count - 1; i >= 0; i--)
                 {
@@ -717,7 +678,9 @@ namespace TNHFramework.Utilities
                         config.Torsowear.RemoveAt(i);
                     }
                 }
-                if (config.Torsowear.Count == 0) config.Chance_Torsowear = 0;
+                
+                if (config.Torsowear.Count == 0)
+                    config.Chance_Torsowear = 0;
 
                 for (int i = config.Pantswear.Count - 1; i >= 0; i--)
                 {
@@ -727,7 +690,9 @@ namespace TNHFramework.Utilities
                         config.Pantswear.RemoveAt(i);
                     }
                 }
-                if (config.Pantswear.Count == 0) config.Chance_Pantswear = 0;
+                
+                if (config.Pantswear.Count == 0)
+                    config.Chance_Pantswear = 0;
 
                 for (int i = config.Pantswear_Lower.Count - 1; i >= 0; i--)
                 {
@@ -737,7 +702,9 @@ namespace TNHFramework.Utilities
                         config.Pantswear_Lower.RemoveAt(i);
                     }
                 }
-                if (config.Pantswear_Lower.Count == 0) config.Chance_Pantswear_Lower = 0;
+                
+                if (config.Pantswear_Lower.Count == 0)
+                    config.Chance_Pantswear_Lower = 0;
 
                 for (int i = config.Backpacks.Count - 1; i >= 0; i--)
                 {
@@ -747,11 +714,12 @@ namespace TNHFramework.Utilities
                         config.Backpacks.RemoveAt(i);
                     }
                 }
-                if (config.Backpacks.Count == 0) config.Chance_Backpacks = 0;
+                
+                if (config.Backpacks.Count == 0)
+                    config.Chance_Backpacks = 0;
             }
 
         }
-
 
         /// <summary>
         /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
@@ -762,12 +730,14 @@ namespace TNHFramework.Utilities
         public static Sprite LoadSprite(FileInfo file)
         {
             Texture2D spriteTexture = LoadTexture(file);
-            if (spriteTexture == null) return null;
+
+            if (spriteTexture == null)
+                return null;
+            
             Sprite sprite = Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), 100f);
             sprite.name = file.Name;
             return sprite;
         }
-
 
         /// <summary>
         /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
@@ -778,20 +748,19 @@ namespace TNHFramework.Utilities
         public static Sprite LoadSprite(IFileHandle file)
         {
             Texture2D spriteTexture = LoadTexture(file);
-            if (spriteTexture == null) return null;
+            
+            if (spriteTexture == null)
+                return null;
+            
             Sprite sprite = Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), 100f);
             sprite.name = file.Name;
             return sprite;
         }
 
-
-
         public static Sprite LoadSprite(Texture2D spriteTexture, float pixelsPerUnit = 100f)
         {
             return Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
         }
-
-
 
         /// <summary>
         /// Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
@@ -802,7 +771,6 @@ namespace TNHFramework.Utilities
         {
             // Load a PNG or JPG file from disk to a Texture2D
             // Returns null if load fails
-
             Stream fileStream = file.OpenRead();
             MemoryStream mem = new();
 
@@ -811,7 +779,8 @@ namespace TNHFramework.Utilities
             byte[] fileData = mem.ToArray();
 
             Texture2D tex2D = new(2, 2);
-            if (tex2D.LoadImage(fileData)) return tex2D;
+            if (tex2D.LoadImage(fileData))
+                return tex2D;
 
             return null;
         }
@@ -827,7 +796,6 @@ namespace TNHFramework.Utilities
         {
             // Load a PNG or JPG file from disk to a Texture2D
             // Returns null if load fails
-
             Stream fileStream = file.OpenRead();
             MemoryStream mem = new();
 
@@ -836,12 +804,11 @@ namespace TNHFramework.Utilities
             byte[] fileData = mem.ToArray();
 
             Texture2D tex2D = new(2, 2);          
-            if (tex2D.LoadImage(fileData)) return tex2D;
+            if (tex2D.LoadImage(fileData))
+                return tex2D;
 
             return null;                     
         }
-
-
 
         /// <summary>
         /// Copies the input stream into the output stream. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
@@ -852,11 +819,12 @@ namespace TNHFramework.Utilities
         {
             byte[] b = new byte[32768];
             int r;
+
             while ((r = input.Read(b, 0, b.Length)) > 0)
+            {
                 output.Write(b, 0, r);
+            }
         }
-
-
 
         public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
         {
@@ -884,6 +852,7 @@ namespace TNHFramework.Utilities
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
+
                 if (gun.Components[j].isFirearm)
                 {
                     myGun = gameObject.GetComponent<FVRFireArm>();
@@ -897,6 +866,7 @@ namespace TNHFramework.Utilities
                 {
                     myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
                     validIndexes.Add(j);
+                    
                     if (myMagazine != null)
                     {
                         gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
@@ -912,6 +882,7 @@ namespace TNHFramework.Utilities
                 else
                 {
                     toMoveToTrays.Add(gameObject);
+                    
                     if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
                     {
                         Speedloader component = gameObject.GetComponent<Speedloader>();
@@ -923,20 +894,26 @@ namespace TNHFramework.Utilities
                         component2.ReloadClipWithList(gun.LoadedRoundsInMag);
                     }
                 }
+               
                 gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
             }
+            
             if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
             {
                 myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
                 myGun.Magazine.IsInfinite = false;
             }
+            
             int BreakIterator = 200;
+            
             while (toDealWith.Count > 0 && BreakIterator > 0)
             {
                 BreakIterator--;
+                
                 for (int k = toDealWith.Count - 1; k >= 0; k--)
                 {
                     SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
+                    
                     if (validIndexes.Contains(savedGunComponent.ObjectAttachedTo))
                     {
                         GameObject gameObject2 = toDealWith[k];
@@ -944,33 +921,41 @@ namespace TNHFramework.Utilities
                         FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
                         gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
                         gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
+                        
                         if (component3.CanScaleToMount && mount.CanThisRescale())
                         {
                             component3.ScaleToMount(mount);
                         }
+                        
                         component3.AttachToMount(mount, false);
+                        
                         if (component3 is Suppressor)
                         {
                             (component3 as Suppressor).AutoMountWell();
                         }
+                        
                         validIndexes.Add(savedGunComponent.Index);
                         toDealWith.RemoveAt(k);
                     }
                 }
             }
+            
             int trayIndex = 0;
             int itemIndex = 0;
+           
             for (int l = 0; l < toMoveToTrays.Count; l++)
             {
                 toMoveToTrays[l].transform.position = position + (float)itemIndex * 0.1f * Vector3.up;
                 toMoveToTrays[l].transform.rotation = rotation;
                 itemIndex++;
                 trayIndex++;
+                
                 if (trayIndex > 2)
                 {
                     trayIndex = 0;
                 }
             }
+            
             myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
             myGun.transform.rotation = rotation;
             yield break;
@@ -1041,9 +1026,248 @@ namespace TNHFramework.Utilities
 
                         // Finally spawn the item and call the callback if it's not null
                         GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+
                         // This is added to the tracked object list after we return
-                        if (callback != null) callback.Invoke(spawnedObject);
+                        if (callback != null)
+                            callback.Invoke(spawnedObject);
                         yield return null;
+                    }
+                }
+            }
+        }
+
+        // This is pretty much a manual process of tagging mods that are incorrectly tagged or missing tags
+        public static void FixModAttachmentTags()
+        {
+            List<FVRObject> attachments = new(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Attachment]);
+            Regex regexSup = new(@"^Sup(SLX|SRD|TI|AA|DD|DeadAir|Gemtech|HUXWRX|KAC|Surefire|Hexagon|Silencer)");
+            Regex regexMWORus = new(@"^DotRusSight(NPZPK1|SurplusOKP7D|AxionKobraEKPD)");
+            Regex regexMWOMicroMount = new(@"^Dot(Geissele|Micro)(GBRS|Leap|Mounts|Offset|Shim|Short|SIGShort|SIGTall|Tall|Unity)");
+            Regex regexMWOMicroSight = new(@"^DotMicro(Aimpoint|Holosun|SIGRomeo|Vortex)");
+
+            foreach (FVRObject attachment in attachments)
+            {
+                if (attachment == null)
+                    continue;
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.None || attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.None)
+                {
+                    // Meats ModulShotguns chokes
+                    if (attachment.ItemID.StartsWith("AttSuppChoke") || attachment.ItemID.StartsWith("Choke"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulShotguns barrels
+                    else if (attachment.ItemID.ToLower().StartsWith("attsuppbar") || attachment.ItemID.StartsWith("AttSuppressorBarrel"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.OSple = false;
+                    }
+                    // Meats ModulAK suppressors
+                    else if (attachment.ItemID.StartsWith("AttSuppressor"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("AR15Muzzle") || attachment.ItemID == "AttSuppCookie")
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR suppressors
+                    else if (attachment.ItemID.StartsWith("AR15Sup") || attachment.ItemID.StartsWith("AttSupp"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR iron sights
+                    else if (attachment.ItemID.Contains("IronSight") && (attachment.ItemID.Contains("Front") || attachment.ItemID.Contains("Rear")))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulAR handle sights
+                    else if (attachment.ItemID.StartsWith("IronSightGooseneck") || attachment.ItemID.EndsWith("HandleSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulAero muzzle brakes
+                    else if (attachment.ItemID.StartsWith("Aero_Muzzle"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MCXMB") || attachment.ItemID.StartsWith("MuzzleMPX"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG suppressors
+                    else if (attachment.ItemID.StartsWith("MCXSRD") || attachment.ItemID.StartsWith("MCXSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2 muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzleBrake_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2/ModulShotguns suppressors
+                    else if (regexSup.IsMatch(attachment.ItemID))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCXSpear scopes
+                    else if (attachment.ItemID.StartsWith("Scope_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulSIG/ModulMCX2/ModulSCAR iron sights
+                    else if ((attachment.ItemID.StartsWith("MCX") || attachment.ItemID.StartsWith("SIG") || attachment.ItemID.StartsWith("SCAR")) && attachment.ItemID.Contains("Sight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulSCAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzSCAR"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSCAR underbarrel grenade launchers
+                    else if (attachment.ItemID.StartsWith("EGLM"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.ProjectileWeapon;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats NGSW suppressors
+                    else if (attachment.ItemID.StartsWith("NGSWSpearSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModernWarfighterOptics magnifiers
+                    else if (attachment.ItemID.StartsWith("DotPicSight") && attachment.name.Contains("Magnifier"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics red dot
+                    else if (attachment.ItemID.StartsWith("DotPicSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Russian
+                    else if (attachment.ItemID.StartsWith("DotRusSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+
+                        // Only some of the Russian-made sights use the Russian mount; the rest are Picatinny
+                        if (regexMWORus.IsMatch(attachment.ItemID))
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Russian;
+                        else
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO mounts
+                    else if (attachment.ItemID.StartsWith("DotACROMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO sights
+                    else if (attachment.ItemID.StartsWith("DotACROSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics Micro mounts
+                    else if (regexMWOMicroMount.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Micro sights
+                    else if (regexMWOMicroSight.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics MRD mounts
+                    else if (attachment.ItemID.StartsWith("DotMRDMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics MRD sights
+                    else if (attachment.ItemID.StartsWith("DotMRDSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                }
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Magnification && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE ModernWarfighterRemake Optics
+                    if (attachment.ItemID.StartsWith("FSCE") && (attachment.name.Contains("30mm Mount") || attachment.name.Contains("Adapter")))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                }
+                else if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Adapter && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE 30mm mounts
+                    if (attachment.ItemID.StartsWith("FSCE.LPVO") || attachment.name.Contains("30mm Mount"))
+                    {
+                        attachment.OSple = false;
                     }
                 }
             }

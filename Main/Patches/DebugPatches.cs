@@ -47,19 +47,19 @@ namespace TNHFramework
 
 
         /*
-        [HarmonyPatch(typeof(ObjectTable))]
-        [HarmonyPatch("Initialize")]
-        [HarmonyPatch(new Type[] { typeof(ObjectTableDef), typeof(FVRObject.ObjectCategory), typeof(List<FVRObject.OTagEra>), typeof(List<FVRObject.OTagSet>), typeof(List<FVRObject.OTagFirearmSize>), typeof(List<FVRObject.OTagFirearmAction>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFeedOption>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagFirearmRoundPower>), typeof(List<FVRObject.OTagAttachmentFeature>), typeof(List<FVRObject.OTagMeleeStyle>), typeof(List<FVRObject.OTagMeleeHandedness>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagPowerupType>), typeof(List<FVRObject.OTagThrownType>), typeof(List<FVRObject.OTagThrownDamageType>), typeof(int), typeof(int), typeof(int), typeof(bool)})]
+        [HarmonyPatch(typeof(ObjectTable), "Initialize", [typeof(ObjectTableDef), typeof(FVRObject.ObjectCategory), typeof(List<FVRObject.OTagEra>), typeof(List<FVRObject.OTagSet>), typeof(List<FVRObject.OTagFirearmSize>), typeof(List<FVRObject.OTagFirearmAction>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFiringMode>), typeof(List<FVRObject.OTagFirearmFeedOption>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagFirearmRoundPower>), typeof(List<FVRObject.OTagAttachmentFeature>), typeof(List<FVRObject.OTagMeleeStyle>), typeof(List<FVRObject.OTagMeleeHandedness>), typeof(List<FVRObject.OTagFirearmMount>), typeof(List<FVRObject.OTagPowerupType>), typeof(List<FVRObject.OTagThrownType>), typeof(List<FVRObject.OTagThrownDamageType>), typeof(int), typeof(int), typeof(int), typeof(bool)])]
         [HarmonyPrefix]
         public static bool Initialize(ObjectTable __instance, ObjectTableDef Def, FVRObject.ObjectCategory category, List<FVRObject.OTagEra> eras, List<FVRObject.OTagSet> sets, List<FVRObject.OTagFirearmSize> sizes, List<FVRObject.OTagFirearmAction> actions, List<FVRObject.OTagFirearmFiringMode> modes, List<FVRObject.OTagFirearmFiringMode> excludeModes, List<FVRObject.OTagFirearmFeedOption> feedoptions, List<FVRObject.OTagFirearmMount> mountsavailable, List<FVRObject.OTagFirearmRoundPower> roundPowers, List<FVRObject.OTagAttachmentFeature> features, List<FVRObject.OTagMeleeStyle> meleeStyles, List<FVRObject.OTagMeleeHandedness> meleeHandedness, List<FVRObject.OTagFirearmMount> mounttype, List<FVRObject.OTagPowerupType> powerupTypes, List<FVRObject.OTagThrownType> thrownTypes, List<FVRObject.OTagThrownDamageType> thrownDamageTypes, int minCapacity, int maxCapacity, int requiredExactCapacity, bool isBlanked)
         {
             __instance.MinCapacity = minCapacity;
             __instance.MaxCapacity = maxCapacity;
+
             if (isBlanked)
             {
                 TNHFrameworkLogger.Log("Table is blanked, not populating!", TNHFrameworkLogger.LogType.TNH);
                 return false;
             }
+
             if (Def.UseIDListOverride)
             {
                 TNHFrameworkLogger.Log("Using IDOverride! Will only add IDs manually", TNHFrameworkLogger.LogType.TNH);
@@ -150,9 +150,11 @@ namespace TNHFramework
                             break;
                         }
                     }
+
                     if (excludeModes != null)
                     {
                         bool flag2 = false;
+
                         for (int l = 0; l < excludeModes.Count; l++)
                         {
                             if (fvrobject.TagFirearmFiringModes.Contains(excludeModes[l]))
@@ -161,6 +163,7 @@ namespace TNHFramework
                                 break;
                             }
                         }
+
                         if (flag2)
                         {
                             TNHFrameworkLogger.Log("Excluded firing modes, removing", TNHFrameworkLogger.LogType.TNH);
@@ -168,9 +171,11 @@ namespace TNHFramework
                             break;
                         }
                     }
+
                     if (feedoptions != null)
                     {
                         bool flag3 = false;
+
                         for (int m = 0; m < feedoptions.Count; m++)
                         {
                             if (!fvrobject.TagFirearmFeedOption.Contains(feedoptions[m]))
@@ -179,6 +184,7 @@ namespace TNHFramework
                                 break;
                             }
                         }
+
                         if (flag3)
                         {
                             TNHFrameworkLogger.Log("Wrong feed options, removing", TNHFrameworkLogger.LogType.TNH);
@@ -186,9 +192,11 @@ namespace TNHFramework
                             break;
                         }
                     }
+
                     if (mountsavailable != null)
                     {
                         bool flag4 = false;
+
                         for (int n = 0; n < mountsavailable.Count; n++)
                         {
                             if (!fvrobject.TagFirearmMounts.Contains(mountsavailable[n]))
@@ -197,6 +205,7 @@ namespace TNHFramework
                                 break;
                             }
                         }
+
                         if (flag4)
                         {
                             TNHFrameworkLogger.Log("Wrong mounts, removing", TNHFrameworkLogger.LogType.TNH);
@@ -204,6 +213,7 @@ namespace TNHFramework
                             break;
                         }
                     }
+
                     if (powerupTypes != null && powerupTypes.Count > 0 && !powerupTypes.Contains(fvrobject.TagPowerupType))
                     {
                         TNHFrameworkLogger.Log("Wrong powerup type, removing", TNHFrameworkLogger.LogType.TNH);
@@ -238,7 +248,6 @@ namespace TNHFramework
                         TNHFrameworkLogger.Log("Wrong features, removing", TNHFrameworkLogger.LogType.TNH);
                         __instance.Objs.RemoveAt(j);
                     }
-
                     else
                     {
                         TNHFrameworkLogger.Log("Keeping item!", TNHFrameworkLogger.LogType.TNH);

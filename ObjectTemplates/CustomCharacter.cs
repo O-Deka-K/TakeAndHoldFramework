@@ -374,12 +374,14 @@ namespace TNHFramework.ObjectTemplates
         {
             foreach (Level level in Levels)
             {
-                if (level.LevelUsesSosig(id)) return true;
+                if (level.LevelUsesSosig(id))
+                    return true;
             }
 
             foreach (Level level in LevelsEndless)
             {
-                if (level.LevelUsesSosig(id)) return true;
+                if (level.LevelUsesSosig(id))
+                    return true;
             }
 
             return false;
@@ -717,7 +719,9 @@ namespace TNHFramework.ObjectTemplates
                 {
                     if (!BackupGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null)
+                            TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        
                         BackupGroup = null;
                     }
                 }
@@ -735,7 +739,6 @@ namespace TNHFramework.ObjectTemplates
             {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
             }
-
             else if (BackupGroup != null)
             {
                 return BackupGroup.GetSpawnedEquipmentGroups();
@@ -1230,7 +1233,6 @@ namespace TNHFramework.ObjectTemplates
             {
                 output += prefix + "Compatible Magazine";
             }
-
             else
             {
                 foreach (string item in objects)
@@ -1305,7 +1307,6 @@ namespace TNHFramework.ObjectTemplates
                 loadout.TableDefs = [];
                 loadout.ListOverride = [];
             }
-
             else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
             {
                 PrimaryGroup = new EquipmentGroup
@@ -1320,7 +1321,6 @@ namespace TNHFramework.ObjectTemplates
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
             }
-
             else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
             {
                 // If we have just one pool, then the primary pool becomes that pool
@@ -1334,7 +1334,6 @@ namespace TNHFramework.ObjectTemplates
                         NumRoundsSpawned = loadout.Num_Rounds
                     };
                 }
-
                 else
                 {
                     PrimaryGroup = new EquipmentGroup
@@ -1402,7 +1401,8 @@ namespace TNHFramework.ObjectTemplates
                 {
                     if (!BackupGroup.DelayedInit(globalObjectBlacklist))
                     {
-                        if (PrimaryGroup == null) TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
+                        if (PrimaryGroup == null)
+                            TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
 
                         BackupGroup = null;
                     }
@@ -1609,7 +1609,6 @@ namespace TNHFramework.ObjectTemplates
             {
                 return true;
             }
-
             else if (SupplyChallenge.EnemyType == id)
             {
                 return true;

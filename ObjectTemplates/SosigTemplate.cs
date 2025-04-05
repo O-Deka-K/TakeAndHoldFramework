@@ -9,7 +9,6 @@ namespace TNHFramework.ObjectTemplates
 {
     public class SosigTemplate
     {
-
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
         public string SosigEnemyID;
