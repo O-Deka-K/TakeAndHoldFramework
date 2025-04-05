@@ -99,7 +99,7 @@
 
 - Fixed unlock button on constructor panel so that it unlocks that category on every constructor in the level immediately (vanilla bug).
 - Fix mod attachment tags for some known mods. This should allow some untagged attachments to appear in auto-populated equipment pools.
-- For vanilla characters, restore the default behavior where the number of supply guards is slightly randomized.
+- For vanilla characters, restore the default behavior where the number of patrol guards is slightly randomized.
 - When using the BuildCharacterFiles option, write out both .json and .yaml files.
 - Slightly improved TNHTweaker patcher so that you can always re-enable TNH Tweaker in r2modman if needed.
 - Optimized code by compiling in release mode.
