@@ -94,3 +94,11 @@
 - Fixed compatibility with Ammo Pouch mod.
 - Respect the HasPrimaryWeapon, HasSecondaryWeapon, etc. booleans. Some mod characters have an equipment pool populated, but disabled via boolean. This makes it consistent with old behavior.
 - Don't play the announcer line to advance to the next node after finishing the last hold (vanilla bug).
+
+## [0.2.2] - 2025-04-04
+
+- Fixed unlock button on constructor panel so that it unlocks that category on every constructor in the level.
+- For vanilla characters, restore the default behavior where the number of supply guards is slightly randomized.
+- When using the BuildCharacterFiles option, write out both .json and .yaml files.
+- Slightly improved TNHTweaker patcher so that you can always re-enable TNH Tweaker in r2modman if needed.
+- Optimized code by compiling in release mode.

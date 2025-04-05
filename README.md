@@ -12,7 +12,7 @@ As Devyn is no longer working on H3VR mods, this is will be the most up-to-date 
 ## I still have Take & Hold Tweaker installed, what should I do?
 Short version: Leave it installed. TNH Framework will handle everything for you.
 Long version:
-TNH Framework has a patcher included that will modify TNH Tweaker's files. While it's not the most well-made, it's functional for most people without being fiddly or liable to break. If you want to disable TNH Framework and just run TNH Tweaker, you should disable TNH Tweaker and then re-enable it again. But for most people, you can just leave it alone.
+TNH Framework has a patcher included that will modify TNH Tweaker's files. If you want to disable TNH Framework and just run TNH Tweaker, you should disable TNH Framework, and then disable TNH Tweaker and re-enable it again.
 
 ## Features
 As of right now, this mod does the following:
