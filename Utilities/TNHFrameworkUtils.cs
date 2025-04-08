@@ -4,132 +4,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
-using Valve.Newtonsoft.Json;
-using Valve.Newtonsoft.Json.Converters;
-using YamlDotNet.Serialization;
-using CustomCharacter = TNHFramework.ObjectTemplates.CustomCharacter;
 using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
-using EquipmentPool = TNHFramework.ObjectTemplates.EquipmentPool;
-using Type = System.Type;
 
 namespace TNHFramework.Utilities
 {
     static class TNHFrameworkUtils
     {
-        private static readonly MethodInfo miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly MethodInfo miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly MethodInfo miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
-
-        public static void CreateObjectIDFile(string path)
-        {
-            try
-            {
-                if (File.Exists(path + "/ObjectIDs.csv"))
-                {
-                    File.Delete(path + "/ObjectIDs.csv");
-                }
-
-                // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
-                {
-                    sw.WriteLine("DisplayName,ObjectID,Mod Content,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
-
-                    foreach (FVRObject obj in IM.OD.Values)
-                    {
-                        sw.WriteLine(
-                            obj.DisplayName.Replace(",", ".") + "," +
-                            obj.ItemID.Replace(",", ".") + "," + 
-                            obj.IsModContent.ToString() + "," +
-                            obj.Category + "," +
-                            obj.TagEra + "," +
-                            obj.TagSet + "," +
-                            obj.TagFirearmCountryOfOrigin + "," +
-                            obj.TagAttachmentFeature + "," +
-                            obj.TagFirearmAction + "," +
-                            string.Join("+", obj.TagFirearmFeedOption.Select(o => o.ToString()).ToArray()) + "," +
-                            string.Join("+", obj.TagFirearmFiringModes.Select(o => o.ToString()).ToArray()) + "," +
-                            string.Join("+", obj.TagFirearmMounts.Select(o => o.ToString()).ToArray()) + "," +
-                            obj.TagAttachmentMount + "," +
-                            obj.TagFirearmRoundPower + "," +
-                            obj.TagFirearmSize + "," +
-                            obj.TagMeleeHandedness + "," +
-                            obj.TagMeleeStyle + "," +
-                            obj.TagPowerupType + "," +
-                            obj.TagThrownDamageType + "," +
-                            obj.TagThrownType);
-                    }
-                    sw.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-
-        public static void CreateSosigIDFile(string path)
-        {
-            try
-            {
-                if (File.Exists(path + "/SosigIDs.txt"))
-                {
-                    File.Delete(path + "/SosigIDs.txt");
-                }
-
-                // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/SosigIDs.txt"))
-                {
-                    sw.WriteLine("#Available Sosig IDs for spawning");
-
-                    List<string> sosigList = [.. LoadedTemplateManager.SosigIDDict.Keys];
-                    sosigList.Sort();
-
-                    foreach (string ID in sosigList)
-                    {
-                        sw.WriteLine(ID);
-                    }
-                    sw.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-
-        public static void CreateIconIDFile(string path, List<string> icons)
-        {
-            try
-            {
-                if (File.Exists(path + "/IconIDs.txt"))
-                {
-                    File.Delete(path + "/IconIDs.txt");
-                }
-
-                // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/IconIDs.txt"))
-                {
-                    sw.WriteLine("#Available Icons for equipment pools");
-                    foreach (string icon in icons)
-                    {
-                        sw.WriteLine(icon);
-                    }
-                    sw.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
         public static void RunCoroutine(IEnumerator routine, Action<Exception> onError = null)
         {
             AnvilManager.Run(RunAndCatch(routine, onError));
@@ -160,401 +43,6 @@ namespace TNHFramework.Utilities
                 }
             }
         }
-
-
-        public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
-        {
-            Dictionary<string, Sprite> icons = [];
-
-            foreach (CustomCharacter character in characters)
-            {
-                foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
-                {
-                    if (!icons.ContainsKey(pool.TableDef.Icon.name))
-                    {
-                        TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
-                        icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
-                    }
-                }
-            }
-
-            return icons;
-        }
-
-        public static string CleanFilename(string filename)
-        {
-            // Remove illegal characters
-            return Regex.Replace(filename, @"(<|>|:|""|/|\\|\||\?|\*)", "");
-        }
-
-        public static void CreateCharacterFiles(List<CustomCharacter> characters, string path, bool isCustom)
-        {
-            try
-            {
-                TNHFrameworkLogger.Log("Creating " + (isCustom ? "custom" : "default") + " character template files", TNHFrameworkLogger.LogType.File);
-
-                path += isCustom ? "/CustomCharacters" : "/DefaultCharacters";
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-                
-                foreach (CustomCharacter charDef in characters)
-                {
-                    string jsonPath = path + "/" + CleanFilename(charDef.DisplayName + ".json");
-
-                    if (File.Exists(jsonPath))
-                        File.Delete(jsonPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(jsonPath))
-                    {
-                        string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(characterString);
-                        sw.Close();
-                    }
-
-                    string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
-
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializerBuilder = new SerializerBuilder();
-
-                        serializerBuilder.WithIndentedSequences();
-                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                        {
-                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                        }
-                        var serializer = serializerBuilder.Build();
-                        string characterString = serializer.Serialize(charDef);
-                        sw.WriteLine(characterString);
-                        sw.Close();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-
-        public static void CreatePopulatedCharacterTemplate(string path)
-        {
-            try
-            {
-                TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
-
-                path += "/PopulatedCharacterTemplate.json";
-
-                if (!File.Exists(path))
-                    File.Delete(path);
-
-                using (StreamWriter sw = File.CreateText(path))
-                {
-                    CustomCharacter character = new();
-                    string characterString = JsonConvert.SerializeObject(character, Formatting.Indented, new StringEnumConverter());
-                    sw.WriteLine(characterString);
-                    sw.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-        public static void CreateSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
-        {
-            try
-            {
-                TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
-
-                path += "/DefaultSosigTemplates";
-
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-
-                foreach (SosigEnemyTemplate template in sosigs)
-                {
-                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
-
-                    if (File.Exists(jsonPath))
-                        File.Delete(jsonPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(jsonPath))
-                    {
-                        SosigTemplate sosig = new(template);
-                        string sosigString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
-
-                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
-
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializerBuilder = new SerializerBuilder();
-                        serializerBuilder.WithIndentedSequences();
-
-                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                        {
-                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                        }
-
-                        var serializer = serializerBuilder.Build();
-                        SosigTemplate sosig = new(template);
-                        string sosigString = serializer.Serialize(sosig);
-
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-        public static void CreateSosigTemplateFiles(List<SosigTemplate> sosigs, string path)
-        {
-            try
-            {
-                TNHFrameworkLogger.Log("Creating custom sosig template files", TNHFrameworkLogger.LogType.File);
-
-                path += "/CustomSosigTemplates";
-
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-
-                foreach (SosigTemplate template in sosigs)
-                {
-                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
-
-                    if (File.Exists(jsonPath))
-                        File.Delete(jsonPath);
-
-                    // Create a new file
-                    using (StreamWriter sw = File.CreateText(jsonPath))
-                    {
-                        string sosigString = JsonConvert.SerializeObject(template, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
-
-                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
-
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializerBuilder = new SerializerBuilder();
-                        serializerBuilder.WithIndentedSequences();
-
-                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                        {
-                            serializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                        }
-
-                        var serializer = serializerBuilder.Build();
-                        string sosigString = serializer.Serialize(template);
-
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-        public static void CreateJsonVaultFiles(string path)
-        {
-            try
-            {
-                path += "/VaultFiles";
-
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-
-                string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
-                List<SavedGunSerializable> savedGuns = [];
-                foreach (string name in vaultFiles)
-                {
-                    try
-                    {
-                        if (name.Contains("DONTREMOVETHISPARTOFFILENAMEV02a") && ES2.Exists(name))
-                        {
-                            using (ES2Reader reader = ES2Reader.Create(name))
-                            {
-                                savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        TNHFrameworkLogger.LogError($"Vault File {name} could not be loaded");
-                    }
-                }
-                
-                foreach (SavedGunSerializable savedGun in savedGuns)
-                {
-                    string jsonPath = path + "/" + CleanFilename(savedGun.FileName + ".json");
-
-                    if (File.Exists(jsonPath))
-                        File.Delete(jsonPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(jsonPath))
-                    {
-                        string characterString = JsonConvert.SerializeObject(savedGun, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(characterString);
-                        sw.Close();
-                    }
-                }
-
-                var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
-                string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
-
-                string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
-                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
-                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
-                vaultPath = Path.Combine(vaultPath, (string)miGetCatFolderName.Invoke(null, [mode]));
-                vaultPath = Path.Combine(vaultPath, (string)miGetSubcatFolderName.Invoke(null, [mode]));
-
-                foreach (string vaultFileName in vaultFileList)
-                {
-                    //string filename = vaultFileName + VaultSystem.GetSuffix(mode);
-                    string filename = vaultFileName + (string)miGetSuffix.Invoke(null, [mode]);
-
-                    try
-                    {
-                        File.Copy(Path.Combine(vaultPath, filename), Path.Combine(path, filename), true);
-                    }
-                    catch (Exception ex)
-                    {
-                        TNHFrameworkLogger.LogError($"Vault File {filename} could not be copied: {ex}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TNHFrameworkLogger.LogError(ex.ToString());
-            }
-        }
-
-        public static void CreateGeneratedTables(string path)
-        {
-            try
-            {
-                path += "/GeneratedEquipmentPools";
-
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-
-                var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
-                foreach (CustomCharacter character in characters)
-                {
-                    string txtPath = path + "/" + CleanFilename(character.DisplayName + ".txt");
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(txtPath))
-                    {
-                        sw.WriteLine("Primary Starting Weapon");
-                        if (character.PrimaryWeapon != null)
-                        {
-                            sw.WriteLine(character.PrimaryWeapon.ToString());
-                        }
-
-                        sw.WriteLine("\n\nSecondary Starting Weapon");
-                        if (character.SecondaryWeapon != null)
-                        {
-                            sw.WriteLine(character.SecondaryWeapon.ToString());
-                        }
-
-                        sw.WriteLine("\n\nTertiary Starting Weapon");
-                        if (character.TertiaryWeapon != null)
-                        {
-                            sw.WriteLine(character.TertiaryWeapon.ToString());
-                        }
-
-                        sw.WriteLine("\n\nPrimary Starting Item");
-                        if (character.PrimaryItem != null)
-                        {
-                            sw.WriteLine(character.PrimaryItem.ToString());
-                        }
-
-                        sw.WriteLine("\n\nSecondary Starting Item");
-                        if (character.SecondaryItem != null)
-                        {
-                            sw.WriteLine(character.SecondaryItem.ToString());
-                        }
-
-                        sw.WriteLine("\n\nTertiary Starting Item");
-                        if (character.TertiaryItem != null)
-                        {
-                            sw.WriteLine(character.TertiaryItem.ToString());
-                        }
-
-                        sw.WriteLine("\n\nStarting Shield");
-                        if (character.Shield != null)
-                        {
-                            sw.WriteLine(character.Shield.ToString());
-                        }
-
-                        foreach (EquipmentPool pool in character.EquipmentPools)
-                        {
-                            sw.WriteLine("\n\n" + pool.ToString());
-                        }
-
-                        sw.Close();
-                    }
-                }
-            }
-            catch
-            {
-                //Debug.LogError(ex.ToString());
-            }
-        }
-
-        public static bool VaultFileComponentsLoaded(VaultFile template)
-        {
-            bool result = true;
-            List<string> missing = [];
-
-            foreach (VaultObject vaultObject in template.Objects)
-            {
-                foreach (VaultElement vaultElement in vaultObject.Elements)
-                {
-                    if (!IM.OD.ContainsKey(vaultElement.ObjectID))
-                    {
-                        missing.Add(vaultElement.ObjectID);
-                        result = false;
-                    }
-                }
-            }
-
-            if (!result)
-                TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID: {template.FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
-
-            return result;
-        }
-
 
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
@@ -626,6 +114,29 @@ namespace TNHFramework.Utilities
                     }
                 }
             }
+        }
+
+        public static bool VaultFileComponentsLoaded(VaultFile template)
+        {
+            bool result = true;
+            List<string> missing = [];
+
+            foreach (VaultObject vaultObject in template.Objects)
+            {
+                foreach (VaultElement vaultElement in vaultObject.Elements)
+                {
+                    if (!IM.OD.ContainsKey(vaultElement.ObjectID))
+                    {
+                        missing.Add(vaultElement.ObjectID);
+                        result = false;
+                    }
+                }
+            }
+
+            if (!result)
+                TNHFrameworkLogger.LogWarning($"Vaulted gun in table does not have all components loaded, removing it! VaultID: {template.FileName}, Missing ID(s): {string.Join(", ", [.. missing])}");
+
+            return result;
         }
 
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
@@ -823,216 +334,6 @@ namespace TNHFramework.Utilities
             while ((r = input.Read(b, 0, b.Length)) > 0)
             {
                 output.Write(b, 0, r);
-            }
-        }
-
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
-        {
-            List<GameObject> toDealWith = [];
-            List<GameObject> toMoveToTrays = [];
-            FVRFireArm myGun = null;
-            FVRFireArmMagazine myMagazine = null;
-            List<int> validIndexes = [];
-            Dictionary<GameObject, SavedGunComponent> dicGO = [];
-            Dictionary<int, GameObject> dicByIndex = [];
-            List<AnvilCallback<GameObject>> callbackList = [];
-            SavedGun gun = savedGun.GetSavedGun();
-
-            for (int i = 0; i < gun.Components.Count; i++)
-            {
-                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
-                TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
-            }
-            yield return callbackList;
-
-            for (int j = 0; j < gun.Components.Count; j++)
-            {
-                GameObject gameObject = UnityEngine.Object.Instantiate(IM.OD[gun.Components[j].ObjectID].GetGameObject());
-                M.AddObjectToTrackedList(gameObject);
-
-                dicGO.Add(gameObject, gun.Components[j]);
-                dicByIndex.Add(gun.Components[j].Index, gameObject);
-
-                if (gun.Components[j].isFirearm)
-                {
-                    myGun = gameObject.GetComponent<FVRFireArm>();
-                    savedGun.ApplyFirearmProperties(myGun);
-                    
-                    validIndexes.Add(j);
-                    gameObject.transform.position = position;
-                    gameObject.transform.rotation = Quaternion.identity;
-                }
-                else if (gun.Components[j].isMagazine)
-                {
-                    myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
-                    validIndexes.Add(j);
-                    
-                    if (myMagazine != null)
-                    {
-                        gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
-                        gameObject.transform.rotation = myGun.GetMagMountPos(myMagazine.IsBeltBox).rotation;
-                        myMagazine.Load(myGun);
-                        myMagazine.IsInfinite = false;
-                    }
-                }
-                else if (gun.Components[j].isAttachment)
-                {
-                    toDealWith.Add(gameObject);
-                }
-                else
-                {
-                    toMoveToTrays.Add(gameObject);
-                    
-                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
-                    {
-                        Speedloader component = gameObject.GetComponent<Speedloader>();
-                        component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
-                    }
-                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Count > 0)
-                    {
-                        FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
-                        component2.ReloadClipWithList(gun.LoadedRoundsInMag);
-                    }
-                }
-               
-                gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
-            }
-            
-            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
-            {
-                myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
-                myGun.Magazine.IsInfinite = false;
-            }
-            
-            int BreakIterator = 200;
-            
-            while (toDealWith.Count > 0 && BreakIterator > 0)
-            {
-                BreakIterator--;
-                
-                for (int k = toDealWith.Count - 1; k >= 0; k--)
-                {
-                    SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
-                    
-                    if (validIndexes.Contains(savedGunComponent.ObjectAttachedTo))
-                    {
-                        GameObject gameObject2 = toDealWith[k];
-                        FVRFireArmAttachment component3 = gameObject2.GetComponent<FVRFireArmAttachment>();
-                        FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
-                        gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
-                        gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
-                        
-                        if (component3.CanScaleToMount && mount.CanThisRescale())
-                        {
-                            component3.ScaleToMount(mount);
-                        }
-                        
-                        component3.AttachToMount(mount, false);
-                        
-                        if (component3 is Suppressor)
-                        {
-                            (component3 as Suppressor).AutoMountWell();
-                        }
-                        
-                        validIndexes.Add(savedGunComponent.Index);
-                        toDealWith.RemoveAt(k);
-                    }
-                }
-            }
-            
-            int trayIndex = 0;
-            int itemIndex = 0;
-           
-            for (int l = 0; l < toMoveToTrays.Count; l++)
-            {
-                toMoveToTrays[l].transform.position = position + (float)itemIndex * 0.1f * Vector3.up;
-                toMoveToTrays[l].transform.rotation = rotation;
-                itemIndex++;
-                trayIndex++;
-                
-                if (trayIndex > 2)
-                {
-                    trayIndex = 0;
-                }
-            }
-            
-            myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
-            myGun.transform.rotation = rotation;
-            yield break;
-        }
-
-        public static FVRFireArmAttachmentMount GetMount(GameObject obj, int index)
-        {
-            return obj.GetComponent<FVRPhysicalObject>().AttachmentMounts[index];
-        }
-
-        public static Vector3 GetPositionRelativeToGun(SavedGunComponent data, Transform gun)
-        {
-            Vector3 a = gun.position;
-            a += gun.up * data.PosOffset.y;
-            a += gun.right * data.PosOffset.x;
-            return a + gun.forward * data.PosOffset.z;
-        }
-
-
-        /// <summary>
-        /// Used to spawn more than one, same objects at a position
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="position"></param>
-        /// <param name="count"></param>
-        /// <param name="tolerance"></param>
-        // Used to spawn more than one, same objects at a position
-        public static IEnumerator InstantiateMultiple(TNH_Manager M, GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
-        {
-            float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
-            for (var index = 0; index < count; index++)
-            {
-                float current = index * heightNeeded;
-                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
-                M.AddObjectToTrackedList(gameObject);
-                yield return null;
-            }
-        }
-        
-
-        /// <summary>
-        /// Spawns items from the equipment group
-        /// </summary>
-        /// <param name="selectedGroup"></param>
-        /// <param name="position"></param>
-        /// <param name="rotation"></param>
-        /// <param name="callback"></param>
-        /// <param name="tolerance"></param>
-        /// <returns></returns>
-        public static IEnumerator InstantiateFromEquipmentGroup(EquipmentGroup selectedGroup, Vector3 position, Quaternion rotation, Action<GameObject> callback = null, float tolerance = 1.3f)
-        {
-            float currentHeight = 0;
-
-            foreach (EquipmentGroup group in selectedGroup.GetSpawnedEquipmentGroups())
-            {
-                for (int i = 0; i < group.ItemsToSpawn; i++)
-                {
-                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
-                    {
-                        // First, async get the game object to spawn
-                        AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
-                        yield return objectCallback;
-
-                        // Next calculate the height needed for this item
-                        GameObject gameObject = selectedFVR.GetGameObject();
-                        float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
-                        currentHeight += heightNeeded;
-
-                        // Finally spawn the item and call the callback if it's not null
-                        GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
-
-                        // This is added to the tracked object list after we return
-                        if (callback != null)
-                            callback.Invoke(spawnedObject);
-                        yield return null;
-                    }
-                }
             }
         }
 
@@ -1268,6 +569,216 @@ namespace TNHFramework.Utilities
                     if (attachment.ItemID.StartsWith("FSCE.LPVO") || attachment.name.Contains("30mm Mount"))
                     {
                         attachment.OSple = false;
+                    }
+                }
+            }
+        }
+
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
+        {
+            List<GameObject> toDealWith = [];
+            List<GameObject> toMoveToTrays = [];
+            FVRFireArm myGun = null;
+            FVRFireArmMagazine myMagazine = null;
+            List<int> validIndexes = [];
+            Dictionary<GameObject, SavedGunComponent> dicGO = [];
+            Dictionary<int, GameObject> dicByIndex = [];
+            List<AnvilCallback<GameObject>> callbackList = [];
+            SavedGun gun = savedGun.GetSavedGun();
+
+            for (int i = 0; i < gun.Components.Count; i++)
+            {
+                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
+                TNHFrameworkLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHFrameworkLogger.LogType.General);
+            }
+            yield return callbackList;
+
+            for (int j = 0; j < gun.Components.Count; j++)
+            {
+                GameObject gameObject = UnityEngine.Object.Instantiate(IM.OD[gun.Components[j].ObjectID].GetGameObject());
+                M.AddObjectToTrackedList(gameObject);
+
+                dicGO.Add(gameObject, gun.Components[j]);
+                dicByIndex.Add(gun.Components[j].Index, gameObject);
+
+                if (gun.Components[j].isFirearm)
+                {
+                    myGun = gameObject.GetComponent<FVRFireArm>();
+                    savedGun.ApplyFirearmProperties(myGun);
+                    
+                    validIndexes.Add(j);
+                    gameObject.transform.position = position;
+                    gameObject.transform.rotation = Quaternion.identity;
+                }
+                else if (gun.Components[j].isMagazine)
+                {
+                    myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
+                    validIndexes.Add(j);
+                    
+                    if (myMagazine != null)
+                    {
+                        gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
+                        gameObject.transform.rotation = myGun.GetMagMountPos(myMagazine.IsBeltBox).rotation;
+                        myMagazine.Load(myGun);
+                        myMagazine.IsInfinite = false;
+                    }
+                }
+                else if (gun.Components[j].isAttachment)
+                {
+                    toDealWith.Add(gameObject);
+                }
+                else
+                {
+                    toMoveToTrays.Add(gameObject);
+                    
+                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    {
+                        Speedloader component = gameObject.GetComponent<Speedloader>();
+                        component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
+                    }
+                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    {
+                        FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
+                        component2.ReloadClipWithList(gun.LoadedRoundsInMag);
+                    }
+                }
+               
+                gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
+            }
+            
+            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
+            {
+                myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
+                myGun.Magazine.IsInfinite = false;
+            }
+            
+            int BreakIterator = 200;
+            
+            while (toDealWith.Count > 0 && BreakIterator > 0)
+            {
+                BreakIterator--;
+                
+                for (int k = toDealWith.Count - 1; k >= 0; k--)
+                {
+                    SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
+                    
+                    if (validIndexes.Contains(savedGunComponent.ObjectAttachedTo))
+                    {
+                        GameObject gameObject2 = toDealWith[k];
+                        FVRFireArmAttachment component3 = gameObject2.GetComponent<FVRFireArmAttachment>();
+                        FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
+                        gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
+                        gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
+                        
+                        if (component3.CanScaleToMount && mount.CanThisRescale())
+                        {
+                            component3.ScaleToMount(mount);
+                        }
+                        
+                        component3.AttachToMount(mount, false);
+                        
+                        if (component3 is Suppressor)
+                        {
+                            (component3 as Suppressor).AutoMountWell();
+                        }
+                        
+                        validIndexes.Add(savedGunComponent.Index);
+                        toDealWith.RemoveAt(k);
+                    }
+                }
+            }
+            
+            int trayIndex = 0;
+            int itemIndex = 0;
+           
+            for (int l = 0; l < toMoveToTrays.Count; l++)
+            {
+                toMoveToTrays[l].transform.position = position + (float)itemIndex * 0.1f * Vector3.up;
+                toMoveToTrays[l].transform.rotation = rotation;
+                itemIndex++;
+                trayIndex++;
+                
+                if (trayIndex > 2)
+                {
+                    trayIndex = 0;
+                }
+            }
+            
+            myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
+            myGun.transform.rotation = rotation;
+            yield break;
+        }
+
+        public static FVRFireArmAttachmentMount GetMount(GameObject obj, int index)
+        {
+            return obj.GetComponent<FVRPhysicalObject>().AttachmentMounts[index];
+        }
+
+        public static Vector3 GetPositionRelativeToGun(SavedGunComponent data, Transform gun)
+        {
+            Vector3 a = gun.position;
+            a += gun.up * data.PosOffset.y;
+            a += gun.right * data.PosOffset.x;
+            return a + gun.forward * data.PosOffset.z;
+        }
+
+
+        /// <summary>
+        /// Used to spawn more than one, same objects at a position
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="position"></param>
+        /// <param name="count"></param>
+        /// <param name="tolerance"></param>
+        // Used to spawn more than one, same objects at a position
+        public static IEnumerator InstantiateMultiple(TNH_Manager M, GameObject gameObject, Vector3 position, int count, float tolerance = 1.3f)
+        {
+            float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
+            for (var index = 0; index < count; index++)
+            {
+                float current = index * heightNeeded;
+                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
+                M.AddObjectToTrackedList(gameObject);
+                yield return null;
+            }
+        }
+        
+
+        /// <summary>
+        /// Spawns items from the equipment group
+        /// </summary>
+        /// <param name="selectedGroup"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="callback"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
+        public static IEnumerator InstantiateFromEquipmentGroup(EquipmentGroup selectedGroup, Vector3 position, Quaternion rotation, Action<GameObject> callback = null, float tolerance = 1.3f)
+        {
+            float currentHeight = 0;
+
+            foreach (EquipmentGroup group in selectedGroup.GetSpawnedEquipmentGroups())
+            {
+                for (int i = 0; i < group.ItemsToSpawn; i++)
+                {
+                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
+                    {
+                        // First, async get the game object to spawn
+                        AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
+                        yield return objectCallback;
+
+                        // Next calculate the height needed for this item
+                        GameObject gameObject = selectedFVR.GetGameObject();
+                        float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
+                        currentHeight += heightNeeded;
+
+                        // Finally spawn the item and call the callback if it's not null
+                        GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+
+                        // This is added to the tracked object list after we return
+                        if (callback != null)
+                            callback.Invoke(spawnedObject);
+                        yield return null;
                     }
                 }
             }
