@@ -8,7 +8,6 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-
     public class SavedGunSerializable
     {
         public string FileName;
@@ -60,13 +59,15 @@ namespace TNHFramework.ObjectTemplates
         {
             if (gun == null)
             {
-                gun = new SavedGun();
-                gun.FileName = FileName;
-                gun.Components = Components.Select(o => o.GetGunComponent()).ToList();
-                gun.LoadedRoundsInMag = LoadedRoundsInMag;
-                gun.LoadedRoundsInChambers = LoadedRoundsInChambers;
-                gun.SavedFlags = SavedFlags;
-                gun.DateMade = default(DateTime);
+                gun = new SavedGun
+                {
+                    FileName = FileName,
+                    Components = Components.Select(o => o.GetGunComponent()).ToList(),
+                    LoadedRoundsInMag = LoadedRoundsInMag,
+                    LoadedRoundsInChambers = LoadedRoundsInChambers,
+                    SavedFlags = SavedFlags,
+                    DateMade = default
+                };
             }
 
             return gun;
@@ -96,7 +97,8 @@ namespace TNHFramework.ObjectTemplates
         {
             foreach (SavedGunComponentSerializable component in Components)
             {
-                if (component.IsFirearm) return IM.OD[component.ObjectID];
+                if (component.IsFirearm)
+                    return IM.OD[component.ObjectID];
             }
 
             return null;
@@ -154,12 +156,12 @@ namespace TNHFramework.ObjectTemplates
 
         public void ApplyFirearmProperties(FVRFireArm firearm)
         {
-            if (!OverrideFireRate && !OverrideFireSelectors) return;
+            if (!OverrideFireRate && !OverrideFireSelectors)
+                return;
 
             Handgun handgunComp = firearm.gameObject.GetComponent<Handgun>();
             if (handgunComp != null)
             {
-
                 if (OverrideFireSelectors)
                 {
                     List<Handgun.FireSelectorMode> modeList = [];
@@ -226,11 +228,7 @@ namespace TNHFramework.ObjectTemplates
                 return;
             }
         }
-
     }
-
-
-
 
     public class SavedGunComponentSerializable
     {
@@ -277,23 +275,24 @@ namespace TNHFramework.ObjectTemplates
         {
             if (component == null)
             {
-                component = new SavedGunComponent();
-                component.Index = Index;
-                component.ObjectID = ObjectID;
-                component.PosOffset = PosOffset.GetVector3();
-                component.OrientationForward = OrientationForward.GetVector3();
-                component.OrientationUp = OrientationUp.GetVector3();
-                component.ObjectAttachedTo = ObjectAttachedTo;
-                component.MountAttachedTo = MountAttachedTo;
-                component.isFirearm = IsFirearm;
-                component.isMagazine = IsMagazine;
-                component.isAttachment = IsAttachment;
-                component.Flags = Flags;
+                component = new SavedGunComponent
+                {
+                    Index = Index,
+                    ObjectID = ObjectID,
+                    PosOffset = PosOffset.GetVector3(),
+                    OrientationForward = OrientationForward.GetVector3(),
+                    OrientationUp = OrientationUp.GetVector3(),
+                    ObjectAttachedTo = ObjectAttachedTo,
+                    MountAttachedTo = MountAttachedTo,
+                    isFirearm = IsFirearm,
+                    isMagazine = IsMagazine,
+                    isAttachment = IsAttachment,
+                    Flags = Flags
+                };
             }
 
             return component;
         }
-
     }
 
 
@@ -328,27 +327,33 @@ namespace TNHFramework.ObjectTemplates
 
         public Handgun.FireSelectorMode GetHandgunMode()
         {
-            Handgun.FireSelectorMode mode = new Handgun.FireSelectorMode();
-            mode.SelectorPosition = SelectorPosition;
-            mode.ModeType = (Handgun.FireSelectorModeType)Enum.Parse(typeof(Handgun.FireSelectorModeType), ModeType.ToString());
-            mode.BurstAmount = BurstAmount;
+            Handgun.FireSelectorMode mode = new Handgun.FireSelectorMode
+            {
+                SelectorPosition = SelectorPosition,
+                ModeType = (Handgun.FireSelectorModeType)Enum.Parse(typeof(Handgun.FireSelectorModeType), ModeType.ToString()),
+                BurstAmount = BurstAmount
+            };
             return mode;
         }
 
         public OpenBoltReceiver.FireSelectorMode GetOpenBoltMode()
         {
-            OpenBoltReceiver.FireSelectorMode mode = new OpenBoltReceiver.FireSelectorMode();
-            mode.SelectorPosition = SelectorPosition;
-            mode.ModeType = (OpenBoltReceiver.FireSelectorModeType)Enum.Parse(typeof(OpenBoltReceiver.FireSelectorModeType), ModeType.ToString());
+            OpenBoltReceiver.FireSelectorMode mode = new OpenBoltReceiver.FireSelectorMode
+            {
+                SelectorPosition = SelectorPosition,
+                ModeType = (OpenBoltReceiver.FireSelectorModeType)Enum.Parse(typeof(OpenBoltReceiver.FireSelectorModeType), ModeType.ToString())
+            };
             return mode;
         }
 
         public ClosedBoltWeapon.FireSelectorMode GetClosedBoltMode()
         {
-            ClosedBoltWeapon.FireSelectorMode mode = new ClosedBoltWeapon.FireSelectorMode();
-            mode.SelectorPosition = SelectorPosition;
-            mode.ModeType = (ClosedBoltWeapon.FireSelectorModeType)Enum.Parse(typeof(ClosedBoltWeapon.FireSelectorModeType), ModeType.ToString());
-            mode.BurstAmount = BurstAmount;
+            ClosedBoltWeapon.FireSelectorMode mode = new ClosedBoltWeapon.FireSelectorMode
+            {
+                SelectorPosition = SelectorPosition,
+                ModeType = (ClosedBoltWeapon.FireSelectorModeType)Enum.Parse(typeof(ClosedBoltWeapon.FireSelectorModeType), ModeType.ToString()),
+                BurstAmount = BurstAmount
+            };
             return mode;
         }
     }
@@ -362,5 +367,4 @@ namespace TNHFramework.ObjectTemplates
         FullAuto,
         SuperFastBurst
     }
-
 }
