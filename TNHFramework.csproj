@@ -17,8 +17,9 @@
     </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Label="UserPaths">
-    <BepInString>$(AppData)\r2modmanPlus-local\H3VR\profiles\Dev\BepInEx</BepInString>
-    <ProfileString>$(BepInString)\Plugins</ProfileString>
+    <BepInString>I:\Mods\r2modmanPlus-data\H3VR\profiles\Default\BepInEx</BepInString>
+    <ProfileString>$(BepInString)\plugins</ProfileString>
+    <H3VRDir>I:\SteamLibrary\steamapps\common\H3VR</H3VRDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -48,90 +49,103 @@
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.5.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="ADepIn, Version=21.1.16.2315, Culture=neutral, PublicKeyToken=null">
       <HintPath>packages\ADepIn.21.1.16.2315\lib\net35\ADepIn.dll</HintPath>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.114.1\lib\net35\Assembly-CSharp.dll</HintPath>
+    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.114.1\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\core\BepInEx.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx.Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(BepInString)\core\BepInEx.Harmony.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Deli.Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\patchers\DeliCollective-Deli\Deli.Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Deli.Patcher, Version=0.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\patchers\DeliCollective-Deli\Deli.Patcher.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Deli.Setup, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(ProfileString)\DeliCollective-Deli\Deli.Setup.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DotNetZip, Version=1.12.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\patchers\DeliCollective-Deli\DotNetZip.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MagazinePatcher">
       <HintPath>$(ProfileString)\devyndamonster-MagazinePatcher\MagazinePatcher\MagazinePatcher.dll</HintPath>
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\h3vr_Data\Managed\ES2.dll</HintPath>
+      <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour, Version=21.9.19.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\core\MonoMod.RuntimeDetour.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.Utils, Version=21.9.19.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\core\MonoMod.Utils.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="OtherLoader">
       <HintPath>$(ProfileString)\devyndamonster-OtherLoader\OtherLoader.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SemanticVersioning, Version=2.0.2.0, Culture=neutral, PublicKeyToken=a89bb7dc6f7a145c, processorArchitecture=MSIL">
       <HintPath>packages\SemanticVersioning.2.0.2\lib\net35\SemanticVersioning.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System">
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Core">
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Xml.Linq">
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Xml">
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Stratum">
       <HintPath>$(ProfileString)\Stratum-Stratum\Stratum.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\h3vr_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>packages\UnityEngine.Core.5.6.1\lib\net35\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.114.1\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.114.1\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet, Version=13.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>packages\YamlDotNet.13.7.1\lib\net35\YamlDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -147,7 +161,6 @@
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CharacterEnums.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
-    <Compile Include="ObjectTemplates\MapData.cs" />
     <Compile Include="ObjectTemplates\Old\CustomCharacterV1.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />
