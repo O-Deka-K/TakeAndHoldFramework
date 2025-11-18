@@ -26,11 +26,13 @@ namespace TNHFramework.Utilities
             firearm = IM.OD[firearm.ItemID];
 
             // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
-            if (maxCapacity <= 0) maxCapacity = 9999;
+            if (maxCapacity <= 0)
+                maxCapacity = 9999;
 
             // Create a list containing all compatible ammo containers
             List<FVRObject> compatibleContainers = [];
-            if (firearm.CompatibleSpeedLoaders != null) compatibleContainers.AddRange(firearm.CompatibleSpeedLoaders);
+            if (firearm.CompatibleSpeedLoaders != null)
+                compatibleContainers.AddRange(firearm.CompatibleSpeedLoaders);
 
             // Go through each magazine and add compatible ones
             foreach (FVRObject magazine in firearm.CompatibleMagazines)
@@ -39,12 +41,10 @@ namespace TNHFramework.Utilities
                 {
                     continue;
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                 {
                     continue;
                 }
-
                 else if (magazine.MagazineCapacity < minCapacity || magazine.MagazineCapacity > maxCapacity)
                 {
                     continue;
@@ -60,12 +60,10 @@ namespace TNHFramework.Utilities
                 {
                     continue;
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(clip.ItemID))
                 {
                     continue;
                 }
-
                 else if (clip.MagazineCapacity < minCapacity || clip.MagazineCapacity > maxCapacity)
                 {
                     continue;
@@ -74,19 +72,16 @@ namespace TNHFramework.Utilities
                 compatibleContainers.Add(clip);
             }
 
-
             // If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
             if (compatibleContainers.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines != null)
             {
                 FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines, globalObjectBlacklist);
-                if (magazine != null) compatibleContainers.Add(magazine);
+                if (magazine != null)
+                    compatibleContainers.Add(magazine);
             }
 
             return compatibleContainers;
         }
-
-
-
 
         public static List<FVRObject> GetCompatibleMagazines(FVRObject firearm, int minCapacity = 0, int maxCapacity = 9999, bool smallestIfEmpty = true, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
@@ -94,11 +89,13 @@ namespace TNHFramework.Utilities
             firearm = IM.OD[firearm.ItemID];
 
             // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
-            if (maxCapacity <= 0) maxCapacity = 9999;
+            if (maxCapacity <= 0)
+                maxCapacity = 9999;
 
             // Create a list containing all compatible ammo containers
             List<FVRObject> compatibleMagazines = [];
-            if (firearm.CompatibleMagazines != null) compatibleMagazines.AddRange(firearm.CompatibleMagazines);
+            if (firearm.CompatibleMagazines != null)
+                compatibleMagazines.AddRange(firearm.CompatibleMagazines);
 
             // Go through these containers and remove any that don't fit given criteria
             for (int i = compatibleMagazines.Count - 1; i >= 0; i--)
@@ -107,12 +104,10 @@ namespace TNHFramework.Utilities
                 {
                     compatibleMagazines.RemoveAt(i);
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleMagazines[i].ItemID))
                 {
                     compatibleMagazines.RemoveAt(i);
                 }
-
                 else if (compatibleMagazines[i].MagazineCapacity < minCapacity || compatibleMagazines[i].MagazineCapacity > maxCapacity)
                 {
                     compatibleMagazines.RemoveAt(i);
@@ -123,12 +118,12 @@ namespace TNHFramework.Utilities
             if (compatibleMagazines.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines is not null)
             {
                 FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines, globalObjectBlacklist, blacklist);
-                if (magazine != null) compatibleMagazines.Add(magazine);
+                if (magazine != null)
+                    compatibleMagazines.Add(magazine);
             }
 
             return compatibleMagazines;
         }
-
 
         public static List<FVRObject> GetCompatibleClips(FVRObject firearm, int minCapacity = 0, int maxCapacity = 9999, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
@@ -136,11 +131,13 @@ namespace TNHFramework.Utilities
             firearm = IM.OD[firearm.ItemID];
 
             // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
-            if (maxCapacity <= 0) maxCapacity = 9999;
+            if (maxCapacity <= 0)
+                maxCapacity = 9999;
 
             // Create a list containing all compatible ammo containers
             List<FVRObject> compatibleClips = [];
-            if (firearm.CompatibleClips != null) compatibleClips.AddRange(firearm.CompatibleClips);
+            if (firearm.CompatibleClips != null)
+                compatibleClips.AddRange(firearm.CompatibleClips);
 
             // Go through these containers and remove any that don't fit given criteria
             for (int i = compatibleClips.Count - 1; i >= 0; i--)
@@ -149,12 +146,10 @@ namespace TNHFramework.Utilities
                 {
                     compatibleClips.RemoveAt(i);
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleClips[i].ItemID))
                 {
                     compatibleClips.RemoveAt(i);
                 }
-
                 else if (compatibleClips[i].MagazineCapacity < minCapacity || compatibleClips[i].MagazineCapacity > maxCapacity)
                 {
                     compatibleClips.RemoveAt(i);
@@ -164,12 +159,10 @@ namespace TNHFramework.Utilities
             return compatibleClips;
         }
 
-
         public static List<FVRObject> GetCompatibleRounds(FVRObject firearm, List<TagEra> eras, List<TagSet> sets, List<string> globalBulletBlacklist = null, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
             return GetCompatibleRounds(firearm, eras.Select(o => (FVRObject.OTagEra)o).ToList(), sets.Select(o => (FVRObject.OTagSet)o).ToList(), globalBulletBlacklist, globalObjectBlacklist, blacklist);
         }
-
 
         public static List<FVRObject> GetCompatibleRounds(FVRObject firearm, List<FVRObject.OTagEra> eras, List<FVRObject.OTagSet> sets, List<string> globalBulletBlacklist = null, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
@@ -178,7 +171,8 @@ namespace TNHFramework.Utilities
 
             // Create a list containing all compatible ammo containers
             List<FVRObject> compatibleRounds = [];
-            if (firearm.CompatibleSingleRounds != null) compatibleRounds.AddRange(firearm.CompatibleSingleRounds);
+            if (firearm.CompatibleSingleRounds != null)
+                compatibleRounds.AddRange(firearm.CompatibleSingleRounds);
 
             // Go through these containers and remove any that don't fit given criteria
             for (int i = compatibleRounds.Count - 1; i >= 0; i--)
@@ -190,17 +184,14 @@ namespace TNHFramework.Utilities
                 {
                     compatibleRounds.RemoveAt(i);
                 }
-
                 else if (blacklist != null && !blacklist.IsRoundAllowed(compatibleRounds[i].ItemID))
                 {
                     compatibleRounds.RemoveAt(i);
                 }
-
                 else if (globalBulletBlacklist != null && globalBulletBlacklist.Contains(compatibleRounds[i].ItemID))
                 {
                     compatibleRounds.RemoveAt(i);
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleRounds[i].ItemID))
                 {
                     compatibleRounds.RemoveAt(i);
@@ -227,7 +218,6 @@ namespace TNHFramework.Utilities
             return compatibleRounds;
         }
 
-
         /// <summary>
         /// Returns the smallest capacity magazine from the given list of magazine FVRObjects
         /// </summary>
@@ -236,7 +226,8 @@ namespace TNHFramework.Utilities
         /// <returns>An FVRObject for the smallest magazine. Can be null if magazines list is empty</returns>
         public static FVRObject GetSmallestCapacityMagazine(List<FVRObject> magazines, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
-            if (magazines == null || magazines.Count == 0) return null;
+            if (magazines == null || magazines.Count == 0)
+                return null;
 
             // This was done with a list because whenever there are multiple smallest magazines of the same size, we want to return a random one from those options
             List<FVRObject> smallestMagazines = [];
@@ -247,24 +238,20 @@ namespace TNHFramework.Utilities
                 {
                     continue;
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                 {
                     continue;
                 }
-
                 else if (smallestMagazines.Count == 0)
                 {
                     smallestMagazines.Add(magazine);
                 }
-
                 // If we find a new smallest mag, clear the list and add the new smallest
                 else if (magazine.MagazineCapacity < smallestMagazines[0].MagazineCapacity)
                 {
                     smallestMagazines.Clear();
                     smallestMagazines.Add(magazine);
                 }
-
                 // If the magazine is the same capacity as current smallest, add it to the list
                 else if (magazine.MagazineCapacity == smallestMagazines[0].MagazineCapacity)
                 {
@@ -272,13 +259,12 @@ namespace TNHFramework.Utilities
                 }
             }
 
-            if (smallestMagazines.Count == 0) return null;
+            if (smallestMagazines.Count == 0)
+                return null;
 
             // Return a random magazine from the smallest
             return smallestMagazines.GetRandom();
         }
-
-
 
         /// <summary>
         /// Returns the smallest capacity magazine that is compatible with the given firearm
@@ -294,8 +280,6 @@ namespace TNHFramework.Utilities
             return GetSmallestCapacityMagazine(firearm.CompatibleMagazines, globalObjectBlacklist, blacklist);
         }
 
-
-
         /// <summary>
         /// Returns true if the given FVRObject has any compatible rounds, clips, magazines, or speedloaders
         /// </summary>
@@ -303,14 +287,14 @@ namespace TNHFramework.Utilities
         /// <returns>True if the FVRObject has any compatible rounds, clips, magazines, or speedloaders. False if it contains none of these</returns>
         public static bool FVRObjectHasAmmoObject(FVRObject item)
         {
-            if (item == null) return false;
+            if (item == null)
+                return false;
 
             // Refresh the FVRObject to have data directly from object dictionary
             item = IM.OD[item.ItemID];
 
             return (item.CompatibleSingleRounds != null && item.CompatibleSingleRounds.Count != 0) || (item.CompatibleClips != null && item.CompatibleClips.Count > 0) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Count > 0) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Count != 0);
         }
-
 
         /// <summary>
         /// Returns true if the given FVRObject has any compatible clips, magazines, or speedloaders
@@ -319,16 +303,14 @@ namespace TNHFramework.Utilities
         /// <returns>True if the FVRObject has any compatible clips, magazines, or speedloaders. False if it contains none of these</returns>
         public static bool FVRObjectHasAmmoContainer(FVRObject item)
         {
-            if (item == null) return false;
+            if (item == null)
+                return false;
 
             // Refresh the FVRObject to have data directly from object dictionary
             item = IM.OD[item.ItemID];
 
             return (item.CompatibleClips != null && item.CompatibleClips.Count > 0) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Count > 0) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Count != 0);
         }
-
-
-
 
         /// <summary>
         /// Returns the next largest magazine when compared to the current magazine. Only magazines from the possibleMagazines list are considered as next largest magazine candidates
@@ -356,25 +338,21 @@ namespace TNHFramework.Utilities
                 {
                     continue;
                 }
-
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                 {
                     continue;
                 }
-
                 else if (nextLargestMagazines.Count == 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity)
                 {
                     nextLargestMagazines.Add(magazine);
                     continue;
                 }
-
                 else if (nextLargestMagazines.Count > 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
                 {
                     nextLargestMagazines.Clear();
                     nextLargestMagazines.Add(magazine);
                     continue;
                 }
-
                 else if (nextLargestMagazines.Count > 0 && magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
                 {
                     nextLargestMagazines.Add(magazine);
@@ -385,9 +363,6 @@ namespace TNHFramework.Utilities
 
             return null;
         }
-
-
-
 
         /// <summary>
         /// Returns a list of FVRPhysicalObjects for items that are either in the players hand, or in one of the players quickbelt slots. This also includes any items in a players backpack if they are wearing one
@@ -435,8 +410,6 @@ namespace TNHFramework.Utilities
             return heldItems;
         }
 
-
-
         /// <summary>
         /// Returns a list of FVRObjects for all of the items that are equipped on the player. Items without a valid FVRObject are excluded. There may also be duplicate entries if the player has identical items equipped
         /// </summary>
@@ -447,17 +420,14 @@ namespace TNHFramework.Utilities
 
             foreach (FVRPhysicalObject item in GetEquippedItems())
             {
-                if (item.ObjectWrapper is null) continue;
+                if (item.ObjectWrapper is null)
+                    continue;
 
                 equippedFVRObjects.Add(item.ObjectWrapper);
             }
 
             return equippedFVRObjects;
         }
-
-
-
-
 
         /// <summary>
         /// Returns a random magazine, clip, or speedloader that is compatible with one of the players equipped items
@@ -471,15 +441,14 @@ namespace TNHFramework.Utilities
             List<FVRObject> heldItems = GetEquippedFVRObjects();
 
             // Interpret -1 as having no max capacity
-            if (maxCapacity == -1) maxCapacity = 9999;
+            if (maxCapacity == -1)
+                maxCapacity = 9999;
 
             // Go through and remove any items that have no ammo containers
             for (int i = heldItems.Count - 1; i >= 0; i--)
             {
                 if (!FVRObjectHasAmmoContainer(heldItems[i]))
-                {
                     heldItems.RemoveAt(i);
-                }
             }
 
             // Now go through all items that do have ammo containers, and try to get an ammo container for one of them
@@ -487,17 +456,16 @@ namespace TNHFramework.Utilities
             foreach (FVRObject item in heldItems)
             {
                 MagazineBlacklistEntry blacklistEntry = null;
-                if (blacklist != null && blacklist.ContainsKey(item.ItemID)) blacklistEntry = blacklist[item.ItemID];
+                if (blacklist != null && blacklist.ContainsKey(item.ItemID))
+                    blacklistEntry = blacklist[item.ItemID];
 
                 List<FVRObject> containers = GetCompatibleAmmoContainers(item, minCapacity, maxCapacity, false, globalObjectBlacklist, blacklistEntry);
-                if (containers.Count > 0) return containers.GetRandom();
+                if (containers.Count > 0)
+                    return containers.GetRandom();
             }
 
             return null;
         }
-
-
-
 
         /// <summary>
         /// Returns a list of all attached objects on the given firearm. This includes attached magazines
@@ -509,7 +477,8 @@ namespace TNHFramework.Utilities
         {
             List<FVRPhysicalObject> detectedObjects = [];
 
-            if (includeSelf) detectedObjects.Add(fireArm);
+            if (includeSelf)
+                detectedObjects.Add(fireArm);
 
             if (fireArm.Magazine is not null && !fireArm.Magazine.IsIntegrated && fireArm.Magazine.ObjectWrapper is not null)
             {
@@ -518,30 +487,17 @@ namespace TNHFramework.Utilities
 
             foreach (FVRFireArmAttachment attachment in fireArm.Attachments)
             {
-                if (attachment.ObjectWrapper is not null) detectedObjects.Add(attachment);
+                if (attachment.ObjectWrapper is not null)
+                    detectedObjects.Add(attachment);
             }
 
             return detectedObjects;
         }
 
-        /*
-        public static List<FVRObject> GetLoadedFVRObjectsFromTemplateList(List<AmmoObjectDataTemplate> items)
-        {
-            List<FVRObject> loadedItems = new List<FVRObject>();
-
-            foreach (AmmoObjectDataTemplate item in items)
-            {
-                if (IM.OD.ContainsKey(item.ObjectID)) loadedItems.Add(IM.OD[item.ObjectID]);
-            }
-
-            return loadedItems;
-        }
-        */
-
         public static FVRFireArmMagazine SpawnDuplicateMagazine(TNH_Manager M, FVRFireArmMagazine magazine, Vector3 position, Quaternion rotation)
         {
             FVRObject objectWrapper = magazine.ObjectWrapper;
-            GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+            GameObject gameObject = Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
             M.AddObjectToTrackedList(gameObject);
 
             FVRFireArmMagazine component = gameObject.GetComponent<FVRFireArmMagazine>();
@@ -563,11 +519,10 @@ namespace TNHFramework.Utilities
             return component;
         }
 
-
         public static Speedloader SpawnDuplicateSpeedloader(TNH_Manager manager, Speedloader speedloader, Vector3 position, Quaternion rotation)
         {
             FVRObject objectWrapper = speedloader.ObjectWrapper;
-            GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+            GameObject gameObject = Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
             manager.AddObjectToTrackedList(gameObject);
             
             Speedloader component = gameObject.GetComponent<Speedloader>();

@@ -4,7 +4,6 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.Utilities
 {
-
     // This code is taken from this stack overflow page: https://stackoverflow.com/questions/22752075/how-can-i-ignore-unknown-enum-values-during-json-deserialization
     public class TolerantEnumConverter : JsonConverter
     {
@@ -32,19 +31,16 @@ namespace TNHFramework.Utilities
                         .FirstOrDefault();
 
                     if (match != null)
-                    {
                         return Enum.Parse(enumType, match);
-                    }
                 }
             }
             else if (reader.TokenType == JsonToken.Integer)
             {
                 int enumVal = Convert.ToInt32(reader.Value);
                 int[] values = (int[])Enum.GetValues(enumType);
+                
                 if (values.Contains(enumVal))
-                {
                     return Enum.Parse(enumType, enumVal.ToString());
-                }
             }
 
             if (!isNullable)
@@ -53,10 +49,7 @@ namespace TNHFramework.Utilities
                     .Where(n => string.Equals(n, "Unknown", StringComparison.OrdinalIgnoreCase))
                     .FirstOrDefault();
 
-                if (defaultName == null)
-                {
-                    defaultName = names.First();
-                }
+                defaultName ??= names.First();
 
                 return Enum.Parse(enumType, defaultName);
             }
