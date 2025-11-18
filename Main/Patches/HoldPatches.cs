@@ -3,6 +3,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -19,6 +20,43 @@ namespace TNHFramework.Patches
 
         private static readonly FieldInfo fiValidSpawnPoints = typeof(TNH_HoldPoint).GetField("m_validSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiCurLevel = typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        // Anton pls fix - Use TNHSeed
+        [HarmonyPatch(typeof(TNH_HoldPoint), "BeginPhase")]
+        [HarmonyPostfix]
+        public static void BeginPhase_TNHSeed(ref float ___m_tickDownToNextGroupSpawn, TNH_HoldChallenge.Phase ___m_curPhase)
+        {
+            ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * 0.8f;
+
+            if (GM.TNHOptions.TNHSeed < 0)
+            {
+                ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * UnityEngine.Random.Range(0.8f, 1.1f);
+            }
+        }
+
+        // Anton pls fix - Use TNHSeed
+        [HarmonyPatch(typeof(TNH_HoldPoint), "BeginAnalyzing")]
+        [HarmonyPostfix]
+        public static void BeginAnalyzing_TNHSeed(TNH_HoldPoint __instance, ref float ___m_tickDownToIdentification, TNH_HoldChallenge.Phase ___m_curPhase)
+        {
+            if (__instance.M.TargetMode == TNHSetting_TargetMode.NoTargets)
+            {
+                ___m_tickDownToIdentification = ___m_curPhase.ScanTime * 0.9f + 60f;
+
+                if (GM.TNHOptions.TNHSeed < 0)
+                    ___m_tickDownToIdentification = UnityEngine.Random.Range(___m_curPhase.ScanTime * 0.9f, ___m_curPhase.ScanTime * 1.1f) + 60f;
+            }
+            else
+            {
+                ___m_tickDownToIdentification = ___m_curPhase.ScanTime * 0.8f;
+
+                if (GM.TNHOptions.TNHSeed < 0)
+                    ___m_tickDownToIdentification = UnityEngine.Random.Range(___m_curPhase.ScanTime * 0.8f, ___m_curPhase.ScanTime * 1.2f);
+
+                if (__instance.M.IsBigLevel)
+                    ___m_tickDownToIdentification += 15f;
+            }
+        }
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")]
         [HarmonyPrefix]
@@ -152,9 +190,7 @@ namespace TNHFramework.Patches
             ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
 
             if (___m_activeSosigs.Count < 1 && ___m_state == TNH_HoldPoint.HoldState.Analyzing)
-            {
                 ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
-            }
 
             if (!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
             {
@@ -178,7 +214,6 @@ namespace TNHFramework.Patches
                 float randomMult = (GM.TNHOptions.TNHSeed >= 0) ? 0.9f : UnityEngine.Random.Range(0.9f, 1.1f);
                 ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence * randomMult * ammoMult;
             }
-
 
             return false;
         }
@@ -235,6 +270,7 @@ namespace TNHFramework.Patches
             int vectorSpawnPoint = 0;
             Vector3 targetVector;
             int vectorIndex = 0;
+            
             while (sosigsSpawned < enemiesToSpawn)
             {
                 TNHFrameworkLogger.Log("Spawning at attack vector: " + vectorIndex, TNHFrameworkLogger.LogType.TNH);
@@ -319,6 +355,60 @@ namespace TNHFramework.Patches
             // We've replaced all calls to SpawnHoldEnemyGroup() with our own, so stub this out
             TNHFrameworkLogger.LogWarning("SpawnHoldEnemyGroupStub() called! This should have been overridden!");
             return false;
+        }
+
+        // Anton pls fix - Clamp after, not before
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnWarpInMarkers")]
+        [HarmonyTranspiler]
+        public static IEnumerable<CodeInstruction> SpawnWarpInMarkers_ClampFix(IEnumerable<CodeInstruction> instructions)
+        {
+            List<CodeInstruction> code = [.. instructions];
+            List<CodeInstruction> codeToCopy = null;
+
+            // Find the code to copy
+            for (int i = 0; i < code.Count - 8; i++)
+            {
+                if (code[i].opcode == OpCodes.Ldarg_0 &&
+                    code[i + 1].opcode == OpCodes.Ldarg_0 &&
+                    code[i + 2].opcode == OpCodes.Ldfld &&
+                    code[i + 3].opcode == OpCodes.Ldarg_0 &&
+                    code[i + 4].opcode == OpCodes.Ldfld &&
+                    code[i + 5].opcode == OpCodes.Callvirt &&
+                    code[i + 6].opcode == OpCodes.Call &&
+                    code[i + 7].opcode == OpCodes.Stfld)
+                {
+                    codeToCopy =
+                    [
+                        new(OpCodes.Ldarg_0),
+                        new(OpCodes.Ldarg_0),
+                        new(OpCodes.Ldfld, code[i + 2].operand),
+                        new(OpCodes.Ldarg_0),
+                        new(OpCodes.Ldfld, code[i + 4].operand),
+                        new(OpCodes.Callvirt, code[i + 5].operand),
+                        new(OpCodes.Call, code[i + 6].operand),
+                        new(OpCodes.Stfld, code[i + 7].operand),
+                    ];
+                }
+            }
+
+            // Find the insertion index
+            for (int j = 0; j < code.Count - 3; j++)
+            {
+                // Search for "m_validSpawnPoints.Shuffle<Transform>()"
+                if (code[j].opcode == OpCodes.Ldarg_0 &&
+                    code[j + 1].opcode == OpCodes.Ldfld &&
+                    code[j + 2].opcode == OpCodes.Call)
+                {
+                    if (codeToCopy != null)
+                    {
+                        code.InsertRange(j - 1, codeToCopy);
+                        TNHFrameworkLogger.Log($"SpawnWarpInMarkers_ClampFix transpiler patched!", TNHFrameworkLogger.LogType.TNH);
+                    }
+                    break;
+                }
+            }
+
+            return code;
         }
     }
 }
