@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.0")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.3")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -36,7 +36,7 @@ namespace TNHFramework
 
         public static Dictionary<string, Type> Serializables = [];
 
-        // Bodged Magazine Patcher replacement stuff.
+        // Bodged Magazine Patcher replacement stuff
         public static Dictionary<FireArmRoundType, List<FVRObject>> CartridgeDictionary = [];
         public static Dictionary<FireArmMagazineType, List<FVRObject>> MagazineDictionary = [];
         public static Dictionary<FireArmClipType, List<FVRObject>> StripperDictionary = [];
@@ -71,13 +71,17 @@ namespace TNHFramework
             LoadConfigFile();
             LoadPanelSprites();
 
-            var harmony = new Harmony("h3vr.tnhframework");
-            harmony.PatchAll(typeof(TNHFramework));
-            harmony.PatchAll(typeof(TNHPatches));
-            harmony.PatchAll(typeof(PatrolPatches));
-            harmony.PatchAll(typeof(HoldPatches));
+            Harmony harmony = new("h3vr.tnhframework");
+            harmony.PatchAll(typeof(ConstructorPatches));
             harmony.PatchAll(typeof(HighScorePatches));
-            
+            harmony.PatchAll(typeof(HoldPatches));
+            harmony.PatchAll(typeof(MiscPatches));
+            harmony.PatchAll(typeof(PatrolPatches));
+            harmony.PatchAll(typeof(SosigPatches));
+            harmony.PatchAll(typeof(SupplyPatches));
+            harmony.PatchAll(typeof(TNHManagerPatches));
+            harmony.PatchAll(typeof(UIManagerPatches));
+
             if (EnableDebugText.Value)
                 harmony.PatchAll(typeof(DebugPatches));
         }
@@ -95,8 +99,6 @@ namespace TNHFramework
         {
             yield break;
         }
-
-
 
         /// <summary>
         /// Loads the sprites used in secondary panels in TNH
@@ -129,9 +131,6 @@ namespace TNHFramework
             result = TNHFrameworkUtils.LoadSprite(file);
             FireRatePanel.plusSprite = result;
         }
-
-
-
 
         /// <summary>
         /// Loads the BepInEx config file, and applies those settings
@@ -196,14 +195,11 @@ namespace TNHFramework
                                     false,
                                     "If true, some text will appear in TNH maps showing additional info");
 
-            
-
             TNHFrameworkLogger.AllowLogging = allowLog.Value;
             TNHFrameworkLogger.LogCharacter = printCharacters.Value;
             TNHFrameworkLogger.LogTNH = logTNH.Value;
             TNHFrameworkLogger.LogFile = logFileReads.Value;
         }
-
 
         /// <summary>
         /// Creates the main TNH Tweaker file folder
@@ -217,28 +213,8 @@ namespace TNHFramework
                 Directory.CreateDirectory(OutputFilePath);
             }
         }
-
-
-
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
-        [HarmonyPrefix]
-        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
-        {
-            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
-
-            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
-
-            ___m_hasCurrentScore = true;
-            ___m_currentScore = score;
-
-            // Draw local scores
-            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
-
-            GM.Omni.SaveToFile();
-
-            return false;
-        }
     }
+
 
     public class TNHTweakerDeli : DeliBehaviour
     {

@@ -152,11 +152,16 @@
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\ConstructorPatches.cs" />
     <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\HighScorePatches.cs" />
     <Compile Include="Main\Patches\HoldPatches.cs" />
+    <Compile Include="Main\Patches\MiscPatches.cs" />
     <Compile Include="Main\Patches\PatrolPatches.cs" />
-    <Compile Include="Main\Patches\TNHPatches.cs" />
+    <Compile Include="Main\Patches\SosigPatches.cs" />
+    <Compile Include="Main\Patches\SupplyPatches.cs" />
+    <Compile Include="Main\Patches\TNHManagerPatches.cs" />
+    <Compile Include="Main\Patches\UIManagerPatches.cs" />
     <Compile Include="Main\TemplateLoadersLegacy.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CharacterEnums.cs" />

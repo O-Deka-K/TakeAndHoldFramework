@@ -1,11 +1,11 @@
 ﻿using FistVR;
-using HarmonyLib;
 using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TNHFramework.ObjectTemplates;
+using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,14 +14,13 @@ namespace TNHFramework
 {
     public static class TNHMenuInitializer
     {
-
         public static bool TNHInitialized = false;
         public static bool MagazineCacheFailed = false;
         public static List<TNH_CharacterDef> SavedCharacters;
 
         public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
-            hotdog.gameObject.SetActive(false);
+            hotdog?.gameObject.SetActive(false);
 
             bool isOtherLoaderLoaded;
             bool isMagPatcherLoaded;
@@ -95,22 +94,54 @@ namespace TNHFramework
                 CreateTNHFiles(path);
             }
 
-            RefreshTNHUI(instance, Categories, CharDatabase);
+            UIManagerPatches.RefreshTNHUI(instance, Categories, CharDatabase);
 
             itemsText.text = "";
             progressText.text = "";
-            hotdog.gameObject.SetActive(true);
+            hotdog?.gameObject.SetActive(true);
             TNHInitialized = true;
         }
 
+        public static void PokeOtherloader()
+        {
+            OtherLoader.LoaderStatus.GetLoaderProgress();
+            List<string> items = OtherLoader.LoaderStatus.LoadingItems;
+        }
 
+        public static float GetOtherLoaderProgress()
+        {
+            return OtherLoader.LoaderStatus.GetLoaderProgress();
+        }
 
+        public static string GetLoadingItems()
+        {
+            List<string> loading = OtherLoader.LoaderStatus.LoadingItems;
+
+            for (int i = 0; i < loading.Count; i++)
+            {
+                string colorHex = ColorUtility.ToHtmlStringRGBA(new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp(((float)loading.Count - i) / loading.Count, 0, 1)));
+                loading[i] = "<color=#" + colorHex + ">Loading Assets (" + loading[i] + ")</color>";
+            }
+
+            loading.Reverse();
+
+            return string.Join("\n", loading.ToArray());
+        }
+
+        public static float PokeMagPatcher()
+        {
+            return PatcherStatus.PatcherProgress;
+        }
+
+        public static string GetMagPatcherCacheLog()
+        {
+            return PatcherStatus.CacheLog;
+        }
 
         public static void InternalMagPatcher()
         {
             List<FVRObject> gunsToIterate = [];
 
-            // *violent screaming*
             foreach (KeyValuePair<string, FVRObject> item in IM.OD)
             {
                 if (item.Value.Category == FVRObject.ObjectCategory.Firearm)
@@ -251,43 +282,6 @@ namespace TNHFramework
             return roundType != FireArmRoundType.a22_LR || magazineType != FireArmMagazineType.mNone || magazineCapacity != 0 || clipType != FireArmClipType.None;
         }
 
-        public static void PokeOtherloader()
-        {
-            OtherLoader.LoaderStatus.GetLoaderProgress();
-            List<string> items = OtherLoader.LoaderStatus.LoadingItems;
-        }
-
-        public static float PokeMagPatcher()
-        {
-            return PatcherStatus.PatcherProgress;
-        }
-
-        public static string GetMagPatcherCacheLog()
-        {
-            return PatcherStatus.CacheLog;
-        }
-
-        public static float GetOtherLoaderProgress()
-        {
-            return OtherLoader.LoaderStatus.GetLoaderProgress();
-        }
-
-        public static string GetLoadingItems()
-        {
-            List<string> loading = OtherLoader.LoaderStatus.LoadingItems;
-
-            for (int i = 0; i < loading.Count; i++)
-            {
-                string colorHex = ColorUtility.ToHtmlStringRGBA(new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp(((float)loading.Count - i) / loading.Count, 0, 1)));
-                loading[i] = "<color=#" + colorHex + ">Loading Assets (" + loading[i] + ")</color>";
-            }
-
-            loading.Reverse();
-
-            return string.Join("\n", loading.ToArray());
-        }
-
-
         public static void LoadTNHTemplates(TNH_CharacterDatabase CharDatabase)
         {
             TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
@@ -298,10 +292,10 @@ namespace TNHFramework
             TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultCharacters(CharDatabase.Characters);
 
-            LoadedTemplateManager.DefaultIconSprites = TNHFrameworkUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
+            LoadedTemplateManager.DefaultIconSprites = GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
             TNHFrameworkLogger.Log("Delayed Init of default characters", TNHFrameworkLogger.LogType.General);
-             InitCharacters(LoadedTemplateManager.DefaultCharacters);
+            InitCharacters(LoadedTemplateManager.DefaultCharacters);
 
             TNHFrameworkLogger.Log("Delayed Init of custom characters", TNHFrameworkLogger.LogType.General);
             InitCharacters(LoadedTemplateManager.CustomCharacters);
@@ -309,26 +303,6 @@ namespace TNHFramework
             TNHFrameworkLogger.Log("Delayed Init of custom sosigs", TNHFrameworkLogger.LogType.General);
             InitSosigs(LoadedTemplateManager.CustomSosigs);
         }
-
-
-
-        public static void CreateTNHFiles(string path)
-        {
-            // Create files relevant for character creation
-            TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
-            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
-            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.CustomSosigs, path);
-            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.DefaultCharacters, path, false);
-            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.CustomCharacters, path, true);
-            TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
-            TNHFrameworkUtils.CreateObjectIDFile(path);
-            TNHFrameworkUtils.CreateSosigIDFile(path);
-            TNHFrameworkUtils.CreateJsonVaultFiles(path);
-            TNHFrameworkUtils.CreateGeneratedTables(path);
-            TNHFrameworkUtils.CreatePopulatedCharacterTemplate(path);
-        }
-
-
 
         /// <summary>
         /// Loads all default sosigs into the template manager
@@ -351,6 +325,25 @@ namespace TNHFramework
             {
                 LoadedTemplateManager.AddCharacterTemplate(character);
             }
+        }
+
+        public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
+        {
+            Dictionary<string, Sprite> icons = [];
+
+            foreach (CustomCharacter character in characters)
+            {
+                foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
+                {
+                    if (!icons.ContainsKey(pool.TableDef.Icon.name))
+                    {
+                        TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
+                        icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
+                    }
+                }
+            }
+
+            return icons;
         }
 
         /// <summary>
@@ -406,47 +399,20 @@ namespace TNHFramework
             }
         }
 
-
-        public static void RefreshTNHUI(TNH_UIManager instance, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase)
+        public static void CreateTNHFiles(string path)
         {
-            TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
-
-            // Load all characters into the UI
-            foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
-            {
-                bool flag = false;
-                foreach (TNH_UIManager.CharacterCategory category in Categories)
-                {
-                    if (category.CategoryName == character.Value.Custom.CategoryData.Name)
-                    {
-                        flag = true; 
-                        break;
-                    }
-                }
-
-                if (!flag)
-                {
-                    Categories.Insert(character.Value.Custom.CategoryData.Priority, new TNH_UIManager.CharacterCategory()
-                    {
-                        CategoryName = character.Value.Custom.CategoryData.Name,
-                        Characters = []
-                    });
-                }
-
-                if (!Categories[(int)character.Value.Def.Group].Characters.Contains(character.Key))
-                {
-                    Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
-                    CharDatabase.Characters.Add(character.Value.Def);
-                }
-            }
-
-            // Update the UI
-            Traverse instanceTraverse = Traverse.Create(instance);
-            int selectedCategory = (int)instanceTraverse.Field("m_selectedCategory").GetValue();
-            int selectedCharacter = (int)instanceTraverse.Field("m_selectedCharacter").GetValue();
-
-            instanceTraverse.Method("SetSelectedCategory", selectedCategory).GetValue();
-            instance.OBS_CharCategory.SetSelectedButton(selectedCharacter);
+            // Create files relevant for character creation
+            TNHFrameworkLogger.Log("Creating character creation files", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, path);
+            TNHFrameworkUtils.CreateSosigTemplateFiles(LoadedTemplateManager.CustomSosigs, path);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.DefaultCharacters, path, false);
+            TNHFrameworkUtils.CreateCharacterFiles(LoadedTemplateManager.CustomCharacters, path, true);
+            TNHFrameworkUtils.CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
+            TNHFrameworkUtils.CreateObjectIDFile(path);
+            TNHFrameworkUtils.CreateSosigIDFile(path);
+            TNHFrameworkUtils.CreateJsonVaultFiles(path);
+            TNHFrameworkUtils.CreateGeneratedTables(path);
+            TNHFrameworkUtils.CreatePopulatedCharacterTemplate(path);
         }
     }
 }

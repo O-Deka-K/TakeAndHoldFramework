@@ -6,19 +6,15 @@ namespace TNHFramework.Patches
 {
     public static class HighScorePatches
     {
-
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
         public static bool StartOfGamePatch(TNH_Manager __instance, bool ___m_hasInit)
         {
             if (!___m_hasInit && __instance.AIManager.HasInit)
-            {
                 TNHFrameworkLogger.Log("Delayed init", TNHFrameworkLogger.LogType.TNH);
-            }
-            
+
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "InitPlayerPosition")]
         [HarmonyPrefix]
@@ -28,7 +24,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "HoldPointCompleted")]
         [HarmonyPrefix]
         public static bool TrackHoldCompletion()
@@ -36,7 +31,6 @@ namespace TNHFramework.Patches
             TNHFrameworkLogger.Log("Hold Completion", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "SetLevel")]
         [HarmonyPrefix]
@@ -46,7 +40,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")]
         [HarmonyPrefix]
         public static bool TrackDeath()
@@ -54,7 +47,6 @@ namespace TNHFramework.Patches
             TNHFrameworkLogger.Log("Died", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")]
         [HarmonyPrefix]
@@ -64,7 +56,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_HoldPoint), "BeginHoldChallenge")]
         [HarmonyPrefix]
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
@@ -73,7 +64,6 @@ namespace TNHFramework.Patches
             return true;
         }
 
-
         [HarmonyPatch(typeof(TNH_GunRecycler), "Button_Recycler")]
         [HarmonyPrefix]
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
@@ -81,7 +71,6 @@ namespace TNHFramework.Patches
             TNHFrameworkLogger.Log("Recycle button", TNHFrameworkLogger.LogType.TNH);
             return true;
         }
-
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "TestVisited")]
         [HarmonyPrefix]
@@ -94,6 +83,7 @@ namespace TNHFramework.Patches
             }
 
             bool flag = __instance.TestVolumeBool(__instance.Bounds, GM.CurrentPlayerBody.transform.position);
+
             if (flag)
             {
                 if (!___m_hasBeenVisited && ___m_contact != null)
@@ -101,22 +91,41 @@ namespace TNHFramework.Patches
                     ___m_contact.SetVisited(true);
                     TNHFrameworkLogger.Log("Visiting supply", TNHFrameworkLogger.LogType.TNH);
                 }
+
                 ___m_hasBeenVisited = true;
             }
 
             __result = flag;
             return false;
         }
-        
 
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "UpdateHighScoreCallbacks")]
         [HarmonyPrefix]
-        public static bool RequestScores(TNH_ScoreDisplay __instance, ref bool ___m_doRequestScoresTop, ref bool ___m_doRequestScoresPlayer)
+        public static bool RequestScores(ref bool ___m_doRequestScoresTop, ref bool ___m_doRequestScoresPlayer)
         {
             // Custom TNH scoreboard is permanently offline, and official scoreboard doesn't support custom characters
             // Local scores still work
             ___m_doRequestScoresTop = false;
             ___m_doRequestScoresPlayer = false;
+
+            return false;
+        }
+
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")]
+        [HarmonyPrefix]
+        public static bool PreventScoring(TNH_ScoreDisplay __instance, string ___m_curSequenceID, ref bool ___m_hasCurrentScore, ref int ___m_currentScore, int score)
+        {
+            TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
+
+            GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
+
+            ___m_hasCurrentScore = true;
+            ___m_currentScore = score;
+
+            // Draw local scores
+            __instance.RedrawHighScoreDisplay(___m_curSequenceID);
+
+            GM.Omni.SaveToFile();
 
             return false;
         }
