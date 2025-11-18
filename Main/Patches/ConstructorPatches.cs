@@ -21,7 +21,7 @@ namespace TNHFramework.Patches
         private static readonly FieldInfo fiLevel = typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiWeaponCases = typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic);
 
-#if (true)  // ODK - TNH_AmmoReloader isn't used anymore
+#if (false)  // ODK - TNH_AmmoReloader isn't used anymore
         /// <summary>
         /// This is a patch for using a character's global ammo blacklist in an ammo reloader
         /// </summary>
@@ -50,6 +50,7 @@ namespace TNHFramework.Patches
                         }
                     }
                 }
+
                 if (list.Count > 0)
                 {
                     ___m_decidedTypes.Add(t, list[UnityEngine.Random.Range(0, list.Count)]);
@@ -112,8 +113,7 @@ namespace TNHFramework.Patches
 
             if (!__instance.M.UnlockedClassesByType.ContainsKey(t))
             {
-                List<FireArmRoundClass> list = new List<FireArmRoundClass>();
-                list.Add(___m_displayedClasses[0]);
+                List<FireArmRoundClass> list = [___m_displayedClasses[0]];
                 __instance.M.UnlockedClassesByType.Add(t, list);
             }
 
