@@ -14,7 +14,6 @@ namespace TNHFramework
     {
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
-
             if (handle is not IFileHandle file)
             {
                 throw new ArgumentException("Could not load sosig! Make sure you're pointing to a sosig template json file in the manifest");
@@ -37,22 +36,18 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
             }
-
         }
     }
-
 
 
     public class CharacterLoaderDeli
     {
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
-            
             if (handle is not IDirectoryHandle dir)
             {
                 throw new ArgumentException("Could not load character! Character should point to a folder holding the character.json and thumb.png");
             }
-
 
             try
             {
@@ -82,7 +77,6 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load custom character! No character.json file found");
                     return;
                 }
-
                 else if (thumbnail == null)
                 {
                     TNHFrameworkLogger.LogError("Failed to load custom character! No thumb.png file found");
@@ -113,12 +107,10 @@ namespace TNHFramework
     }
 
 
-
     public class VaultFileLoaderDeli
     {
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
-
             if (handle is not IFileHandle file)
             {
                 throw new ArgumentException("Could not load vault file! Make sure you're pointing to a vault json file in the manifest");

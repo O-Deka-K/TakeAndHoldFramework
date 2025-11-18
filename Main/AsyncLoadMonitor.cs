@@ -5,12 +5,12 @@ namespace TNHFramework
 {
     public static class AsyncLoadMonitor
     {
-
         public static List<AnvilCallback<AssetBundle>> CallbackList = [];
 
         public static float GetProgress()
         {
-            if (CallbackList.Count == 0) return 1;
+            if (CallbackList.Count == 0)
+                return 1;
 
             float totalStatus = 0;
 
@@ -20,7 +20,6 @@ namespace TNHFramework
                 {
                     CallbackList.RemoveAt(i);
                 }
-
                 else
                 {
                     totalStatus += CallbackList[i].Progress;

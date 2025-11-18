@@ -6,16 +6,10 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    public class CharacterTemplate
+    public class CharacterTemplate(TNH_CharacterDef def, CustomCharacter custom)
     {
-        public TNH_CharacterDef Def;
-        public CustomCharacter Custom;
-
-        public CharacterTemplate(TNH_CharacterDef def, CustomCharacter custom)
-        {
-            Def = def;
-            Custom = custom;
-        }
+        public TNH_CharacterDef Def = def;
+        public CustomCharacter Custom = custom;
     }
 
     public static class LoadedTemplateManager
@@ -50,7 +44,7 @@ namespace TNHFramework
             if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
             {
                 SosigIDDict.Add(template.SosigEnemyID, NewSosigID);
-                NewSosigID += 1;
+                NewSosigID++;
             }
             else
             {
@@ -67,7 +61,6 @@ namespace TNHFramework
 
             TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
-
 
         public static void AddSosigTemplate(SosigEnemyTemplate realTemplate)
         {
@@ -90,7 +83,6 @@ namespace TNHFramework
 
             TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
-
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
@@ -143,10 +135,5 @@ namespace TNHFramework
                 LoadedLegacyVaultFiles.Add(template.FileName, template);
             }
         }
-
     }
-
-
-    
-
 }

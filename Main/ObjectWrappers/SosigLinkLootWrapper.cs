@@ -82,7 +82,7 @@ namespace TNHFramework
                         M.AddObjectToTrackedList(gameObject);
                     }
 
-                    spawnedItems += 1;
+                    spawnedItems++;
                 }
             }
         }

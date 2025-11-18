@@ -3,7 +3,6 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-
     [JsonConverter(typeof(TolerantEnumConverter))]
     public enum ObjectCategory
     {
@@ -210,6 +209,4 @@ namespace TNHFramework.ObjectTemplates
         Fire,
         Utility
     }
-
-
 }
