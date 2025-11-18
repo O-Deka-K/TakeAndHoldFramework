@@ -9,7 +9,6 @@ namespace TNHFramework.ObjectTemplates
 {
     public class SosigTemplate
     {
-
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
         public string SosigEnemyID;
@@ -30,8 +29,8 @@ namespace TNHFramework.ObjectTemplates
 
         public SosigTemplate() { }
 
-        public SosigTemplate(SosigEnemyTemplate template) {
-
+        public SosigTemplate(SosigEnemyTemplate template)
+        {
             DisplayName = template.DisplayName;
             SosigEnemyCategory = template.SosigEnemyCategory;
             SosigEnemyID = template.SosigEnemyID.ToString();
@@ -88,7 +87,6 @@ namespace TNHFramework.ObjectTemplates
         {
             if (template == null)
             {
-
                 TNHFrameworkLogger.Log("Getting sosig template", TNHFrameworkLogger.LogType.Character);
 
                 template = (SosigEnemyTemplate)ScriptableObject.CreateInstance(typeof(SosigEnemyTemplate));
@@ -136,10 +134,7 @@ namespace TNHFramework.ObjectTemplates
                     outfit.DelayedInit();
                 }
 
-                if (DroppedObjectPool != null)
-                {
-                    DroppedObjectPool.DelayedInit();
-                }
+                DroppedObjectPool?.DelayedInit();
                 
 				// Add the new sosig template to the global dictionaries
                 ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(template.SosigEnemyID, template);
@@ -147,7 +142,6 @@ namespace TNHFramework.ObjectTemplates
                 ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[template.SosigEnemyCategory].Add(template);
             }
         }
-
     }
 
     public class SosigConfig
@@ -368,7 +362,6 @@ namespace TNHFramework.ObjectTemplates
 
             return template;
         }
-
     }
 
     public class OutfitConfig
@@ -459,6 +452,5 @@ namespace TNHFramework.ObjectTemplates
             template.Pantswear_Lower = Pantswear_Lower.Select(o => IM.OD[o]).ToList();
             template.Backpacks = Backpacks.Select(o => IM.OD[o]).ToList();
         }
-
     }
 }
