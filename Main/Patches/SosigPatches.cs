@@ -20,6 +20,7 @@ namespace TNHFramework.Patches
                 return false;
 
             GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
+
             if (tem.SosigEnemyID != SosigEnemyID.None)
             {
                 if (tem.OutfitConfig.Count > 0 && LoadedTemplateManager.LoadedSosigsDict.ContainsKey(tem))
@@ -31,6 +32,7 @@ namespace TNHFramework.Patches
                     {
                         UnityEngine.Object.Destroy(item);
                     }
+
                     curClothes.Clear();
 
                     if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
@@ -114,7 +116,7 @@ namespace TNHFramework.Patches
                     {
                         child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
 
-                        if (!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                        if (child is not Transform && child is not MeshFilter && child is not MeshRenderer)
                             UnityEngine.Object.Destroy(child);
                     }
 
@@ -131,7 +133,7 @@ namespace TNHFramework.Patches
                 {
                     child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
 
-                    if (!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                    if (child is not Transform && child is not MeshFilter && child is not MeshRenderer)
                         UnityEngine.Object.Destroy(child);
                 }
 

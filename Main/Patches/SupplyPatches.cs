@@ -18,7 +18,6 @@ namespace TNHFramework.Patches
 
         public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, ref int panelIndex, int minBoxPiles, int maxBoxPiles, bool spawnToken)
         {
-
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
             //supplyPoint.m_isconfigured = true;
             fiIsConfigured.SetValue(supplyPoint, true);
@@ -28,9 +27,7 @@ namespace TNHFramework.Patches
             SpawnSupplyTurrets(supplyPoint, level);
 
             int numConstructors = UnityEngine.Random.Range(level.MinConstructors, level.MaxConstructors + 1);
-
             SpawnSupplyConstructor(supplyPoint, numConstructors);
-
             SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, ref panelIndex);
 
             SpawnSupplyBoxes(supplyPoint, level, minBoxPiles, maxBoxPiles, spawnToken);
@@ -72,16 +69,15 @@ namespace TNHFramework.Patches
                 var activeTurrets = (List<AutoMeater>)fiActiveTurrets.GetValue(point);
                 activeTurrets.Add(turret);
             }
-
         }
 
-        public static void SpawnSupplyConstructor(TNH_SupplyPoint point, int toSpawn)
+        public static void SpawnSupplyConstructor(TNH_SupplyPoint point, int numConstructors)
         {
             TNHFrameworkLogger.Log("Spawning constructor panel", TNHFrameworkLogger.LogType.TNH);
 
             point.SpawnPoints_Panels.Shuffle();
 
-            for (int i = 0; i < toSpawn && i < point.SpawnPoints_Panels.Count; i++)
+            for (int i = 0; i < numConstructors && i < point.SpawnPoints_Panels.Count; i++)
             {
                 GameObject constructor = point.M.SpawnObjectConstructor(point.SpawnPoints_Panels[i]);
                 TNHFramework.SpawnedConstructors.Add(constructor);

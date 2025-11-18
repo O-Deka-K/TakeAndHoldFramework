@@ -57,17 +57,17 @@ namespace TNHFramework.Patches
             return patrolIndex;
         }
 
-        private static void SetTimeTilPatrolCanSpawn(TNH_Manager instance, Patrol patrol)
+        private static void SetTimeTilPatrolCanSpawn(TNH_Manager M, Patrol patrol)
         {
-            if (instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
+            if (M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
                 //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
-                fiTimeTilPatrolCanSpawn.SetValue(instance, patrol.PatrolCadence);
+                fiTimeTilPatrolCanSpawn.SetValue(M, patrol.PatrolCadence);
             }
             else
             {
                 //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
-                fiTimeTilPatrolCanSpawn.SetValue(instance, patrol.PatrolCadenceLimited);
+                fiTimeTilPatrolCanSpawn.SetValue(M, patrol.PatrolCadenceLimited);
             }
         }
 
@@ -428,7 +428,7 @@ namespace TNHFramework.Patches
                 TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, spawnPoints, forwardVectors, patrolPoints, patrolIndex);
                 ___m_patrolSquads.Add(squad);
 
-                for (int i = 1; i < Math.Min(___m_activeSupplyPointIndicies.Count, maxPatrols); i++)
+                for (int i = 1; i < Mathf.Min(___m_activeSupplyPointIndicies.Count, maxPatrols); i++)
                 {
                     patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
 
@@ -454,7 +454,7 @@ namespace TNHFramework.Patches
                 TNH_Manager.SosigPatrolSquad squad = GenerateSentryPatrol(__instance, patrol, spawnPoints, forwardVectors, patrolPoints, patrolIndex);
                 ___m_patrolSquads.Add(squad);
 
-                for (int i = 1; i < Math.Min(___m_activeSupplyPointIndicies.Count, maxPatrols); i++)
+                for (int i = 1; i < Mathf.Min(___m_activeSupplyPointIndicies.Count, maxPatrols); i++)
                 {
                     patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
 
@@ -521,6 +521,7 @@ namespace TNHFramework.Patches
 
             if (validLocations.Count < 1)
                 return false;
+            
             validLocations.Shuffle();
 
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
@@ -592,7 +593,7 @@ namespace TNHFramework.Patches
 
             TNH_Manager.SosigPatrolSquad squad = new()
             {
-                PatrolPoints = new List<Vector3>(PatrolPoints),
+                PatrolPoints = [.. PatrolPoints],
                 IsPatrollingUp = true,
                 ID_Leader = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType],
                 ID_Regular = (patrol.EnemyType.Count > 0) ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None,

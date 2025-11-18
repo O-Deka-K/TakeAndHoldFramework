@@ -193,7 +193,6 @@ namespace TNHFramework.Patches
             {
                 index = pointSequence.HoldPoints[currLevel];
             }
-
             // If we have been to all the points, then we just select a random safe one
             else
             {
@@ -293,11 +292,7 @@ namespace TNHFramework.Patches
                 try
                 {
                     TNH_ObjectConstructor constructor = TNHFramework.SpawnedConstructors[i].GetComponent<TNH_ObjectConstructor>();
-
-                    if (constructor != null)
-                    {
-                        constructor.ClearCase();
-                    }
+                    constructor?.ClearCase();
 
                     UnityEngine.Object.Destroy(TNHFramework.SpawnedConstructors[i]);
                 }

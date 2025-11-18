@@ -110,7 +110,6 @@ namespace TNHFramework.Patches
                 ___m_isChamberRoundOnExtractor = true;
                 ___m_proxy.ClearProxy();
             }
-
         }
 
         // Anton pls fix - Pump action shotgun config not working
