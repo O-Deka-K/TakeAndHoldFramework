@@ -3,7 +3,6 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -17,6 +16,7 @@ namespace TNHFramework.Patches
         private static readonly MethodInfo miDeletionBurst = typeof(TNH_HoldPoint).GetMethod("DeletionBurst", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miIdentifyEncryption = typeof(TNH_HoldPoint).GetMethod("IdentifyEncryption", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miLowerAllBarriers = typeof(TNH_HoldPoint).GetMethod("LowerAllBarriers", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miGetMaxTargsInHold = typeof(TNH_HoldPoint).GetMethod("GetMaxTargsInHold", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly FieldInfo fiValidSpawnPoints = typeof(TNH_HoldPoint).GetField("m_validSpawnPoints", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiCurLevel = typeof(TNH_Manager).GetField("m_curLevel", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -357,58 +357,58 @@ namespace TNHFramework.Patches
             return false;
         }
 
-        // Anton pls fix - Clamp after, not before
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnWarpInMarkers")]
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> SpawnWarpInMarkers_ClampFix(IEnumerable<CodeInstruction> instructions)
+        [HarmonyPrefix]
+        public static bool SpawnWarpInMarkers_Replacement(TNH_HoldPoint __instance, ref List<Transform> ___m_validSpawnPoints, TNH_HoldChallenge.Phase ___m_curPhase,
+            ref int ___m_numTargsToSpawn, int ___m_phaseIndex, ref List<GameObject> ___m_warpInTargets)
         {
-            List<CodeInstruction> code = [.. instructions];
-            List<CodeInstruction> codeToCopy = null;
+            ___m_validSpawnPoints.Clear();
 
-            // Find the code to copy
-            for (int i = 0; i < code.Count - 8; i++)
+            for (int i = 0; i < __instance.SpawnPoints_Targets.Count; i++)
             {
-                if (code[i].opcode == OpCodes.Ldarg_0 &&
-                    code[i + 1].opcode == OpCodes.Ldarg_0 &&
-                    code[i + 2].opcode == OpCodes.Ldfld &&
-                    code[i + 3].opcode == OpCodes.Ldarg_0 &&
-                    code[i + 4].opcode == OpCodes.Ldfld &&
-                    code[i + 5].opcode == OpCodes.Callvirt &&
-                    code[i + 6].opcode == OpCodes.Call &&
-                    code[i + 7].opcode == OpCodes.Stfld)
+                if (__instance.SpawnPoints_Targets[i] != null)
                 {
-                    codeToCopy =
-                    [
-                        new(OpCodes.Ldarg_0),
-                        new(OpCodes.Ldarg_0),
-                        new(OpCodes.Ldfld, code[i + 2].operand),
-                        new(OpCodes.Ldarg_0),
-                        new(OpCodes.Ldfld, code[i + 4].operand),
-                        new(OpCodes.Callvirt, code[i + 5].operand),
-                        new(OpCodes.Call, code[i + 6].operand),
-                        new(OpCodes.Stfld, code[i + 7].operand),
-                    ];
+                    TNH_EncryptionSpawnPoint component = __instance.SpawnPoints_Targets[i].gameObject.GetComponent<TNH_EncryptionSpawnPoint>();
+
+                    if (component == null)
+                        ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[i]);
+                    else if (component.AllowedSpawns[(int)___m_curPhase.Encryption])
+                        ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[i]);
                 }
             }
 
-            // Find the insertion index
-            for (int j = 0; j < code.Count - 3; j++)
+            if (___m_validSpawnPoints.Count <= 0)
+                ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[0]);
+
+            ___m_numTargsToSpawn = UnityEngine.Random.Range(___m_curPhase.MinTargets, ___m_curPhase.MaxTargets + 1);
+
+            if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
             {
-                // Search for "m_validSpawnPoints.Shuffle<Transform>()"
-                if (code[j].opcode == OpCodes.Ldarg_0 &&
-                    code[j + 1].opcode == OpCodes.Ldfld &&
-                    code[j + 2].opcode == OpCodes.Call)
-                {
-                    if (codeToCopy != null)
-                    {
-                        code.InsertRange(j - 1, codeToCopy);
-                        TNHFrameworkLogger.Log($"SpawnWarpInMarkers_ClampFix transpiler patched!", TNHFrameworkLogger.LogType.TNH);
-                    }
-                    break;
-                }
+                //___m_numTargsToSpawn = this.GetMaxTargsInHold();
+                ___m_numTargsToSpawn = (int)miGetMaxTargsInHold.Invoke(__instance, []);
+
+                if (___m_phaseIndex == 0)
+                    ___m_numTargsToSpawn -= 2;
+
+                if (___m_phaseIndex == 1)
+                    ___m_numTargsToSpawn--;
+
+                if (LoadedTemplateManager.CurrentCharacter.isCustom && ___m_numTargsToSpawn < 5)  // ODK - Need a few more
+                    ___m_numTargsToSpawn = 5;
+                else if (___m_numTargsToSpawn < 3)
+                    ___m_numTargsToSpawn = 3;
             }
 
-            return code;
+            ___m_numTargsToSpawn = Mathf.Min(___m_numTargsToSpawn, ___m_validSpawnPoints.Count);  // ODK - Moved this down
+            ___m_validSpawnPoints.Shuffle<Transform>();
+
+            for (int j = 0; j < ___m_numTargsToSpawn; j++)
+            {
+                GameObject item = UnityEngine.Object.Instantiate<GameObject>(__instance.M.Prefab_TargetWarpingIn, ___m_validSpawnPoints[j].position, ___m_validSpawnPoints[j].rotation);
+                ___m_warpInTargets.Add(item);
+            }
+
+            return false;
         }
     }
 }
