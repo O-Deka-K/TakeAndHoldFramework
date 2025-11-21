@@ -6,13 +6,15 @@ using System.Collections.Generic;
 using System.IO;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
-using CustomCharacter = TNHFramework.ObjectTemplates.CustomCharacter;
 using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
 
 namespace TNHFramework.Utilities
 {
     static class TNHFrameworkUtils
     {
+        public static bool IsSpawning = false;
+        public static GameObject LastSpawnedGun;
+
         public static void RunCoroutine(IEnumerator routine, Action<Exception> onError = null)
         {
             AnvilManager.Run(RunAndCatch(routine, onError));
@@ -43,94 +45,43 @@ namespace TNHFramework.Utilities
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.IDOverride != null)
-            {
-                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(group.IDOverride[i]))
-                    {
-                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
-                        {
-                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
-                            {
-                                group.IDOverride.RemoveAt(i);
-                            }
-                        }
-
-                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
-                        {
-                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
-                            {
-                                group.IDOverride.RemoveAt(i);
-                            }
-                        }
-
-                        // If this is not a vaulted gun, remove it
-                        else
-                        {
-                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
-                            group.IDOverride.RemoveAt(i);
-                        }
-                    }
-                }
-            }
+                RemoveMissingObjectIDs(group.IDOverride);
         }
 
         public static void RemoveUnloadedObjectIDs(ObjectTemplates.V1.EquipmentGroup group)
         {
             if (group.IDOverride != null)
-            {
-                for (int i = group.IDOverride.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(group.IDOverride[i]))
-                    {
-                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(group.IDOverride[i]))
-                        {
-                            if (!LoadedTemplateManager.LoadedLegacyVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
-                            {
-                                group.IDOverride.RemoveAt(i);
-                            }
-                        }
-
-                        // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
-                        {
-                            if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]]))
-                            {
-                                group.IDOverride.RemoveAt(i);
-                            }
-                        }
-
-                        // If this is not a vaulted gun, remove it
-                        else
-                        {
-                            TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {group.IDOverride[i]}");
-                            group.IDOverride.RemoveAt(i);
-                        }
-                    }
-                }
-            }
+                RemoveMissingObjectIDs(group.IDOverride);
         }
 
-        public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
+        public static void RemoveMissingObjectIDs(List<string> IDOverride)
         {
-            Dictionary<string, Sprite> icons = [];
-
-            foreach (CustomCharacter character in characters)
+            for (int i = IDOverride.Count - 1; i >= 0; i--)
             {
-                foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
+                if (!IM.OD.ContainsKey(IDOverride[i]))
                 {
-                    if (!icons.ContainsKey(pool.TableDef.Icon.name))
+                    // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                    if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(IDOverride[i]))
                     {
-                        TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
-                        icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
+                        if (!LoadedTemplateManager.LoadedLegacyVaultFiles[IDOverride[i]].AllComponentsLoaded())
+                            IDOverride.RemoveAt(i);
+                    }
+
+                    // If this is a vaulted gun with all it's components loaded, we should still have this in the object list
+                    else if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(IDOverride[i]))
+                    {
+                        if (!VaultFileComponentsLoaded(LoadedTemplateManager.LoadedVaultFiles[IDOverride[i]]))
+                            IDOverride.RemoveAt(i);
+                    }
+
+                    // If this is not a vaulted gun, remove it
+                    else
+                    {
+                        TNHFrameworkLogger.LogWarning($"Object in table not loaded, removing it from object table! ObjectID: {IDOverride[i]}");
+                        IDOverride.RemoveAt(i);
                     }
                 }
             }
-
-            return icons;
         }
 
         public static bool VaultFileComponentsLoaded(VaultFile template)
@@ -348,8 +299,10 @@ namespace TNHFramework.Utilities
             }
         }
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
+        public static IEnumerator SpawnLegacyVaultFile(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
         {
+            IsSpawning = true;
+
             List<GameObject> toDealWith = [];
             List<GameObject> toMoveToTrays = [];
             FVRFireArm myGun = null;
@@ -379,7 +332,9 @@ namespace TNHFramework.Utilities
                 {
                     myGun = gameObject.GetComponent<FVRFireArm>();
                     savedGun.ApplyFirearmProperties(myGun);
-                    
+
+                    LastSpawnedGun = gameObject;
+
                     validIndexes.Add(j);
                     gameObject.transform.position = position;
                     gameObject.transform.rotation = Quaternion.identity;
@@ -474,6 +429,8 @@ namespace TNHFramework.Utilities
             
             myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
             myGun.transform.rotation = rotation;
+
+            IsSpawning = false;
             yield break;
         }
 
@@ -488,6 +445,25 @@ namespace TNHFramework.Utilities
             a += gun.up * data.PosOffset.y;
             a += gun.right * data.PosOffset.x;
             return a + gun.forward * data.PosOffset.z;
+        }
+
+        public static IEnumerator SpawnItemRoutine(TNH_Manager M, Vector3 position, Quaternion rotation, FVRObject o)
+        {
+            TNHFrameworkLogger.Log($"SpawnItemRoutine: START [{o.ItemID}]", TNHFrameworkLogger.LogType.TNH);
+
+            if (o == null)
+                yield break;
+
+            IsSpawning = true;
+            yield return o.GetGameObjectAsync();
+
+            TNHFrameworkLogger.Log($"SpawnItemRoutine: Spawning item [{o.ItemID}]", TNHFrameworkLogger.LogType.TNH);
+            LastSpawnedGun = UnityEngine.Object.Instantiate(o.GetGameObject(), position, rotation);
+            M.AddObjectToTrackedList(LastSpawnedGun);
+            LastSpawnedGun.SetActive(true);
+
+            IsSpawning = false;
+            yield break;
         }
 
         /// <summary>
