@@ -59,15 +59,15 @@ namespace TNHFramework.Patches
 
         private static void SetTimeTilPatrolCanSpawn(TNH_Manager M, Patrol patrol)
         {
-            if (M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
-            {
-                //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
-                fiTimeTilPatrolCanSpawn.SetValue(M, patrol.PatrolCadence);
-            }
-            else
+            if (M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
                 fiTimeTilPatrolCanSpawn.SetValue(M, patrol.PatrolCadenceLimited);
+            }
+            else
+            {
+                //instance.m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
+                fiTimeTilPatrolCanSpawn.SetValue(M, patrol.PatrolCadence);
             }
         }
 
@@ -84,13 +84,13 @@ namespace TNHFramework.Patches
 
             Level level = LoadedTemplateManager.CurrentLevel;
 
-            int maxPatrols = (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ?
-                level.Patrols[0].MaxPatrols : level.Patrols[0].MaxPatrolsLimited;
+            int maxPatrols = (__instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking) ?
+                level.Patrols[0].MaxPatrolsLimited : level.Patrols[0].MaxPatrols;
 
             // Adjust max patrols for new patrol behavior
             if (!__instance.UsesClassicPatrolBehavior && !LoadedTemplateManager.CurrentCharacter.isCustom)
             {
-                maxPatrols += (__instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo) ? 1 : 2;
+                maxPatrols += (__instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking) ? 1 : 2;
             }
 
             // Time to generate a new patrol
@@ -404,8 +404,8 @@ namespace TNHFramework.Patches
 
             Patrol patrol = level.Patrols[patrolIndex];
 
-            int maxPatrols = (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ?
-                level.Patrols[0].MaxPatrols : level.Patrols[0].MaxPatrolsLimited;
+            int maxPatrols = (__instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking) ?
+                level.Patrols[0].MaxPatrolsLimited : level.Patrols[0].MaxPatrols;
 
             if (isStart)
             {

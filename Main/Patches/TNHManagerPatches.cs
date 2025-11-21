@@ -71,7 +71,7 @@ namespace TNHFramework.Patches
             level.PossiblePanelTypes.ForEach(o => TNHFrameworkLogger.Log(o.ToString(), TNHFrameworkLogger.LogType.TNH));
 
             // Ensure ammo reloaders spawn first if this is limited ammo
-            if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 level.PossiblePanelTypes.Remove(PanelType.AmmoReloader);
                 level.PossiblePanelTypes.Insert(0, PanelType.AmmoReloader);
