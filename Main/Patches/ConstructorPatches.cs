@@ -567,9 +567,7 @@ namespace TNHFramework.Patches
                 sightObj = M.GetObjectTable(M.C.RequireSightTable).GetRandomObject();
 
                 if (sightObj.RequiredSecondaryPieces.Count > 0)
-                {
                     requiredAttachment_B = sightObj.RequiredSecondaryPieces[0];
-                }
             }
             // Check the bespoke attachment chance here
             // In vanilla TNH, it ALWAYS spawns a bespoke attachment if there is one
@@ -579,15 +577,11 @@ namespace TNHFramework.Patches
             }
 
             if (weapon.RequiredSecondaryPieces.Count > 0)
-            {
                 requiredAttachment_B = weapon.RequiredSecondaryPieces[0];
-            }
 
             bool spawnAmmoAsBox = false;
             if (M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking && weapon.TagFirearmRoundPower != FVRObject.OTagFirearmRoundPower.Ordnance)
-            {
                 spawnAmmoAsBox = true;
-            }
 
             createComp.PlaceWeaponInContainer(weapon, sightObj, requiredAttachment_B, ammoObj, numClipSpeedLoaderRound, spawnAmmoAsBox);
             return caseObj;
