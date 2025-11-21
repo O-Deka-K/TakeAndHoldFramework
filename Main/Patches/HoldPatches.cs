@@ -60,8 +60,7 @@ namespace TNHFramework.Patches
             Phase currentPhase = LoadedTemplateManager.CurrentCharacter.GetCurrentPhase(___m_curPhase);
 
             // If we shouldn't spawn any targets, we exit out early
-            if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
-                (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
+            if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) || currentPhase.MaxTargetsLimited < 1)
             {
                 //__instance.CompletePhase();
                 miCompletePhase.Invoke(__instance, []);
@@ -110,7 +109,7 @@ namespace TNHFramework.Patches
                 ___m_hasThrownNadesInWave = false;
 
                 // Adjust spawn cadence depending on ammo mode
-                float ammoMult = (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking ? 1f : 1.35f);
+                float ammoMult = (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking ? 1.35f : 1f);
                 float randomMult = (GM.TNHOptions.TNHSeed < 0) ? Random.Range(0.9f, 1.1f) : 0.9f;
                 ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence * randomMult * ammoMult;
             }
@@ -296,15 +295,7 @@ namespace TNHFramework.Patches
             int minTargets = currentPhase.MinTargets;
             int maxTargets = currentPhase.MaxTargets;
 
-            if (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
-            {
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-                {
-                    minTargets = Mathf.Max(minTargets, 3);
-                    maxTargets = Mathf.Max(maxTargets, 5);
-                }
-            }
-            else
+            if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 minTargets = currentPhase.MinTargetsLimited;
                 maxTargets = currentPhase.MaxTargetsLimited;
@@ -312,21 +303,29 @@ namespace TNHFramework.Patches
                 if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     maxTargets = Mathf.Max(maxTargets, 3);
             }
+            else
+            {
+                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                {
+                    minTargets = Mathf.Max(minTargets, 3);
+                    maxTargets = Mathf.Max(maxTargets, 5);
+                }
+            }
 
             List<FVRObject> encryptions;
-            if (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
-            {
-                if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-                    encryptions = [__instance.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
-                else
-                    encryptions = currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefab(o)).ToList();
-            }
-            else
+            if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     encryptions = [__instance.M.GetEncryptionPrefabSimple(TNH_EncryptionType.Static)];
                 else
                     encryptions = currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefabSimple(o)).ToList();
+            }
+            else
+            {
+                if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                    encryptions = [__instance.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
+                else
+                    encryptions = currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefab(o)).ToList();
             }
 
             minTargets = Mathf.Min(minTargets, ___m_validSpawnPoints.Count);
