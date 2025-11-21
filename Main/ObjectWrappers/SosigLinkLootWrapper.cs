@@ -65,21 +65,23 @@ namespace TNHFramework
                     {
                         TNHFrameworkLogger.Log($"Spawning vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
 
-                        Transform newTransform = transform;
-                        newTransform.position = transform.position + (Vector3.up * 0.1f * spawnedItems);
-                        VaultSystem.SpawnVaultFile(LoadedTemplateManager.LoadedVaultFiles[selectedItem], newTransform, true, false, false, out _, Vector3.zero);
+                        GameObject newObject = new("SosigDropMarker");
+                        newObject.transform.position = transform.position + (Vector3.up * 0.1f * spawnedItems);
+                        newObject.transform.rotation = transform.rotation;
+                        newObject.transform.localScale = transform.localScale;
+                        VaultSystem.SpawnVaultFile(LoadedTemplateManager.LoadedVaultFiles[selectedItem], newObject.transform, true, false, false, out _, Vector3.zero);
+                        Destroy(newObject, 10f);
                     }
                     else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem))
                     {
                         TNHFrameworkLogger.Log($"Spawning legacy vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
-                        AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
+                        AnvilManager.Run(TNHFrameworkUtils.SpawnLegacyVaultFile(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
                             transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation, M));
                     }
                     else
                     {
                         TNHFrameworkLogger.Log($"Spawning item {selectedItem}", TNHFrameworkLogger.LogType.TNH);
-                        GameObject gameObject = Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation);
-                        M.AddObjectToTrackedList(gameObject);
+                        AnvilManager.Run(TNHFrameworkUtils.SpawnItemRoutine(M, transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation, IM.OD[selectedItem]));
                     }
 
                     spawnedItems++;
