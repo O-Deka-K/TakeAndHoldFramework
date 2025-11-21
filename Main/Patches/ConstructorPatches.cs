@@ -2,6 +2,7 @@
 using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
@@ -12,66 +13,21 @@ namespace TNHFramework.Patches
     static class ConstructorPatches
     {
         private static readonly MethodInfo miUpdateTokenDisplay = typeof(TNH_AmmoReloader2).GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo miUpdateRerollButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miSetState = typeof(TNH_ObjectConstructor).GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miUpdateLockUnlockButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateLockUnlockButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miUpdateRerollButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly FieldInfo fiAllowEntry = typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiSpawnedCase = typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiLevel = typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiWeaponCases = typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic);
 
-#if (false)  // ODK - TNH_AmmoReloader isn't used anymore
-        /// <summary>
-        /// This is a patch for using a character's global ammo blacklist in an ammo reloader
-        /// </summary>
-        /// <param name="__instance"></param>
-        /// <param name="__result"></param>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
-        [HarmonyPrefix]
-        public static bool AmmoReloaderGetAmmo(ref FireArmRoundClass __result, Dictionary<FireArmRoundType, FireArmRoundClass> ___m_decidedTypes,
-            List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t)
-        {
-            if (!___m_decidedTypes.ContainsKey(t))
-            {
-                List<FireArmRoundClass> list = [];
-                CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
-
-                for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
-                {
-                    FVRObject objectID = AM.SRoundDisplayDataDic[t].Classes[i].ObjectID;
-                    if (___m_validEras.Contains(objectID.TagEra) && ___m_validSets.Contains(objectID.TagSet))
-                    {
-                        if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))
-                        {
-                            list.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
-                        }
-                    }
-                }
-
-                if (list.Count > 0)
-                {
-                    ___m_decidedTypes.Add(t, list[UnityEngine.Random.Range(0, list.Count)]);
-                }
-                else
-                {
-                    ___m_decidedTypes.Add(t, AM.GetRandomValidRoundClass(t));
-                }
-            }
-
-            __result = ___m_decidedTypes[t];
-            return false;
-        }
-#endif
-
         // This is a patch for using a character's global ammo blacklist in the new ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "RefreshDisplayWithType")]
         [HarmonyPrefix]
         public static bool RefreshDisplayWithTypeBlacklist(TNH_AmmoReloader2 __instance, List<FireArmRoundType> ___m_detectedTypes, ref bool ___m_isConfirmingPurchase,
             ref bool ___hasDisplayedType, ref FireArmRoundType ___m_displayedType, ref List<FireArmRoundClass> ___m_displayedClasses, int ___m_selectedClass,
-            int ___m_confirmingClass, List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t, int selectedEntry, bool confirmPurchase)
+            int ___m_confirmingClass, List<FVRObject.OTagEra> ___m_validEras, List<FVRObject.OTagSet> ___m_validSets, FireArmRoundType t, bool confirmPurchase)
         {
             __instance.AmmoTypeField.text = AM.SRoundDisplayDataDic[t].DisplayName;
 
@@ -160,55 +116,63 @@ namespace TNHFramework.Patches
             return false;
         }
 
+        // Fix backported from build 120b5
+        [HarmonyPatch(typeof(TNH_ObjectConstructor), "UnlockPoolCategory")]
+        [HarmonyPostfix]
+        public static void UnlockPoolCategory_UnlockOnAll()
+        {
+            TNH_ObjectConstructor[] constructors = UnityEngine.Object.FindObjectsOfType<TNH_ObjectConstructor>();
+
+            foreach (TNH_ObjectConstructor constructor in constructors)
+            {
+                if (constructor.UsesUnlock)
+                {
+                    //constructor.UpdateLockUnlockButtonState(false);
+                    miUpdateLockUnlockButtonState.Invoke(constructor, [false]);
+                }
+                else
+                {
+                    //constructor.UpdateRerollButtonState(false);
+                    miUpdateRerollButtonState.Invoke(constructor, [false]);
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]
         [HarmonyPrefix]
-        public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
+        public static bool GetPoolEntry_Replacement(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
         {
-            // Collect all pools that could spawn based on level and type, and sum up their rarities
-            List<EquipmentPoolDef.PoolEntry> validPools = [];
-            float summedRarity = 0;
-            foreach (EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
+            if (!TNHFramework.SpawnedPoolsDictionary.TryGetValue(t, out List<EquipmentPoolDef.PoolEntry> validPools) || !validPools.Any())
             {
-                if (entry.Type == t && entry.MinLevelAppears <= level && entry.MaxLevelAppears >= level)
-                {
-                    validPools.Add(entry);
-                    summedRarity += entry.Rarity;
-                }
+                validPools = poolDef.Entries.Where(o => o.Type == t && o.MinLevelAppears <= level && level <= o.MaxLevelAppears).ToList();
+                TNHFramework.SpawnedPoolsDictionary[t] = validPools;
             }
 
             // If we didn't find a single pool, we cry about it
-            if (validPools.Count == 0)
+            if (validPools == null || !validPools.Any())
             {
                 TNHFrameworkLogger.LogWarning("No valid pool could spawn at constructor for type (" + t + ")");
                 __result = null;
                 return false;
             }
 
-            // Go back through and remove pools that have already spawned, unless there is only one entry left
-            validPools.Shuffle();
-            for (int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
-            {
-                if (TNHFramework.SpawnedPools.Contains(validPools[i]))
-                {
-                    summedRarity -= validPools[i].Rarity;
-                    validPools.RemoveAt(i);
-                }
-            }
+            float summedRarity = validPools.Sum(o => o.Rarity);
 
             // Select a random value within the summed rarity, and select a pool based on that value
-            float selectValue = UnityEngine.Random.Range(0, summedRarity);
+            float selectValue = Random.Range(0, summedRarity);
             float currentSum = 0;
             foreach (EquipmentPoolDef.PoolEntry entry in validPools)
             {
                 currentSum += entry.Rarity;
+
                 if (selectValue <= currentSum)
                 {
                     __result = entry;
-                    TNHFramework.SpawnedPools.Add(entry);
+                    //TNHFramework.SpawnedPools.Add(entry);
+                    validPools.Remove(entry);
                     return false;
                 }
             }
-
 
             TNHFrameworkLogger.LogError("Somehow escaped pool entry rarity selection! This is not good!");
             __result = poolDef.Entries[0];
@@ -219,18 +183,20 @@ namespace TNHFramework.Patches
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")]
         [HarmonyPriority(800)]
         [HarmonyPrefix]
-        public static bool ButtonClickedReplacement(TNH_ObjectConstructor __instance, bool ___allowEntry, List<EquipmentPoolDef.PoolEntry> ___m_poolEntries,
+        public static bool ButtonClicked_Replacement(TNH_ObjectConstructor __instance, bool ___allowEntry, List<EquipmentPoolDef.PoolEntry> ___m_poolEntries,
             ref int ___m_selectedEntry, GameObject ___m_spawnedCase, ref int ___m_numTokensSelected, ref List<int> ___m_poolAddedCost, int i)
         {
-            //__instance.UpdateRerollButtonState(false);
-            miUpdateRerollButtonState.Invoke(__instance, [false]);
+            if (!__instance.Icons[i].gameObject.activeSelf)
+                return false;
 
             if (!___allowEntry)
                 return false;
 
             if (__instance.State == TNH_ObjectConstructor.ConstructorState.EntryList)
             {
-                int cost = ___m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[i];
+                int cost = 0;
+                if (___m_poolEntries[i] != null)
+                    cost = ___m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[i];
 
                 if (__instance.M.GetNumTokens() >= cost)
                 {
@@ -254,7 +220,9 @@ namespace TNHFramework.Patches
                 }
                 else if (i == 3)
                 {
-                    int cost = ___m_poolEntries[___m_selectedEntry].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[___m_selectedEntry];
+                    int cost = 0;
+                    if (___m_poolEntries[i] != null)
+                        cost = ___m_poolEntries[___m_selectedEntry].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[___m_selectedEntry];
 
                     if (__instance.M.GetNumTokens() >= cost)
                     {
@@ -266,9 +234,7 @@ namespace TNHFramework.Patches
                             SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Spawn, __instance.transform.position);
 
                             if (__instance.M.C.UsesPurchasePriceIncrement)
-                            {
                                 ___m_poolAddedCost[___m_selectedEntry]++;
-                            }
 
                             //__instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
                             miSetState.Invoke(__instance, [TNH_ObjectConstructor.ConstructorState.EntryList, 0]);
@@ -287,20 +253,6 @@ namespace TNHFramework.Patches
             }
 
             return false;
-        }
-
-        // Anton pls fix - When you click the unlock button, it should unlock the category on ALL spawned constructors, not just one
-        [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked_Unlock")]
-        [HarmonyPostfix]
-        public static void ButtonClicked_UnlockOnAll()
-        {
-            foreach (GameObject constructorObject in TNHFramework.SpawnedConstructors)
-            {
-                //constructorObject?.GetComponent<TNH_ObjectConstructor>()?.UpdateLockUnlockButtonState(false);
-                var constructor = constructorObject?.GetComponent<TNH_ObjectConstructor>();
-                if (constructor != null)
-                    miUpdateLockUnlockButtonState.Invoke(constructor, [false]);
-            }
         }
 
         private static IEnumerator SpawnObjectAtConstructor(EquipmentPoolDef.PoolEntry entry, TNH_ObjectConstructor constructor)
@@ -425,7 +377,7 @@ namespace TNHFramework.Patches
                         else if (vaultFileLegacy != null)
                         {
                             TNHFrameworkLogger.Log("Spawning legacy vaulted gun", TNHFrameworkLogger.LogType.TNH);
-                            AnvilManager.Run(TNHFrameworkUtils.SpawnFirearm(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation, constructor.M));
+                            AnvilManager.Run(TNHFrameworkUtils.SpawnLegacyVaultFile(vaultFileLegacy, primarySpawn.position, primarySpawn.rotation, constructor.M));
                             // SpawnFirearm adds the objects to the tracked objects list
                         }
                         else
@@ -434,7 +386,7 @@ namespace TNHFramework.Patches
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
 
-                            GameObject spawnedObject = UnityEngine.Object.Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
+                            GameObject spawnedObject = Object.Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
                             constructor.M.AddObjectToTrackedList(spawnedObject);
                             TNHFrameworkLogger.Log("Normal item spawned", TNHFrameworkLogger.LogType.TNH);
                         }
@@ -455,7 +407,7 @@ namespace TNHFramework.Patches
                                 yield return gameObjectCallback;
 
                                 TNHFrameworkLogger.Log($"Spawning required secondary item ({requiredObject.ItemID})", TNHFrameworkLogger.LogType.TNH);
-                                GameObject requiredItem = UnityEngine.Object.Instantiate(requiredObject.GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
+                                GameObject requiredItem = Object.Instantiate(requiredObject.GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
                                 constructor.M.AddObjectToTrackedList(requiredItem);
                                 requiredSpawnCount++;
                             }
@@ -487,7 +439,7 @@ namespace TNHFramework.Patches
                                 yield return gameObjectCallback;
 
                                 TNHFrameworkLogger.Log($"Spawning magazine ({magazineObject.ItemID})", TNHFrameworkLogger.LogType.TNH);
-                                GameObject spawnedMag = UnityEngine.Object.Instantiate(magazineObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                GameObject spawnedMag = Object.Instantiate(magazineObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
                                 constructor.M.AddObjectToTrackedList(spawnedMag);
                                 ammoSpawnCount++;
 
@@ -497,7 +449,7 @@ namespace TNHFramework.Patches
                                 TNHFrameworkLogger.Log($"Spawning clip ({clipObject.ItemID}), Count = {group.NumClipsSpawned}", TNHFrameworkLogger.LogType.TNH);
                                 for (int i = 0; i < group.NumClipsSpawned; i++)
                                 {
-                                    GameObject spawnedClip = UnityEngine.Object.Instantiate(clipObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    GameObject spawnedClip = Object.Instantiate(clipObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
                                     constructor.M.AddObjectToTrackedList(spawnedClip);
                                     ammoSpawnCount++;
                                 }
@@ -540,7 +492,7 @@ namespace TNHFramework.Patches
 
                                 for (int i = 0; i < numSpawned; i++)
                                 {
-                                    GameObject spawned = UnityEngine.Object.Instantiate(ammoObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    GameObject spawned = Object.Instantiate(ammoObject.GetGameObject(), ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
                                     constructor.M.AddObjectToTrackedList(spawned);
                                     ammoSpawnCount++;
                                 }
@@ -573,7 +525,7 @@ namespace TNHFramework.Patches
                             objectSpawnCount++;
                         }
                         // If this object has bespoke attachments we'll try to spawn one
-                        else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < group.BespokeAttachmentChance)
+                        else if (mainObject.BespokeAttachments.Count > 0 && Random.value < group.BespokeAttachmentChance)
                         {
                             TNHFrameworkLogger.Log("Spawning bespoke attachment", TNHFrameworkLogger.LogType.TNH);
                             FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
@@ -597,7 +549,7 @@ namespace TNHFramework.Patches
         public static GameObject SpawnWeaponCase(TNH_Manager M, float bespokeAttachmentChance, GameObject caseFab, Vector3 position, Vector3 forward,
             FVRObject weapon, int numMag, int numRound, int minAmmo, int maxAmmo, FVRObject ammoObjOverride = null)
         {
-            GameObject caseObj = UnityEngine.Object.Instantiate<GameObject>(caseFab, position, Quaternion.LookRotation(forward, Vector3.up));
+            GameObject caseObj = Object.Instantiate<GameObject>(caseFab, position, Quaternion.LookRotation(forward, Vector3.up));
 
             //M.m_weaponCases.Add(caseObj);
             var weaponCases = (List<GameObject>)fiWeaponCases.GetValue(M);
@@ -621,9 +573,9 @@ namespace TNHFramework.Patches
             }
             // Check the bespoke attachment chance here
             // In vanilla TNH, it ALWAYS spawns a bespoke attachment if there is one
-            else if (weapon.BespokeAttachments.Count > 0 && UnityEngine.Random.value < bespokeAttachmentChance)
+            else if (weapon.BespokeAttachments.Count > 0 && Random.value < bespokeAttachmentChance)
             {
-                sightObj = weapon.BespokeAttachments[UnityEngine.Random.Range(0, weapon.BespokeAttachments.Count)];
+                sightObj = weapon.BespokeAttachments[Random.Range(0, weapon.BespokeAttachments.Count)];
             }
 
             if (weapon.RequiredSecondaryPieces.Count > 0)
@@ -631,7 +583,13 @@ namespace TNHFramework.Patches
                 requiredAttachment_B = weapon.RequiredSecondaryPieces[0];
             }
 
-            createComp.PlaceWeaponInContainer(weapon, sightObj, requiredAttachment_B, ammoObj, numClipSpeedLoaderRound);
+            bool spawnAmmoAsBox = false;
+            if (M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking && weapon.TagFirearmRoundPower != FVRObject.OTagFirearmRoundPower.Ordnance)
+            {
+                spawnAmmoAsBox = true;
+            }
+
+            createComp.PlaceWeaponInContainer(weapon, sightObj, requiredAttachment_B, ammoObj, numClipSpeedLoaderRound, spawnAmmoAsBox);
             return caseObj;
         }
 
