@@ -87,7 +87,7 @@ namespace TNHFramework.ObjectTemplates
                     CategoryData.Name = "Memetastic Meats";
                     break;
 
-                case TNH_CharacterDef.CharacterGroup.Competitive:
+                case TNH_CharacterDef.CharacterGroup.ChallengingMeals:
                     CategoryData.Name = "Competitive Casings";
                     break;
             }
