@@ -369,6 +369,7 @@ namespace TNHFramework.ObjectTemplates
         public List<string> Headwear;
         public float Chance_Headwear;
         public bool ForceWearAllHead;
+        public bool HeadUsesTorsoIndex;
         public List<string> Eyewear;
         public float Chance_Eyewear;
         public bool ForceWearAllEye;
@@ -381,12 +382,20 @@ namespace TNHFramework.ObjectTemplates
         public List<string> Pantswear;
         public float Chance_Pantswear;
         public bool ForceWearAllPants;
+        public bool PantsUsesTorsoIndex;
         public List<string> Pantswear_Lower;
         public float Chance_Pantswear_Lower;
         public bool ForceWearAllPantsLower;
+        public bool PantsLowerUsesPantsIndex;
         public List<string> Backpacks;
         public float Chance_Backpacks;
         public bool ForceWearAllBackpacks;
+        public List<string> TorosDecoration;
+        public float Chance_TorosDecoration;
+        public bool ForceWearAllTorosDecorations;
+        public List<string> Belt;
+        public float Chance_Belt;
+        public bool ForceWearAllBelts;
 
         [JsonIgnore]
         private SosigOutfitConfig template;
@@ -402,6 +411,8 @@ namespace TNHFramework.ObjectTemplates
             Pantswear = template.Pantswear.Select(o => o.ItemID).ToList();
             Pantswear_Lower = template.Pantswear_Lower.Select(o => o.ItemID).ToList();
             Backpacks = template.Backpacks.Select(o => o.ItemID).ToList();
+            TorosDecoration = template.TorosDecoration.Select(o => o.ItemID).ToList();
+            Belt = template.Belt.Select(o => o.ItemID).ToList();
             Chance_Headwear = template.Chance_Headwear;
             Chance_Eyewear = template.Chance_Eyewear;
             Chance_Facewear = template.Chance_Facewear;
@@ -409,6 +420,11 @@ namespace TNHFramework.ObjectTemplates
             Chance_Pantswear = template.Chance_Pantswear;
             Chance_Pantswear_Lower = template.Chance_Pantswear_Lower;
             Chance_Backpacks = template.Chance_Backpacks;
+            Chance_TorosDecoration = template.Chance_TorosDecoration;
+            Chance_Belt = template.Chance_Belt;
+            HeadUsesTorsoIndex = template.HeadUsesTorsoIndex;
+            PantsUsesTorsoIndex = template.PantsUsesTorsoIndex;
+            PantsLowerUsesPantsIndex = template.PantsLowerUsesPantsIndex;
 
             this.template = template;
         }
@@ -422,6 +438,8 @@ namespace TNHFramework.ObjectTemplates
             Pantswear ??= [];
             Pantswear_Lower ??= [];
             Backpacks ??= [];
+            TorosDecoration ??= [];
+            Belt ??= [];
         }
 
         public SosigOutfitConfig GetOutfitConfig()
@@ -437,6 +455,8 @@ namespace TNHFramework.ObjectTemplates
                 template.Chance_Pantswear = Chance_Pantswear;
                 template.Chance_Pantswear_Lower = Chance_Pantswear_Lower;
                 template.Chance_Backpacks = Chance_Backpacks;
+                template.Chance_TorosDecoration = Chance_TorosDecoration;
+                template.Chance_Belt = Chance_Belt;
             }
 
             return template;
@@ -451,6 +471,8 @@ namespace TNHFramework.ObjectTemplates
             template.Pantswear = Pantswear.Select(o => IM.OD[o]).ToList();
             template.Pantswear_Lower = Pantswear_Lower.Select(o => IM.OD[o]).ToList();
             template.Backpacks = Backpacks.Select(o => IM.OD[o]).ToList();
+            template.TorosDecoration = TorosDecoration.Select(o => IM.OD[o]).ToList();
+            template.Belt = Belt.Select(o => IM.OD[o]).ToList();
         }
     }
 }

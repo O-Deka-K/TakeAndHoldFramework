@@ -14,7 +14,7 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")]
         [HarmonyPrefix]
-        public static bool SetOutfitReplacement(ref PlayerSosigBody ___m_sosigPlayerBody, SosigEnemyTemplate tem)
+        public static bool SetOutfit_Replacement(ref PlayerSosigBody ___m_sosigPlayerBody, SosigEnemyTemplate tem)
         {
             if (___m_sosigPlayerBody == null)
                 return false;
@@ -30,31 +30,50 @@ namespace TNHFramework.Patches
                     var curClothes = (List<GameObject>)fiCurClothes.GetValue(___m_sosigPlayerBody);
                     foreach (GameObject item in curClothes)
                     {
-                        UnityEngine.Object.Destroy(item);
+                        Object.Destroy(item);
                     }
 
                     curClothes.Clear();
 
-                    if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Headwear, curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllHead);
+                    int torsoIndex = -1;
+                    if (outfitConfig.Chance_Torsowear >= Random.value)
+                    {
+                        torsoIndex = EquipSosigClothing(outfitConfig.Torsowear, curClothes, ___m_sosigPlayerBody.Sosig_Torso, -1, outfitConfig.ForceWearAllTorso);
+                    }
 
-                    if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Facewear, curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllFace);
+                    if (outfitConfig.Chance_Headwear >= Random.value)
+                    {
+                        int headIndex = (outfitConfig.HeadUsesTorsoIndex) ? torsoIndex : -1;
+                        EquipSosigClothing(outfitConfig.Headwear, curClothes, ___m_sosigPlayerBody.Sosig_Head, headIndex, outfitConfig.ForceWearAllHead);
+                    }
 
-                    if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Eyewear, curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllEye);
+                    int pantsIndex = -1;
+                    if (outfitConfig.Chance_Pantswear >= Random.value)
+                    {
+                        pantsIndex = (outfitConfig.PantsUsesTorsoIndex) ? torsoIndex : -1;
+                        pantsIndex = EquipSosigClothing(outfitConfig.Pantswear, curClothes, ___m_sosigPlayerBody.Sosig_Abdomen, pantsIndex, outfitConfig.ForceWearAllPants);
+                    }
 
-                    if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Torsowear, curClothes, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllTorso);
+                    if (outfitConfig.Chance_Pantswear_Lower >= Random.value)
+                    {
+                        int pantsLowerIndex = (outfitConfig.PantsLowerUsesPantsIndex) ? pantsIndex : -1;
+                        EquipSosigClothing(outfitConfig.Pantswear_Lower, curClothes, ___m_sosigPlayerBody.Sosig_Legs, pantsLowerIndex, outfitConfig.ForceWearAllPantsLower);
+                    }
 
-                    if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Pantswear, curClothes, ___m_sosigPlayerBody.Sosig_Abdomen, outfitConfig.ForceWearAllPants);
+                    if (outfitConfig.Chance_Facewear >= Random.value)
+                        EquipSosigClothing(outfitConfig.Facewear, curClothes, ___m_sosigPlayerBody.Sosig_Head, -1, outfitConfig.ForceWearAllFace);
 
-                    if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Pantswear_Lower, curClothes, ___m_sosigPlayerBody.Sosig_Legs, outfitConfig.ForceWearAllPantsLower);
+                    if (outfitConfig.Chance_Eyewear >= Random.value)
+                        EquipSosigClothing(outfitConfig.Eyewear, curClothes, ___m_sosigPlayerBody.Sosig_Head, -1, outfitConfig.ForceWearAllEye);
 
-                    if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
-                        EquipSosigClothing(outfitConfig.Backpacks, curClothes, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllBackpacks);
+                    if (outfitConfig.Chance_Backpacks >= Random.value)
+                        EquipSosigClothing(outfitConfig.Backpacks, curClothes, ___m_sosigPlayerBody.Sosig_Torso, -1, outfitConfig.ForceWearAllBackpacks);
+
+                    if (outfitConfig.Chance_TorosDecoration >= Random.value)
+                        EquipSosigClothing(outfitConfig.TorosDecoration, curClothes, ___m_sosigPlayerBody.Sosig_Torso, -1, outfitConfig.ForceWearAllTorosDecorations);
+
+                    if (outfitConfig.Chance_Belt >= Random.value)
+                        EquipSosigClothing(outfitConfig.Belt, curClothes, ___m_sosigPlayerBody.Sosig_Abdomen, -1, outfitConfig.ForceWearAllBackpacks);
                 }
             }
 
@@ -71,7 +90,7 @@ namespace TNHFramework.Patches
 
         public static void EquipSosigWeapon(Sosig sosig, GameObject weaponPrefab, TNHModifier_AIDifficulty difficulty)
         {
-            SosigWeapon weapon = UnityEngine.Object.Instantiate(weaponPrefab, sosig.transform.position + Vector3.up * 0.1f, sosig.transform.rotation).GetComponent<SosigWeapon>();
+            SosigWeapon weapon = Object.Instantiate(weaponPrefab, sosig.transform.position + Vector3.up * 0.1f, sosig.transform.rotation).GetComponent<SosigWeapon>();
             weapon.SetAutoDestroy(true);
             weapon.O.SpawnLockable = false;
 
@@ -84,32 +103,38 @@ namespace TNHFramework.Patches
                 weapon.FlightVelocityMultiplier = 0.3f;
         }
 
-        public static void EquipSosigClothing(List<string> options, SosigLink link, bool wearAll)
+        public static int EquipSosigClothing(List<string> options, SosigLink link, int index, bool wearAll)
         {
             if (wearAll)
             {
                 foreach (string clothing in options)
                 {
-                    GameObject clothingObject = UnityEngine.Object.Instantiate(IM.OD[clothing].GetGameObject(), link.transform.position, link.transform.rotation);
+                    GameObject clothingObject = Object.Instantiate(IM.OD[clothing].GetGameObject(), link.transform.position, link.transform.rotation);
                     clothingObject.transform.SetParent(link.transform);
                     clothingObject.GetComponent<SosigWearable>().RegisterWearable(link);
                 }
             }
             else
             {
-                GameObject clothingObject = UnityEngine.Object.Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.transform.position, link.transform.rotation);
+                if (index < 0 || index >= options.Count)
+                    index = Random.Range(0, options.Count);
+
+                string clothing = options[index];
+                GameObject clothingObject = Object.Instantiate(IM.OD[clothing].GetGameObject(), link.transform.position, link.transform.rotation);
                 clothingObject.transform.SetParent(link.transform);
                 clothingObject.GetComponent<SosigWearable>().RegisterWearable(link);
             }
+
+            return index;
         }
 
-        public static void EquipSosigClothing(List<string> options, List<GameObject> playerClothing, Transform link, bool wearAll)
+        public static int EquipSosigClothing(List<string> options, List<GameObject> playerClothing, Transform link, int index, bool wearAll)
         {
             if (wearAll)
             {
                 foreach (string clothing in options)
                 {
-                    GameObject clothingObject = UnityEngine.Object.Instantiate(IM.OD[clothing].GetGameObject(), link.position, link.rotation);
+                    GameObject clothingObject = Object.Instantiate(IM.OD[clothing].GetGameObject(), link.position, link.rotation);
 
                     Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
                     foreach (Component child in children)
@@ -117,7 +142,7 @@ namespace TNHFramework.Patches
                         child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
 
                         if (child is not Transform && child is not MeshFilter && child is not MeshRenderer)
-                            UnityEngine.Object.Destroy(child);
+                            Object.Destroy(child);
                     }
 
                     playerClothing.Add(clothingObject);
@@ -126,7 +151,11 @@ namespace TNHFramework.Patches
             }
             else
             {
-                GameObject clothingObject = UnityEngine.Object.Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.position, link.rotation);
+                if (index < 0 || index >= options.Count)
+                    index = Random.Range(0, options.Count);
+
+                string clothing = options[index];
+                GameObject clothingObject = Object.Instantiate(IM.OD[clothing].GetGameObject(), link.position, link.rotation);
 
                 Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
                 foreach (Component child in children)
@@ -134,12 +163,14 @@ namespace TNHFramework.Patches
                     child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
 
                     if (child is not Transform && child is not MeshFilter && child is not MeshRenderer)
-                        UnityEngine.Object.Destroy(child);
+                        Object.Destroy(child);
                 }
 
                 playerClothing.Add(clothingObject);
                 clothingObject.transform.SetParent(link);
             }
+
+            return index;
         }
 
         [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")]
