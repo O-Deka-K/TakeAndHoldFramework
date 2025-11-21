@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using HarmonyLib;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using TNHFramework.ObjectTemplates;
@@ -10,143 +11,203 @@ namespace TNHFramework.Patches
 {
     static class SupplyPatches
     {
-        private static readonly FieldInfo fiIsConfigured = typeof(TNH_SupplyPoint).GetField("m_isconfigured", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo fiHasBeenVisited = typeof(TNH_SupplyPoint).GetField("m_hasBeenVisited", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSpawnDefenses = typeof(TNH_SupplyPoint).GetMethod("SpawnDefenses", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSpawnConstructor = typeof(TNH_SupplyPoint).GetMethod("SpawnConstructor", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSpawnSecondaryPanel = typeof(TNH_SupplyPoint).GetMethod("SpawnSecondaryPanel", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSpawnBoxes = typeof(TNH_SupplyPoint).GetMethod("SpawnBoxes", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo fiNumSpawnBonus = typeof(TNH_SupplyPoint).GetField("numSpawnBonus", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiActiveSosigs = typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo fiActiveTurrets = typeof(TNH_SupplyPoint).GetField("m_activeTurrets", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo fiSpawnBoxes = typeof(TNH_SupplyPoint).GetField("m_spawnBoxes", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, ref int panelIndex, int minBoxPiles, int maxBoxPiles, bool spawnToken)
+        public static int NumConstructors;
+        public static int PanelIndex = 0;
+
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "Configure")]
+        [HarmonyPrefix]
+        public static bool Configure_Replacement(TNH_SupplyPoint __instance, ref bool ___m_isconfigured, ref bool ___m_hasBeenVisited,
+            TNH_TakeChallenge t, bool spawnSosigs, bool spawnDefenses, bool spawnConstructor, int minBoxPiles, int maxBoxPiles, bool SpawnToken)
         {
-            supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
-            //supplyPoint.m_isconfigured = true;
-            fiIsConfigured.SetValue(supplyPoint, true);
+            Level level = LoadedTemplateManager.CurrentLevel;
 
-            SpawnSupplyGroup(supplyPoint, level);
+            __instance.InitLights();
+            __instance.T = t;
+            ___m_isconfigured = true;
 
-            SpawnSupplyTurrets(supplyPoint, level);
+            if (spawnSosigs)
+            {
+                //__instance.SpawnTakeEnemyGroup();
+                //miSpawnTakeEnemyGroup.Invoke(__instance, []);
+                AnvilManager.Run(SpawnSupplyGroup(__instance, level));
+            }
 
-            int numConstructors = UnityEngine.Random.Range(level.MinConstructors, level.MaxConstructors + 1);
-            SpawnSupplyConstructor(supplyPoint, numConstructors);
-            SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, ref panelIndex);
+            if (spawnDefenses)
+            {
+                //SpawnSupplyTurrets(__instance, level);
+                miSpawnDefenses.Invoke(__instance, []);
+            }
 
-            SpawnSupplyBoxes(supplyPoint, level, minBoxPiles, maxBoxPiles, spawnToken);
+            //int numConstructors = Random.Range(level.MinConstructors, level.MaxConstructors + 1);
 
-            //supplyPoint.m_hasBeenVisited = false;
-            fiHasBeenVisited.SetValue(supplyPoint, false);
+            if (spawnConstructor)
+            {
+                //SpawnSupplyConstructor(__instance, numConstructors);
+                //SpawnSecondarySupplyPanel(__instance, level, numConstructors);
+                miSpawnConstructor.Invoke(__instance, []);
+                miSpawnSecondaryPanel.Invoke(__instance, [TNH_SupplyPoint.SupplyPanelType.All]);
+            }
+
+            if (maxBoxPiles > 0)
+            {
+                //SpawnSupplyBoxes(__instance, level, minBoxPiles, maxBoxPiles, SpawnToken);
+                miSpawnBoxes.Invoke(__instance, [minBoxPiles, maxBoxPiles, SpawnToken]);
+            }
+
+            ___m_hasBeenVisited = false;
+            return false;
         }
 
-        public static void SpawnSupplyGroup(TNH_SupplyPoint point, Level level)
+        public static IEnumerator SpawnSupplyGroup(TNH_SupplyPoint point, Level level)
         {
             point.SpawnPoints_Sosigs_Defense.Shuffle<Transform>();
 
-            TNHFrameworkLogger.Log($"Spawning {level.SupplyChallenge.NumGuards} supply guards", TNHFrameworkLogger.LogType.TNH);
+            int numToSpawn = Random.Range(level.SupplyChallenge.NumGuards - 1, level.SupplyChallenge.NumGuards + 1);
+            int numSpawnBonus = (int)fiNumSpawnBonus.GetValue(point);
+            numToSpawn += numSpawnBonus;
 
-            for (int i = 0; i < level.SupplyChallenge.NumGuards && i < point.SpawnPoints_Sosigs_Defense.Count; i++)
+            if (!LoadedTemplateManager.CurrentCharacter.isCustom)
+                numToSpawn = Mathf.Clamp(numToSpawn, 0, 5);
+
+            fiNumSpawnBonus.SetValue(point, numSpawnBonus + 1);
+            numToSpawn = Mathf.Clamp(numToSpawn, 0, point.SpawnPoints_Sosigs_Defense.Count);
+
+            TNHFrameworkLogger.Log($"Spawning {numToSpawn} supply guards", TNHFrameworkLogger.LogType.TNH);
+
+            for (int i = 0; i < numToSpawn; i++)
             {
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
 
-                Sosig enemy = TNHManagerPatches.SpawnEnemy(template, transform, point.M, level.SupplyChallenge.IFFUsed, false, transform.position, true);
+                Sosig enemy = point.M.SpawnEnemy(template, transform.position, transform.rotation, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 //point.m_activeSosigs.Add(enemy);
                 var activeSosigs = (List<Sosig>)fiActiveSosigs.GetValue(point);
                 activeSosigs.Add(enemy);
+
+                yield return new WaitForSeconds(0.1f);
             }
+
+            yield break;
         }
 
-        public static void SpawnSupplyTurrets(TNH_SupplyPoint point, Level level)
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnDefenses")]
+        [HarmonyPrefix]
+        public static void SpawnDefenses_ShuffleSpawnPoints(TNH_SupplyPoint __instance)
         {
-            point.SpawnPoints_Turrets.Shuffle<Transform>();
-            FVRObject turretPrefab = point.M.GetTurretPrefab(level.SupplyChallenge.TurretType);
-
-            for (int i = 0; i < level.SupplyChallenge.NumTurrets && i < point.SpawnPoints_Turrets.Count; i++)
-            {
-                Vector3 pos = point.SpawnPoints_Turrets[i].position + Vector3.up * 0.25f;
-                AutoMeater turret = UnityEngine.Object.Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, point.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
-
-                //point.m_activeTurrets.Add(turret);
-                var activeTurrets = (List<AutoMeater>)fiActiveTurrets.GetValue(point);
-                activeTurrets.Add(turret);
-            }
+            __instance.SpawnPoints_Turrets.Shuffle<Transform>();
         }
 
-        public static void SpawnSupplyConstructor(TNH_SupplyPoint point, int numConstructors)
+        // Allow spawning of multiple Object Constructors
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnConstructor")]
+        [HarmonyPrefix]
+        public static bool SpawnConstructor_Replacement(TNH_SupplyPoint __instance, ref GameObject ___m_constructor)
         {
+            Level level = LoadedTemplateManager.CurrentLevel;
+
             TNHFrameworkLogger.Log("Spawning constructor panel", TNHFrameworkLogger.LogType.TNH);
 
-            point.SpawnPoints_Panels.Shuffle();
+            __instance.SpawnPoints_Panels.Shuffle<Transform>();
 
-            for (int i = 0; i < numConstructors && i < point.SpawnPoints_Panels.Count; i++)
+            int numConstructors = Random.Range(level.MinConstructors, level.MaxConstructors + 1);
+            numConstructors = Mathf.Clamp(numConstructors, 0,  __instance.SpawnPoints_Panels.Count);
+            NumConstructors = numConstructors;
+
+            for (int i = 0; i < numConstructors; i++)
             {
-                GameObject constructor = point.M.SpawnObjectConstructor(point.SpawnPoints_Panels[i]);
+                GameObject constructor = __instance.M.SpawnObjectConstructor(__instance.SpawnPoints_Panels[i]);
                 TNHFramework.SpawnedConstructors.Add(constructor);
             }
+
+            return false;
         }
 
-        public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, ref int panelIndex)
+        // Spawn all the new types of panels
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnSecondaryPanel")]
+        [HarmonyPrefix]
+        public static bool SpawnSecondaryPanel_Replacement(TNH_SupplyPoint __instance)
         {
+            Level level = LoadedTemplateManager.CurrentLevel;
+
             TNHFrameworkLogger.Log("Spawning secondary panels", TNHFrameworkLogger.LogType.TNH);
 
-            bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
-            int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
+            List<PanelType> panelTypes;
+            int numPanels;
 
-            if (point.M.LevelName == "Institution" && !isCustomCharacter)
-                numPanels = 3;
+            if (__instance.M.LevelName == "Institution" && !LoadedTemplateManager.CurrentCharacter.isCustom)
+            {
+                panelTypes = [PanelType.AmmoReloader, PanelType.MagDuplicator, PanelType.Recycler];
+                numPanels = panelTypes.Count;
+            }
+            else
+            {
+                panelTypes = [.. level.PossiblePanelTypes];
+                numPanels = Random.Range(level.MinPanels, level.MaxPanels + 1);
+            }
 
-            for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && level.PossiblePanelTypes.Count > 0; i++)
+            if (panelTypes.Count < 1 || numPanels < 1)
+                return false;
+
+            numPanels = Mathf.Clamp(numPanels, 0, __instance.SpawnPoints_Panels.Count);
+
+            for (int i = NumConstructors; i < NumConstructors + numPanels; i++)
             {
                 TNHFrameworkLogger.Log("Panel index : " + i, TNHFrameworkLogger.LogType.TNH);
 
                 // Go through the panels, and loop if we have gone too far 
-                if (panelIndex >= level.PossiblePanelTypes.Count)
-                    panelIndex = 0;
-
-                PanelType panelType = level.PossiblePanelTypes[panelIndex];
-                panelIndex++;
+                PanelType panelType = panelTypes[PanelIndex % panelTypes.Count];
+                PanelIndex = (PanelIndex + 1) % panelTypes.Count;
 
                 TNHFrameworkLogger.Log("Panel type selected : " + panelType, TNHFrameworkLogger.LogType.TNH);
 
-                GameObject panel = null;
+                GameObject panel;
 
                 if (panelType == PanelType.AmmoReloader)
                 {
-                    panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i]);
                 }
                 else if (panelType == PanelType.MagDuplicator)
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
 
                     if (TNHFramework.AlwaysMagUpgrader.Value)
                         panel.AddComponent(typeof(MagazinePanel));
                 }
                 else if (panelType == PanelType.MagUpgrader || panelType == PanelType.MagPurchase)
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagazinePanel));
                 }
                 else if (panelType == PanelType.Recycler)
                 {
-                    panel = point.M.SpawnGunRecycler(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnGunRecycler(__instance.SpawnPoints_Panels[i]);
                 }
                 else if (panelType == PanelType.AmmoPurchase)
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(AmmoPurchasePanel));
                 }
                 else if (panelType == PanelType.AddFullAuto)
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(FullAutoPanel));
                 }
                 else if (panelType == PanelType.FireRateUp || panelType == PanelType.FireRateDown)
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(FireRatePanel));
                 }
                 else
                 {
-                    panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i]);
                 }
 
                 // If we spawned a panel, add it to the global list
@@ -160,200 +221,195 @@ namespace TNHFramework.Patches
                     TNHFrameworkLogger.LogWarning("Failed to spawn secondary panel!");
                 }
             }
+
+            return false;
         }
 
-        public static void SpawnSupplyBoxes(TNH_SupplyPoint point, Level level, int minBoxPiles, int maxBoxPiles, bool spawnToken)
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnBoxes")]
+        [HarmonyPrefix]
+        public static bool SpawnBoxes_Replacement(TNH_SupplyPoint __instance, ref List<GameObject> ___m_spawnBoxes, int min, int max, bool SpawnToken)
         {
-            point.SpawnPoints_Boxes.Shuffle();
+            Level level = LoadedTemplateManager.CurrentLevel;
 
-            bool isCustomCharacter = ((int)point.M.C.CharacterID >= 1000);
-            var spawnBoxes = (List<GameObject>)fiSpawnBoxes.GetValue(point);
+            __instance.SpawnPoints_Boxes.Shuffle();
 
             // Custom Character behavior:
             // - Every supply point has the same min and max number of boxes
             // - Every supply point has the same min and max number of tokens
             // - Every box that doesn't have a token has the same probability of having health
-            if (isCustomCharacter)
+            if (LoadedTemplateManager.CurrentCharacter.isCustom)
             {
                 int minTokens = level.MinTokensPerSupply;
                 int maxTokens = level.MaxTokensPerSupply;
 
                 int minBoxes = level.MinBoxesSpawned;
                 int maxBoxes = level.MaxBoxesSpawned;
-                int boxesToSpawn = UnityEngine.Random.Range(minBoxes, maxBoxes + 1);
+                int boxesToSpawn = Random.Range(minBoxes, maxBoxes + 1);
 
                 TNHFrameworkLogger.Log($"Going to spawn {boxesToSpawn} boxes at this point -- Min ({minBoxes}), Max ({maxBoxes})", TNHFrameworkLogger.LogType.TNH);
 
                 for (int i = 0; i < boxesToSpawn; i++)
                 {
-                    Transform spawnTransform = point.SpawnPoints_Boxes[UnityEngine.Random.Range(0, point.SpawnPoints_Boxes.Count)];
-                    Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f) + Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
-                    Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
+                    Transform spawnTransform = __instance.SpawnPoints_Boxes[Random.Range(0, __instance.SpawnPoints_Boxes.Count)];
+                    Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * Random.Range(-0.5f, 0.5f) + Vector3.forward * Random.Range(-0.5f, 0.5f);
+                    Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, Random.rotation, 0.1f);
 
-                    GameObject box = UnityEngine.Object.Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                    //point.m_spawnBoxes.Add(box);
-                    spawnBoxes.Add(box);
+                    GameObject box = Object.Instantiate(__instance.M.Prefabs_ShatterableCrates[Random.Range(0, __instance.M.Prefabs_ShatterableCrates.Count)], position, rotation);
+                    ___m_spawnBoxes.Add(box);
                 }
 
                 int tokensSpawned = 0;
 
-                // J: If you're asking "why is this an if/elseif check if it's a boolean value?", I... I don't know. I don't know why Anton does this. It's not a big deal but I don't know why.
-                if (!point.M.UsesUberShatterableCrates)
+                if (!__instance.M.UsesUberShatterableCrates)
                 {
-                    foreach (GameObject boxObj in spawnBoxes)
+                    foreach (GameObject boxObj in ___m_spawnBoxes)
                     {
-
                         if (tokensSpawned < minTokens)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
                             tokensSpawned++;
                         }
-
-                        else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                        else if (tokensSpawned < maxTokens && Random.value < level.BoxTokenChance)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(point.M);
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
                             tokensSpawned++;
                         }
-
-                        else if (UnityEngine.Random.value < level.BoxHealthChance)
+                        else if (Random.value < level.BoxHealthChance)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(point.M);
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(__instance.M);
                         }
                     }
                 }
-
-                else if (point.M.UsesUberShatterableCrates)
+                else if (__instance.M.UsesUberShatterableCrates)
                 {
-                    for (int k = 0; k < spawnBoxes.Count; k++)
+                    for (int k = 0; k < ___m_spawnBoxes.Count; k++)
                     {
-                        UberShatterable boxComp = spawnBoxes[k].GetComponent<UberShatterable>();
+                        UberShatterable boxComp = ___m_spawnBoxes[k].GetComponent<UberShatterable>();
                         if (tokensSpawned < minTokens)
                         {
-                            SpawnBoxWithToken(point, boxComp);
+                            SpawnBoxWithToken(__instance, boxComp);
                             tokensSpawned++;
                         }
-                        else if (tokensSpawned < maxTokens && UnityEngine.Random.value < level.BoxTokenChance)
+                        else if (tokensSpawned < maxTokens && Random.value < level.BoxTokenChance)
                         {
-                            SpawnBoxWithToken(point, boxComp);
+                            SpawnBoxWithToken(__instance, boxComp);
                             tokensSpawned++;
                         }
-                        else if (UnityEngine.Random.value < level.BoxHealthChance)
+                        else if (Random.value < level.BoxHealthChance)
                         {
-                            SpawnBoxWithHealth(point, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp);
                         }
                         else
                         {
-                            SpawnBoxEmpty(point, boxComp);
+                            SpawnBoxEmpty(__instance, boxComp);
                         }
                     }
                 }
             }
-
             // Vanilla character behavior:
             // - Only one box per Take phase has a token (spawnToken is only true for one supply point)
             // - Hallways has 1-2 piles of 1-3 boxes per supply point; large maps have only 1 supply point with 2-3 piles of 1-3 boxes
             // - Each supply point has up to 3 health, and each of these has a different probability of spawning
             else
             {
-                bool spawnHealth1 = (UnityEngine.Random.Range(0f, 1f) > 0.1f);
-                bool spawnHealth2 = (UnityEngine.Random.Range(0f, 1f) > 0.4f);
-                bool spawnHealth3 = (UnityEngine.Random.Range(0f, 1f) > 0.8f);
+                bool spawnHealth1 = (Random.Range(0f, 1f) > 0.1f);
+                bool spawnHealth2 = (Random.Range(0f, 1f) > 0.4f);
+                bool spawnHealth3 = (Random.Range(0f, 1f) > 0.8f);
 
-                point.SpawnPoints_Boxes.Shuffle<Transform>();
+                __instance.SpawnPoints_Boxes.Shuffle<Transform>();
 
-                int boxPiles = UnityEngine.Random.Range(minBoxPiles, maxBoxPiles + 1);
+                int boxPiles = Random.Range(min, max + 1);
                 if (boxPiles < 1)
-                    return;
+                    return false;
 
                 for (int i = 0; i < boxPiles; i++)
                 {
-                    Transform transform = point.SpawnPoints_Boxes[i];
+                    Transform transform = __instance.SpawnPoints_Boxes[i];
 
-                    int boxesPerPile = UnityEngine.Random.Range(1, 3);
+                    int boxesPerPile = Random.Range(1, 3);
                     for (int j = 0; j < boxesPerPile; j++)
                     {
                         Vector3 position = transform.position + Vector3.up * 0.1f + Vector3.up * 0.85f * (float)j;
-                        Vector3 onUnitSphere = UnityEngine.Random.onUnitSphere;
+                        Vector3 onUnitSphere = Random.onUnitSphere;
                         onUnitSphere.y = 0f;
                         onUnitSphere.Normalize();
                         Quaternion rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(onUnitSphere, Vector3.up), 0.1f);
 
-                        GameObject item = UnityEngine.Object.Instantiate<GameObject>(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                        //point.m_spawnBoxes.Add(item);
-                        spawnBoxes.Add(item);
+                        GameObject item = Object.Instantiate<GameObject>(__instance.M.Prefabs_ShatterableCrates[Random.Range(0, __instance.M.Prefabs_ShatterableCrates.Count)], position, rotation);
+                        ___m_spawnBoxes.Add(item);
                     }
                 }
 
-                //point.m_spawnBoxes.Shuffle();
-                spawnBoxes.Shuffle();
-                //miShuffle.Invoke(spawnBoxes, []);
+                ___m_spawnBoxes.Shuffle();
 
-                if (!point.M.UsesUberShatterableCrates)
+                if (!__instance.M.UsesUberShatterableCrates)
                 {
                     int spawnIndex = 0;
                     TNH_ShatterableCrate boxComp;
 
-                    if (spawnToken && spawnBoxes.Count > spawnIndex)
+                    if (SpawnToken && ___m_spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingToken(point.M);
+                        boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingToken(__instance.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth1 && spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth1 && ___m_spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(point.M);
+                        boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(__instance.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth2 && spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth2 && ___m_spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(point.M);
+                        boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(__instance.M);
                         spawnIndex++;
                     }
 
-                    if (spawnHealth3 && spawnBoxes.Count > spawnIndex)
+                    if (spawnHealth3 && ___m_spawnBoxes.Count > spawnIndex)
                     {
-                        boxComp = spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(point.M);
+                        boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
+                        boxComp.SetHoldingHealth(__instance.M);
                         //spawnIndex++;
                     }
                 }
                 else
                 {
-                    for (int k = 0; k < spawnBoxes.Count; k++)
+                    for (int k = 0; k < ___m_spawnBoxes.Count; k++)
                     {
-                        UberShatterable boxComp = spawnBoxes[k].GetComponent<UberShatterable>();
+                        UberShatterable boxComp = ___m_spawnBoxes[k].GetComponent<UberShatterable>();
 
-                        if (spawnToken)
+                        if (SpawnToken)
                         {
-                            spawnToken = false;
-                            SpawnBoxWithToken(point, boxComp);
+                            SpawnToken = false;
+                            SpawnBoxWithToken(__instance, boxComp);
                         }
                         else if (spawnHealth1)
                         {
                             spawnHealth1 = false;
-                            SpawnBoxWithHealth(point, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp);
                         }
                         else if (spawnHealth2)
                         {
                             spawnHealth2 = false;
-                            SpawnBoxWithHealth(point, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp);
                         }
                         else if (spawnHealth3)
                         {
                             spawnHealth3 = false;
-                            SpawnBoxWithHealth(point, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp);
                         }
                         else
                         {
-                            SpawnBoxEmpty(point, boxComp);
+                            SpawnBoxEmpty(__instance, boxComp);
                         }
                     }
                 }
             }
+
+            return false;
         }
 
         private static void SpawnBoxWithToken(TNH_SupplyPoint point, UberShatterable boxComp)
@@ -397,7 +453,7 @@ namespace TNHFramework.Patches
             }
             else
             {
-                numGuards = UnityEngine.Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
+                numGuards = Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
                 numGuards += ___numSpawnBonus;
                 numGuards = Mathf.Clamp(numGuards, 0, 5);
                 ___numSpawnBonus++;
@@ -410,7 +466,7 @@ namespace TNHFramework.Patches
                 Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
 
-                Sosig enemy = TNHManagerPatches.SpawnEnemy(template, transform, __instance.M, __instance.T.IFFUsed, false, transform.position, true);
+                Sosig enemy = __instance.M.SpawnEnemy(template, transform.position, transform.rotation, __instance.T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
 
@@ -421,7 +477,9 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static bool SpawnStartingEquipment(TNH_SupplyPoint __instance, ref List<GameObject> ___m_trackedObjects)
         {
+            __instance.InitLights();
             ___m_trackedObjects.Clear();
+
             if (__instance.M.ItemSpawnerMode == TNH_ItemSpawnerMode.On)
             {
                 __instance.M.ItemSpawner.transform.position = __instance.SpawnPoints_Panels[0].position + Vector3.up * 0.8f;
@@ -431,11 +489,12 @@ namespace TNHFramework.Patches
 
             for (int i = 0; i < __instance.SpawnPoint_Tables.Count; i++)
             {
-                GameObject item = UnityEngine.Object.Instantiate(__instance.M.Prefab_MetalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
+                GameObject item = Object.Instantiate(__instance.M.Prefab_MetalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
                 ___m_trackedObjects.Add(item);
             }
 
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
+
             if (character.PrimaryWeapon != null)
             {
                 EquipmentGroup selectedGroup = character.PrimaryWeapon.PrimaryGroup ?? character.PrimaryWeapon.BackupGroup;
@@ -443,6 +502,7 @@ namespace TNHFramework.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+
                     FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
                     if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
                     {
@@ -462,6 +522,7 @@ namespace TNHFramework.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+
                     FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
                     if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
                     {
