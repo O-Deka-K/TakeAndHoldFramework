@@ -17,9 +17,13 @@ namespace TNHFramework.Patches
         public static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> code = [.. instructions];
+            List<CodeInstruction> codeToInsert =
+            [
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Stloc_0),
+            ];
 
             // Find the insertion index
-            int insertIndex = -1;
             for (int i = 0; i < code.Count - 2; i++)
             {
                 // Search for "if (obj.CompatibleClips.Count > 0)"
@@ -27,36 +31,9 @@ namespace TNHFramework.Patches
                     code[i + 1].opcode == OpCodes.Ldc_I4_0 &&
                     code[i + 2].opcode == OpCodes.Ble)
                 {
-                    insertIndex = i + 3;
+                    code.InsertRange(i + 3, codeToInsert);
                     break;
                 }
-            }
-
-            // If that failed, then just look for the first branch instruction
-            if (insertIndex == -1)
-            {
-                for (int i = 0; i < code.Count; i++)
-                {
-                    // Search for ble
-                    if (code[i].opcode == OpCodes.Ble)
-                    {
-                        insertIndex = i + 1;
-                        break;
-                    }
-                }
-            }
-
-            // Set flag = true so that AudEvent_Spawn is played instead of AudEvent_Fail
-            List<CodeInstruction> codeToInsert =
-            [
-                new(OpCodes.Ldc_I4_1),
-                new(OpCodes.Stloc_0),
-            ];
-
-            // Insert the code
-            if (insertIndex > -1)
-            {
-                code.InsertRange(insertIndex, codeToInsert);
             }
 
             return code;
@@ -100,17 +77,25 @@ namespace TNHFramework.Patches
             }
         }
 
+        // Anton pls fix - Wrong list used (DicSafeHoldIndiciesForHoldPoint)
+        [HarmonyPatch(typeof(TNH_Manager), "GetRandomSafeSupplyIndexFromHoldPoint")]
+        [HarmonyPrefix]
+        private static bool GetRandomSafeSupplyIndexFromHoldPoint_BugFix(TNH_Manager __instance, out int __result, int index)
+        {
+            __result = __instance.DicSafeSupplyIndiciesForHoldPoint[index][UnityEngine.Random.Range(0, __instance.DicSafeSupplyIndiciesForHoldPoint[index].Count)];
+            return false;
+        }
+
         // Anton pls fix - Pump action shotgun config not working
         [HarmonyPatch(typeof(TubeFedShotgun), "SetLoadedChambers")]
         [HarmonyPostfix]
         public static void SetLoadedChambers_SetExtractor(TubeFedShotgun __instance, ref bool ___m_isChamberRoundOnExtractor, ref FVRFirearmMovingProxyRound ___m_proxy)
         {
-            if (__instance.Chamber.IsFull)
+            if (__instance.Chamber.IsFull && __instance.Magazine.HasARound())
             {
                 ___m_isChamberRoundOnExtractor = true;
                 ___m_proxy.ClearProxy();
             }
-
         }
 
         // Anton pls fix - Pump action shotgun config not working

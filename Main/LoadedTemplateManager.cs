@@ -15,6 +15,7 @@ namespace TNHFramework
     public static class LoadedTemplateManager
     {
         public static CustomCharacter CurrentCharacter;
+        public static Level CurrentLevel;
         public static Dictionary<TNH_Char, CharacterTemplate> LoadedCharacterDict = [];
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = [];

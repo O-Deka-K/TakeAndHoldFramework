@@ -56,10 +56,10 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp.dll</HintPath>
+      <HintPath>lib\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>lib\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.17.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>$(BepInString)\core\BepInEx.dll</HintPath>
@@ -91,7 +91,7 @@
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
+      <HintPath>lib\ES2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour, Version=21.9.19.1, Culture=neutral, processorArchitecture=MSIL">
@@ -140,10 +140,10 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\UnityEngine.UI.dll</HintPath>
+      <HintPath>lib\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\H3VR.GameLibs.0.118.1\lib\net35\Valve.Newtonsoft.Json.dll</HintPath>
+      <HintPath>lib\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet, Version=13.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
       <HintPath>packages\YamlDotNet.13.7.1\lib\net35\YamlDotNet.dll</HintPath>

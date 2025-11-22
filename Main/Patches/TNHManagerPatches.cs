@@ -23,37 +23,41 @@ namespace TNHFramework.Patches
             return true;
         }
 
+        [HarmonyPatch(typeof(TNH_Manager), "SetLevel")]
+        [HarmonyPostfix]
+        public static void SetLevel(TNH_Progression.Level ___m_curLevel)
+        {
+            LoadedTemplateManager.CurrentLevel = LoadedTemplateManager.CurrentCharacter.GetCurrentLevel(___m_curLevel);
+            SupplyPatches.PanelIndex = 0;
+        }
+
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")]
         [HarmonyPrefix]
         public static bool SetPhase_Take_Replacement(TNH_Manager __instance, ref List<int> ___m_activeSupplyPointIndicies, ref TNH_Progression.Level ___m_curLevel,
             ref int ___m_lastHoldIndex, ref int ___m_curHoldIndex, ref TNH_HoldPoint ___m_curHoldPoint, TNH_PointSequence ___m_curPointSequence, int ___m_level)
         {
+            Level level = LoadedTemplateManager.CurrentLevel;
+
+            TNHFramework.SpawnedConstructors.Clear();
+            TNHFramework.SpawnedBossIndexes.Clear();
+            TNHFramework.SpawnedPoolsDictionary.Clear();
+            TNHFramework.PatrolIndexPool.Clear();
+            TNHFramework.PreventOutfitFunctionality = LoadedTemplateManager.CurrentCharacter.ForceDisableOutfitFunctionality;
+
             __instance.ResetAlertedThisPhase();
             __instance.ResetPlayerTookDamageThisPhase();
             __instance.ResetHasGuardBeenKilledThatWasAltered();
             ___m_activeSupplyPointIndicies.Clear();
 
-            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
-            Level level = character.GetCurrentLevel(___m_curLevel);
-
-            TNHFramework.SpawnedBossIndexes.Clear();
-            TNHFramework.PatrolIndexPool.Clear();
-            TNHFramework.PreventOutfitFunctionality = character.ForceDisableOutfitFunctionality;
-
             // Reset the TNH radar
             if (__instance.RadarMode == TNHModifier_RadarMode.Standard)
-            {
                 __instance.TAHReticle.GetComponent<AIEntity>().LM_VisualOcclusionCheck = __instance.ReticleMask_Take;
-            }
             else if (__instance.RadarMode == TNHModifier_RadarMode.Omnipresent)
-            {
                 __instance.TAHReticle.GetComponent<AIEntity>().LM_VisualOcclusionCheck = __instance.ReticleMask_Hold;
-            }
-
-            __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Hold);
-            __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Supply);
 
             ___m_lastHoldIndex = ___m_curHoldIndex;
+            __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Hold);
+            __instance.TAHReticle.DeRegisterTrackedType(TAH_ReticleContact.ContactType.Supply);
 
             // Get the next hold point and configure it
             ___m_curHoldIndex = GetNextHoldPointIndex(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
@@ -67,7 +71,7 @@ namespace TNHFramework.Patches
             level.PossiblePanelTypes.ForEach(o => TNHFrameworkLogger.Log(o.ToString(), TNHFrameworkLogger.LogType.TNH));
 
             // Ensure ammo reloaders spawn first if this is limited ammo
-            if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 level.PossiblePanelTypes.Remove(PanelType.AmmoReloader);
                 level.PossiblePanelTypes.Insert(0, PanelType.AmmoReloader);
@@ -75,18 +79,16 @@ namespace TNHFramework.Patches
 
             // For default characters, only a single supply point spawns in each level of Institution
             // We will allow multiple supply points for custom characters
-            bool allowExplicitSingleSupplyPoints = !character.isCustom;
+            bool allowExplicitSingleSupplyPoints = !LoadedTemplateManager.CurrentCharacter.isCustom;
 
             // Now spawn and set up all of the supply points
-            int panelIndex = 0;
             if (allowExplicitSingleSupplyPoints && ___m_curPointSequence.UsesExplicitSingleSupplyPoints && ___m_level < 5)
             {
                 TNHFrameworkLogger.Log("Spawning explicit single supply point", TNHFrameworkLogger.LogType.TNH);
 
                 int supplyPointIndex = ___m_curPointSequence.SupplyPoints[___m_level];
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
-                //supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
-                SupplyPatches.ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
+                supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
                 ___m_activeSupplyPointIndicies.Add(supplyPointIndex);
@@ -99,8 +101,7 @@ namespace TNHFramework.Patches
                 TNHFrameworkLogger.Log($"Spawning explicit single supply point", TNHFrameworkLogger.LogType.TNH);
 
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointIndex];
-                //supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
-                SupplyPatches.ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 2, 3, true);
+                supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 2, 3, true);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
                 ___m_activeSupplyPointIndicies.Add(supplyPointIndex);
@@ -111,7 +112,7 @@ namespace TNHFramework.Patches
                 List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
                 supplyPointsIndexes.Shuffle<int>();
 
-                int numSupplyPoints = UnityEngine.Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
+                int numSupplyPoints = Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
                 numSupplyPoints = Mathf.Clamp(numSupplyPoints, 0, supplyPointsIndexes.Count);
 
                 TNHFrameworkLogger.Log($"Spawning {numSupplyPoints} supply points", TNHFrameworkLogger.LogType.TNH);
@@ -122,7 +123,7 @@ namespace TNHFramework.Patches
                     TNHFrameworkLogger.Log($"Configuring supply point : {i}", TNHFrameworkLogger.LogType.TNH);
 
                     TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
-                    SupplyPatches.ConfigureSupplyPoint(supplyPoint, level, ref panelIndex, 1, 2, spawnToken);
+                    supplyPoint.Configure(___m_curLevel.SupplyChallenge, true, true, true, TNH_SupplyPoint.SupplyPanelType.All, 1, 2, spawnToken);
                     spawnToken = false;
                     TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                     supplyPoint.SetContact(contact);
@@ -158,28 +159,8 @@ namespace TNHFramework.Patches
                 }
             }
 
-            // Spawn the constructor panels
-            for (int i = 0; i < __instance.ConstructSpawners.Count; i++)
-            {
-                if (___m_lastHoldIndex >= 0)
-                {
-                    TNH_HoldPoint holdPoint = __instance.HoldPoints[___m_lastHoldIndex];
-
-                    if (!holdPoint.ExcludeConstructVolumes.Contains(__instance.ConstructSpawners[i]))
-                    {
-                        __instance.ConstructSpawners[i].SpawnConstructs(___m_level);
-                    }
-                }
-                else
-                {
-                    __instance.ConstructSpawners[i].SpawnConstructs(___m_level);
-                }
-            }
-
             if (__instance.BGAudioMode == TNH_BGAudioMode.Default)
-            {
                 __instance.FMODController.SwitchTo(0, 2f, false, false);
-            }
 
             return false;
         }
@@ -193,7 +174,6 @@ namespace TNHFramework.Patches
             {
                 index = pointSequence.HoldPoints[currLevel];
             }
-
             // If we have been to all the points, then we just select a random safe one
             else
             {
@@ -286,52 +266,47 @@ namespace TNHFramework.Patches
 
         public static void ClearAllPanels()
         {
-            TNHFramework.SpawnedPools.Clear();
+            //TNHFramework.SpawnedPools.Clear();
+            TNHFramework.SpawnedPoolsDictionary.Clear();
 
             for (int i = TNHFramework.SpawnedConstructors.Count - 1; i >= 0; i--)
             {
                 try
                 {
                     TNH_ObjectConstructor constructor = TNHFramework.SpawnedConstructors[i].GetComponent<TNH_ObjectConstructor>();
+                    constructor?.ClearCase();
 
-                    if (constructor != null)
-                    {
-                        constructor.ClearCase();
-                    }
-
-                    UnityEngine.Object.Destroy(TNHFramework.SpawnedConstructors[i]);
+                    Object.Destroy(TNHFramework.SpawnedConstructors[i]);
                 }
                 catch
                 {
                     TNHFrameworkLogger.LogWarning("Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
                 }
-
-                TNHFramework.SpawnedConstructors.RemoveAt(i);
             }
+
+            TNHFramework.SpawnedConstructors.Clear();
 
             for (int i = TNHFramework.SpawnedPanels.Count - 1; i >= 0; i--)
             {
-                UnityEngine.Object.Destroy(TNHFramework.SpawnedPanels[i]);
-                TNHFramework.SpawnedPanels.RemoveAt(i);
+                Object.Destroy(TNHFramework.SpawnedPanels[i]);
             }
+
+            TNHFramework.SpawnedPanels.Clear();
         }
 
-        public static Sosig SpawnEnemy(SosigEnemyTemplate template, Transform spawnLocation, TNH_Manager M, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
-        {
-            return SpawnEnemy(template, spawnLocation.position, spawnLocation.rotation, M, IFF, isAssault, pointOfInterest, allowAllWeapons);
-        }
-
-        public static Sosig SpawnEnemy(SosigEnemyTemplate template, Vector3 spawnLocation, Quaternion spawnRotation, TNH_Manager M, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
+        [HarmonyPatch(typeof(TNH_Manager), "SpawnEnemy")]
+        [HarmonyPrefix]
+        public static bool SpawnEnemy_Replacement(TNH_Manager __instance, ref Sosig __result, SosigEnemyTemplate t, Vector3 pos, Quaternion rot, int IFF, bool IsAssault, Vector3 pointOfInterest, bool AllowAllWeapons)
         {
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
-            SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
+            SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[t];
 
             TNHFrameworkLogger.Log("Spawning sosig: " + customTemplate.SosigEnemyID, TNHFrameworkLogger.LogType.TNH);
 
             // Fill out the sosig's config based on the difficulty
             SosigConfig config;
 
-            if (M.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
+            if (__instance.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
             {
                 config = customTemplate.ConfigsEasy.GetRandom<SosigConfig>();
             }
@@ -342,95 +317,117 @@ namespace TNHFramework.Patches
             else
             {
                 TNHFrameworkLogger.LogError("Sosig did not have normal difficulty config when playing on normal difficulty! Not spawning this enemy!");
-                return null;
+                __result = null;
+                return false;
             }
 
             // Create the sosig object
-            GameObject sosigPrefab = UnityEngine.Object.Instantiate(IM.OD[customTemplate.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation, spawnRotation);
-            Sosig sosigComponent = sosigPrefab.GetComponentInChildren<Sosig>();
+            GameObject sosigPrefab = Object.Instantiate(IM.OD[customTemplate.SosigPrefabs.GetRandom<string>()].GetGameObject(), pos, rot);  // ODK - Validate SosigPrefabs
+            Sosig sosig = sosigPrefab.GetComponentInChildren<Sosig>();
 
-            sosigComponent.Configure(config.GetConfigTemplate());
-            sosigComponent.SetIFF(IFF);
+            sosig.Configure(config.GetConfigTemplate());
+            sosig.SetIFF(IFF);
 
             // Set up the sosig's inventory
-            sosigComponent.Inventory.Init();
-            sosigComponent.Inventory.FillAllAmmo();
-            sosigComponent.InitHands();
+            sosig.Inventory.Init();
+            sosig.Inventory.FillAllAmmo();
+            sosig.InitHands();
 
             // Equip the sosig's weapons
             if (customTemplate.WeaponOptions.Count > 0)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptions.GetRandom<string>()].GetGameObject();
-                SosigPatches.EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
+                SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
             }
 
             if (character.ForceAllAgentWeapons)
-                allowAllWeapons = true;
+                AllowAllWeapons = true;
 
-            if (customTemplate.WeaponOptionsSecondary.Count > 0 && allowAllWeapons && customTemplate.SecondaryChance >= UnityEngine.Random.value)
+            if (customTemplate.WeaponOptionsSecondary.Count > 0 && AllowAllWeapons && customTemplate.SecondaryChance >= Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsSecondary.GetRandom<string>()].GetGameObject();
-                SosigPatches.EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
+                SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
             }
 
-            if (customTemplate.WeaponOptionsTertiary.Count > 0 && allowAllWeapons && customTemplate.TertiaryChance >= UnityEngine.Random.value)
+            if (customTemplate.WeaponOptionsTertiary.Count > 0 && AllowAllWeapons && customTemplate.TertiaryChance >= Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsTertiary.GetRandom<string>()].GetGameObject();
-                SosigPatches.EquipSosigWeapon(sosigComponent, weaponPrefab, M.AI_Difficulty);
+                SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
             }
 
             // Equip clothing to the sosig
-            OutfitConfig outfitConfig = customTemplate.OutfitConfigs.GetRandom<OutfitConfig>();
+            OutfitConfig outfitConfig = customTemplate.OutfitConfigs.GetRandom<OutfitConfig>();  // ODK - Validate OutfitConfigs
 
-            if (outfitConfig.Headwear.Count > 0 && outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Headwear, sosigComponent.Links[0], outfitConfig.ForceWearAllHead);
+            int torsoIndex = -1;
+            if (outfitConfig.Torsowear.Count > 0 && outfitConfig.Chance_Torsowear >= Random.value)
+                torsoIndex = SosigPatches.EquipSosigClothing(outfitConfig.Torsowear, sosig.Links[1], -1, outfitConfig.ForceWearAllTorso);
 
-            if (outfitConfig.Facewear.Count > 0 && outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Facewear, sosigComponent.Links[0], outfitConfig.ForceWearAllFace);
+            if (outfitConfig.Headwear.Count > 0 && outfitConfig.Chance_Headwear >= Random.value)
+            {
+                int headIndex = (outfitConfig.HeadUsesTorsoIndex) ? torsoIndex : -1;
+                SosigPatches.EquipSosigClothing(outfitConfig.Headwear, sosig.Links[0], headIndex, outfitConfig.ForceWearAllHead);
+            }
 
-            if (outfitConfig.Eyewear.Count > 0 && outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Eyewear, sosigComponent.Links[0], outfitConfig.ForceWearAllEye);
+            int pantsIndex = -1;
+            if (outfitConfig.Pantswear.Count > 0 && outfitConfig.Chance_Pantswear >= Random.value)
+            {
+                pantsIndex = (outfitConfig.PantsUsesTorsoIndex) ? torsoIndex : -1;
+                pantsIndex = SosigPatches.EquipSosigClothing(outfitConfig.Pantswear, sosig.Links[2], pantsIndex, outfitConfig.ForceWearAllPants);
+            }
 
-            if (outfitConfig.Torsowear.Count > 0 && outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Torsowear, sosigComponent.Links[1], outfitConfig.ForceWearAllTorso);
+            if (outfitConfig.Pantswear_Lower.Count > 0 && outfitConfig.Chance_Pantswear_Lower >= Random.value)
+            {
+                int pantsLowerIndex = (outfitConfig.PantsLowerUsesPantsIndex) ? pantsIndex : -1;
+                SosigPatches.EquipSosigClothing(outfitConfig.Pantswear_Lower, sosig.Links[3], pantsLowerIndex, outfitConfig.ForceWearAllPantsLower);
+            }
 
-            if (outfitConfig.Pantswear.Count > 0 && outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Pantswear, sosigComponent.Links[2], outfitConfig.ForceWearAllPants);
+            if (outfitConfig.Facewear.Count > 0 && outfitConfig.Chance_Facewear >= Random.value)
+                SosigPatches.EquipSosigClothing(outfitConfig.Facewear, sosig.Links[0], -1, outfitConfig.ForceWearAllFace);
 
-            if (outfitConfig.Pantswear_Lower.Count > 0 && outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Pantswear_Lower, sosigComponent.Links[3], outfitConfig.ForceWearAllPantsLower);
+            if (outfitConfig.Eyewear.Count > 0 && outfitConfig.Chance_Eyewear >= Random.value)
+                SosigPatches.EquipSosigClothing(outfitConfig.Eyewear, sosig.Links[0], -1, outfitConfig.ForceWearAllEye);
 
-            if (outfitConfig.Backpacks.Count > 0 && outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
-                SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosigComponent.Links[1], outfitConfig.ForceWearAllBackpacks);
+            if (outfitConfig.Backpacks.Count > 0 && outfitConfig.Chance_Backpacks >= Random.value)
+                SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[1], -1, outfitConfig.ForceWearAllBackpacks);
+
+            if (outfitConfig.TorosDecoration.Count > 0 && outfitConfig.Chance_TorosDecoration >= Random.value)
+                SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[1], -1, outfitConfig.ForceWearAllTorosDecorations);
+
+            if (outfitConfig.Belt.Count > 0 && outfitConfig.Chance_Belt >= Random.value)
+                SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[2], -1, outfitConfig.ForceWearAllBelts);
 
             // Set up the sosig's orders
-            if (isAssault)
+            if (IsAssault)
             {
-                sosigComponent.CurrentOrder = Sosig.SosigOrder.Assault;
-                sosigComponent.FallbackOrder = Sosig.SosigOrder.Assault;
-                sosigComponent.CommandAssaultPoint(pointOfInterest);
+                sosig.CurrentOrder = Sosig.SosigOrder.Assault;
+                sosig.FallbackOrder = Sosig.SosigOrder.Assault;
+                sosig.CommandAssaultPoint(pointOfInterest);
             }
             else
             {
-                sosigComponent.CurrentOrder = Sosig.SosigOrder.Wander;
-                sosigComponent.FallbackOrder = Sosig.SosigOrder.Wander;
-                sosigComponent.CommandGuardPoint(pointOfInterest, true);
-                sosigComponent.SetDominantGuardDirection(UnityEngine.Random.onUnitSphere);
+                sosig.CurrentOrder = Sosig.SosigOrder.Wander;
+                sosig.FallbackOrder = Sosig.SosigOrder.Wander;
+                sosig.CommandGuardPoint(pointOfInterest, true);
+                sosig.SetDominantGuardDirection(Random.onUnitSphere);
             }
-            sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
+            sosig.SetGuardInvestigateDistanceThreshold(25f);
 
             // Handle sosig dropping custom loot
-            if (customTemplate.DroppedObjectPool != null && UnityEngine.Random.value < customTemplate.DroppedLootChance)
+            if (customTemplate.DroppedObjectPool != null)
             {
-                SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
-                component.M = M;
-                component.character = character;
-                component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
-                component.group = new(customTemplate.DroppedObjectPool);
-                component.group.DelayedInit(character.GlobalObjectBlacklist);
+                if (Random.value < customTemplate.DroppedLootChance)
+                {
+                    SosigLinkLootWrapper component = sosig.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
+                    component.M = __instance;
+                    component.character = character;
+                    component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
+                    component.group = new(customTemplate.DroppedObjectPool);
+                    component.group.DelayedInit(character.GlobalObjectBlacklist);
+                }
             }
 
-            return sosigComponent;
+            __result = sosig;
+            return false;
         }
     }
 }

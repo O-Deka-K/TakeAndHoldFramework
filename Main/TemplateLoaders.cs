@@ -2,7 +2,6 @@
 using Stratum;
 using Stratum.Extensions;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TNHFramework.ObjectTemplates;
@@ -84,13 +83,7 @@ namespace TNHFramework
                 {
                     if (file.Name.EndsWith("character.yaml"))
                     {
-                        var deserializerBuilder = new DeserializerBuilder();
-
-                        foreach (KeyValuePair<string, Type> thing in TNHFramework.Serializables)
-                        {
-                            deserializerBuilder.WithTagMapping(thing.Key, thing.Value);
-                        }
-                        var deserializer = deserializerBuilder.Build();
+                        var deserializer = new DeserializerBuilder().Build();
                         character = deserializer.Deserialize<CustomCharacter>(File.ReadAllText(file.FullName));
 
                         TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);

@@ -25,7 +25,7 @@ namespace TNHFramework.Utilities
             // Refresh the FVRObject to have data directly from object dictionary
             firearm = IM.OD[firearm.ItemID];
 
-            // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
+            // If the max capacity is zero or negative, we interpret that as no limit on max capacity
             if (maxCapacity <= 0)
                 maxCapacity = 9999;
 
@@ -38,17 +38,13 @@ namespace TNHFramework.Utilities
             foreach (FVRObject magazine in firearm.CompatibleMagazines)
             {
                 if (blacklist != null && !blacklist.IsMagazineAllowed(magazine.ItemID))
-                {
                     continue;
-                }
-                else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
-                {
+
+                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                     continue;
-                }
-                else if (magazine.MagazineCapacity < minCapacity || magazine.MagazineCapacity > maxCapacity)
-                {
+
+                if (magazine.MagazineCapacity < minCapacity || magazine.MagazineCapacity > maxCapacity)
                     continue;
-                }
 
                 compatibleContainers.Add(magazine);
             }
@@ -57,17 +53,13 @@ namespace TNHFramework.Utilities
             foreach (FVRObject clip in firearm.CompatibleClips)
             {
                 if (blacklist != null && !blacklist.IsClipAllowed(clip.ItemID))
-                {
                     continue;
-                }
-                else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(clip.ItemID))
-                {
+
+                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(clip.ItemID))
                     continue;
-                }
-                else if (clip.MagazineCapacity < minCapacity || clip.MagazineCapacity > maxCapacity)
-                {
+
+                if (clip.MagazineCapacity < minCapacity || clip.MagazineCapacity > maxCapacity)
                     continue;
-                }
 
                 compatibleContainers.Add(clip);
             }
@@ -88,7 +80,7 @@ namespace TNHFramework.Utilities
             // Refresh the FVRObject to have data directly from object dictionary
             firearm = IM.OD[firearm.ItemID];
 
-            // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
+            // If the max capacity is zero or negative, we interpret that as no limit on max capacity
             if (maxCapacity <= 0)
                 maxCapacity = 9999;
 
@@ -101,17 +93,11 @@ namespace TNHFramework.Utilities
             for (int i = compatibleMagazines.Count - 1; i >= 0; i--)
             {
                 if (blacklist != null && !blacklist.IsMagazineAllowed(compatibleMagazines[i].ItemID))
-                {
                     compatibleMagazines.RemoveAt(i);
-                }
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleMagazines[i].ItemID))
-                {
                     compatibleMagazines.RemoveAt(i);
-                }
                 else if (compatibleMagazines[i].MagazineCapacity < minCapacity || compatibleMagazines[i].MagazineCapacity > maxCapacity)
-                {
                     compatibleMagazines.RemoveAt(i);
-                }
             }
 
             // If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
@@ -130,7 +116,7 @@ namespace TNHFramework.Utilities
             // Refresh the FVRObject to have data directly from object dictionary
             firearm = IM.OD[firearm.ItemID];
 
-            // If the max capacity is zero or negative, we iterpret that as no limit on max capacity
+            // If the max capacity is zero or negative, we interpret that as no limit on max capacity
             if (maxCapacity <= 0)
                 maxCapacity = 9999;
 
@@ -143,17 +129,11 @@ namespace TNHFramework.Utilities
             for (int i = compatibleClips.Count - 1; i >= 0; i--)
             {
                 if (blacklist != null && !blacklist.IsClipAllowed(compatibleClips[i].ItemID))
-                {
                     compatibleClips.RemoveAt(i);
-                }
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleClips[i].ItemID))
-                {
                     compatibleClips.RemoveAt(i);
-                }
                 else if (compatibleClips[i].MagazineCapacity < minCapacity || compatibleClips[i].MagazineCapacity > maxCapacity)
-                {
                     compatibleClips.RemoveAt(i);
-                }
             }
 
             return compatibleClips;
@@ -181,21 +161,13 @@ namespace TNHFramework.Utilities
                     break;
 
                 if (!eras.Contains(compatibleRounds[i].TagEra) || !sets.Contains(compatibleRounds[i].TagSet))
-                {
                     compatibleRounds.RemoveAt(i);
-                }
                 else if (blacklist != null && !blacklist.IsRoundAllowed(compatibleRounds[i].ItemID))
-                {
                     compatibleRounds.RemoveAt(i);
-                }
                 else if (globalBulletBlacklist != null && globalBulletBlacklist.Contains(compatibleRounds[i].ItemID))
-                {
                     compatibleRounds.RemoveAt(i);
-                }
                 else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(compatibleRounds[i].ItemID))
-                {
                     compatibleRounds.RemoveAt(i);
-                }
             }
 
             if (AM.STypeDic.ContainsKey(firearm.RoundType))
@@ -209,9 +181,7 @@ namespace TNHFramework.Utilities
                 foreach (var round in dogshit)
                 {
                     if (compatibleRounds.Count > 1 && compatibleRounds.Contains(round.ObjectID))
-                    {
                         compatibleRounds.Remove(round.ObjectID);
-                    }
                 }
             }
 
@@ -235,14 +205,12 @@ namespace TNHFramework.Utilities
             foreach (FVRObject magazine in magazines)
             {
                 if (blacklist != null && !blacklist.IsMagazineAllowed(magazine.ItemID))
-                {
                     continue;
-                }
-                else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
-                {
+
+                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                     continue;
-                }
-                else if (smallestMagazines.Count == 0)
+
+                if (!smallestMagazines.Any())
                 {
                     smallestMagazines.Add(magazine);
                 }
@@ -259,7 +227,7 @@ namespace TNHFramework.Utilities
                 }
             }
 
-            if (smallestMagazines.Count == 0)
+            if (!smallestMagazines.Any())
                 return null;
 
             // Return a random magazine from the smallest
@@ -331,35 +299,48 @@ namespace TNHFramework.Utilities
 
             // We make this a list so that when several next largest mags have the same capacity, we can return a random magazine from that selection
             List<FVRObject> nextLargestMagazines = [];
-            
+            List<FVRObject> largestMagazines = [];
+            int largestCapacity = 0;
+
             foreach (FVRObject magazine in IM.CompatMags[currentMagazine.MagazineType])
             {
                 if (blacklistedMagazines != null && blacklistedMagazines.Contains(magazine.ItemID))
-                {
                     continue;
-                }
-                else if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
-                {
+
+                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
                     continue;
+
+                if (magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity > largestCapacity)
+                {
+                    nextLargestMagazines.Clear();
+                    largestMagazines.Add(magazine);
+                    largestCapacity = magazine.MagazineCapacity;
                 }
-                else if (nextLargestMagazines.Count == 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity)
+                else if (magazine.MagazineCapacity == largestCapacity)
+                {
+                    largestMagazines.Add(magazine);
+                }
+
+                if (!nextLargestMagazines.Any() && magazine.MagazineCapacity > currentMagazine.MagazineCapacity + 9)
                 {
                     nextLargestMagazines.Add(magazine);
-                    continue;
                 }
-                else if (nextLargestMagazines.Count > 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
+                else if (nextLargestMagazines.Any() && magazine.MagazineCapacity > currentMagazine.MagazineCapacity + 9 && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
                 {
                     nextLargestMagazines.Clear();
                     nextLargestMagazines.Add(magazine);
-                    continue;
                 }
-                else if (nextLargestMagazines.Count > 0 && magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
+                else if (nextLargestMagazines.Any() && magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
                 {
                     nextLargestMagazines.Add(magazine);
                 }
             }
 
-            if (nextLargestMagazines.Count > 0) return nextLargestMagazines.GetRandom();
+            if (nextLargestMagazines.Any())
+                return nextLargestMagazines.GetRandom();
+
+            if (currentMagazine.MagazineCapacity < largestCapacity && largestMagazines.Any())
+                return largestMagazines.GetRandom();
 
             return null;
         }
@@ -377,22 +358,16 @@ namespace TNHFramework.Utilities
 
             // Get any items in the players hands
             if (rightHandObject is FVRPhysicalObject)
-            {
                 heldItems.Add((FVRPhysicalObject)rightHandObject);
-            }
 
             if (leftHandObject is FVRPhysicalObject)
-            {
                 heldItems.Add((FVRPhysicalObject)leftHandObject);
-            }
 
             // Get any items on the players body
             foreach (FVRQuickBeltSlot slot in GM.CurrentPlayerBody.QuickbeltSlots)
             {
                 if (slot.CurObject is not null && slot.CurObject.ObjectWrapper is not null)
-                {
                     heldItems.Add(slot.CurObject);
-                }
 
                 // If the player has a backpack on, we should search through that as well
                 if (slot.CurObject is PlayerBackPack && ((PlayerBackPack)slot.CurObject).ObjectWrapper is not null)
@@ -400,9 +375,7 @@ namespace TNHFramework.Utilities
                     foreach (FVRQuickBeltSlot backpackSlot in GM.CurrentPlayerBody.QuickbeltSlots)
                     {
                         if (backpackSlot.CurObject is not null)
-                        {
                             heldItems.Add(backpackSlot.CurObject);
-                        }
                     }
                 }
             }
@@ -460,7 +433,7 @@ namespace TNHFramework.Utilities
                     blacklistEntry = blacklist[item.ItemID];
 
                 List<FVRObject> containers = GetCompatibleAmmoContainers(item, minCapacity, maxCapacity, false, globalObjectBlacklist, blacklistEntry);
-                if (containers.Count > 0)
+                if (containers.Any())
                     return containers.GetRandom();
             }
 
@@ -481,9 +454,7 @@ namespace TNHFramework.Utilities
                 detectedObjects.Add(fireArm);
 
             if (fireArm.Magazine is not null && !fireArm.Magazine.IsIntegrated && fireArm.Magazine.ObjectWrapper is not null)
-            {
                 detectedObjects.Add(fireArm.Magazine);
-            }
 
             foreach (FVRFireArmAttachment attachment in fireArm.Attachments)
             {
@@ -529,13 +500,9 @@ namespace TNHFramework.Utilities
             for (int i = 0; i < speedloader.Chambers.Count; i++)
             {
                 if (speedloader.Chambers[i].IsLoaded)
-                {
                     component.Chambers[i].Load(speedloader.Chambers[i].LoadedClass, false);
-                }
                 else
-                {
                     component.Chambers[i].Unload();
-                }
             }
 
             return component;

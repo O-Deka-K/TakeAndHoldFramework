@@ -5,7 +5,6 @@ using FistVR;
 using HarmonyLib;
 using Stratum;
 using Stratum.Extensions;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -34,8 +33,6 @@ namespace TNHFramework
         public static string InfoPath;
         public static string OutputFilePath;
 
-        public static Dictionary<string, Type> Serializables = [];
-
         // Bodged Magazine Patcher replacement stuff
         public static Dictionary<FireArmRoundType, List<FVRObject>> CartridgeDictionary = [];
         public static Dictionary<FireArmMagazineType, List<FVRObject>> MagazineDictionary = [];
@@ -46,11 +43,10 @@ namespace TNHFramework
         public static bool PreventOutfitFunctionality = false;
         public static List<int> SpawnedBossIndexes = [];
         public static List<int> PatrolIndexPool = [];
-        public static List<int> SupplyPointIFFList = [];
 
         public static List<GameObject> SpawnedConstructors = [];
         public static List<GameObject> SpawnedPanels = [];
-        public static List<EquipmentPoolDef.PoolEntry> SpawnedPools = [];
+        public static Dictionary<EquipmentPoolDef.PoolEntry.PoolEntryType, List<EquipmentPoolDef.PoolEntry>> SpawnedPoolsDictionary = [];
 
         /// <summary>
         /// First method that gets called

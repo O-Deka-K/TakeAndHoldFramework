@@ -372,7 +372,7 @@ namespace TNHFramework
 
             if (detectedMag != null)
             {
-                upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
+                upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper, character.GlobalObjectBlacklist);
                 if (upgradeMag != null)
                 {
                     UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
@@ -494,9 +494,6 @@ namespace TNHFramework
             }
             else
             {
-                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(PanelCost);
-
                 FVRObject.OTagFirearmRoundPower roundPower = AM.GetRoundPower(detectedFirearm.RoundType);
                 int numSpawned = GetRoundsToSpawn(roundPower);
 
@@ -504,11 +501,22 @@ namespace TNHFramework
 
                 CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
                 MagazineBlacklistEntry blacklistEntry = null;
-                if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
+                if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID))
+                    blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
 
                 FVRObject compatibleRound = FirearmUtils.GetCompatibleRounds(detectedFirearm.ObjectWrapper, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.GlobalObjectBlacklist, blacklistEntry).GetRandom();
 
-                AnvilManager.Run(SpawnRounds(original.M, compatibleRound, numSpawned));
+                if (compatibleRound == null)
+                {
+                    SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
+                    return;
+                }
+                else
+                {
+                    SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
+                    original.M.SubtractTokens(PanelCost);
+                    AnvilManager.Run(SpawnRounds(original.M, compatibleRound, numSpawned));
+                }
 
                 ClearSelection();
                 UpdateIcons();
