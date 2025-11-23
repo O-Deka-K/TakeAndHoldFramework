@@ -24,9 +24,7 @@ namespace TNHFramework.Patches
             ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * 0.8f;
 
             if (GM.TNHOptions.TNHSeed < 0)
-            {
                 ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * Random.Range(0.8f, 1.1f);
-            }
         }
 
         // Anton pls fix - Use TNHSeed
@@ -239,15 +237,14 @@ namespace TNHFramework.Patches
                 if (__instance.SpawnPoints_Targets[i] != null)
                 {
                     TNH_EncryptionSpawnPoint component = __instance.SpawnPoints_Targets[i].gameObject.GetComponent<TNH_EncryptionSpawnPoint>();
+                    TNH_EncryptionType type = (__instance.M.TargetMode == TNHSetting_TargetMode.Simple) ? TNH_EncryptionType.Static : ___m_curPhase.Encryption;
 
-                    if (component == null)
-                        ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[i]);
-                    else if (component.AllowedSpawns[(int)___m_curPhase.Encryption] || __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                    if (component == null || component.AllowedSpawns[(int)type])
                         ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[i]);
                 }
             }
 
-            if (___m_validSpawnPoints.Count <= 0)
+            if (!___m_validSpawnPoints.Any())
                 ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[0]);
 
             ___m_numTargsToSpawn = Random.Range(___m_curPhase.MinTargets, ___m_curPhase.MaxTargets + 1);
