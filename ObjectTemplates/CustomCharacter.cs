@@ -526,7 +526,7 @@ namespace TNHFramework.ObjectTemplates
 
         public bool IsMagazineAllowed(string itemID)
         {
-            if (MagazineWhitelist.Count > 0 && !MagazineWhitelist.Contains(itemID))
+            if (MagazineWhitelist.Any() && !MagazineWhitelist.Contains(itemID))
             {
                 return false;
             }
@@ -541,7 +541,7 @@ namespace TNHFramework.ObjectTemplates
 
         public bool IsClipAllowed(string itemID)
         {
-            if (ClipWhitelist.Count > 0 && !ClipWhitelist.Contains(itemID))
+            if (ClipWhitelist.Any() && !ClipWhitelist.Contains(itemID))
             {
                 return false;
             }
@@ -556,7 +556,7 @@ namespace TNHFramework.ObjectTemplates
 
         public bool IsSpeedloaderAllowed(string itemID)
         {
-            if (SpeedLoaderWhitelist.Count > 0 && !SpeedLoaderWhitelist.Contains(itemID))
+            if (SpeedLoaderWhitelist.Any() && !SpeedLoaderWhitelist.Contains(itemID))
             {
                 return false;
             }
@@ -571,7 +571,7 @@ namespace TNHFramework.ObjectTemplates
 
         public bool IsRoundAllowed(string itemID)
         {
-            if (RoundWhitelist.Count > 0 && !RoundWhitelist.Contains(itemID))
+            if (RoundWhitelist.Any() && !RoundWhitelist.Contains(itemID))
             {
                 return false;
             }
@@ -774,6 +774,7 @@ namespace TNHFramework.ObjectTemplates
         public bool AutoPopulateGroup;
         public bool ForceSpawnAllSubPools;
         public List<string> IDOverride = [];
+        public List<string> IDOverrideBackup = [];
         public FVRTags Tags;
         public List<EquipmentGroup> SubGroups = [];
 
@@ -809,6 +810,8 @@ namespace TNHFramework.ObjectTemplates
             AutoPopulateGroup = thing.AutoPopulateGroup;
             ForceSpawnAllSubPools = thing.ForceSpawnAllSubPools;
             IDOverride = thing.IDOverride ?? [];
+            IDOverrideBackup = thing.IDOverrideBackup ?? [];
+
             Tags = new()
             {
                 Eras = thing.Eras ?? [],
@@ -839,6 +842,7 @@ namespace TNHFramework.ObjectTemplates
         public void Validate()
         {
             IDOverride ??= [];
+            IDOverrideBackup ??= [];
             SubGroups ??= [];
             foreach (EquipmentGroup subGroup in SubGroups)
             {
@@ -949,14 +953,14 @@ namespace TNHFramework.ObjectTemplates
         {
             List<EquipmentGroup> result;
 
-            if (IsCompatibleMagazine || SubGroups == null || SubGroups.Count == 0)
+            if (IsCompatibleMagazine || SubGroups == null || !SubGroups.Any())
             {
                 result = [this];
                 return result;
             }
             else if (ForceSpawnAllSubPools)
             {
-                result = (objects.Count == 0) ? [] : [this];
+                result = objects.Any() ? [this] : [];
 
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -967,7 +971,7 @@ namespace TNHFramework.ObjectTemplates
             }
             else
             {
-                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float thisRarity = objects.Any() ? (float)Rarity : 0;
                 float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -1088,29 +1092,29 @@ namespace TNHFramework.ObjectTemplates
                 {
                     continue;
                 }
-                else if (Tags.Eras != null && Tags.Eras.Count > 0 && !Tags.Eras.Contains((TagEra)fvrobject.TagEra))
+                else if (Tags.Eras != null && Tags.Eras.Any() && !Tags.Eras.Contains((TagEra)fvrobject.TagEra))
                 {
                     continue;
                 }
-                else if (Tags.Sets != null && Tags.Sets.Count > 0 && !Tags.Sets.Contains((TagSet)fvrobject.TagSet))
+                else if (Tags.Sets != null && Tags.Sets.Any() && !Tags.Sets.Contains((TagSet)fvrobject.TagSet))
                 {
                     continue;
                 }
-                else if (Tags.Sizes != null && Tags.Sizes.Count > 0 && !Tags.Sizes.Contains((TagFirearmSize)fvrobject.TagFirearmSize))
+                else if (Tags.Sizes != null && Tags.Sizes.Any() && !Tags.Sizes.Contains((TagFirearmSize)fvrobject.TagFirearmSize))
                 {
                     continue;
                 }
-                else if (Tags.Actions != null && Tags.Actions.Count > 0 && !Tags.Actions.Contains((TagFirearmAction)fvrobject.TagFirearmAction))
+                else if (Tags.Actions != null && Tags.Actions.Any() && !Tags.Actions.Contains((TagFirearmAction)fvrobject.TagFirearmAction))
                 {
                     continue;
                 }
-                else if (Tags.RoundPowers != null && Tags.RoundPowers.Count > 0 && !Tags.RoundPowers.Contains((TagFirearmRoundPower)fvrobject.TagFirearmRoundPower))
+                else if (Tags.RoundPowers != null && Tags.RoundPowers.Any() && !Tags.RoundPowers.Contains((TagFirearmRoundPower)fvrobject.TagFirearmRoundPower))
                 {
                     continue;
                 }
                 else
                 {
-                    if (Tags.Modes != null && Tags.Modes.Count > 0)
+                    if (Tags.Modes != null && Tags.Modes.Any())
                     {
                         bool flag = false;
                         for (int k = 0; k < Tags.Modes.Count; k++)
@@ -1145,7 +1149,7 @@ namespace TNHFramework.ObjectTemplates
                         }
                     }
 
-                    if (Tags.FeedOptions != null && Tags.FeedOptions.Count > 0)
+                    if (Tags.FeedOptions != null && Tags.FeedOptions.Any())
                     {
                         bool flag3 = true;
                         for (int m = 0; m < Tags.FeedOptions.Count; m++)
@@ -1179,31 +1183,31 @@ namespace TNHFramework.ObjectTemplates
                         }
                     }
                     
-                    if (Tags.PowerupTypes != null && Tags.PowerupTypes.Count > 0 && !Tags.PowerupTypes.Contains((TagPowerupType)fvrobject.TagPowerupType))
+                    if (Tags.PowerupTypes != null && Tags.PowerupTypes.Any() && !Tags.PowerupTypes.Contains((TagPowerupType)fvrobject.TagPowerupType))
                     {
                         continue;
                     }
-                    else if (Tags.ThrownTypes != null && Tags.ThrownTypes.Count > 0 && !Tags.ThrownTypes.Contains((TagThrownType)fvrobject.TagThrownType))
+                    else if (Tags.ThrownTypes != null && Tags.ThrownTypes.Any() && !Tags.ThrownTypes.Contains((TagThrownType)fvrobject.TagThrownType))
                     {
                         continue;
                     }
-                    else if (Tags.ThrownDamageTypes != null && Tags.ThrownDamageTypes.Count > 0 && !Tags.ThrownDamageTypes.Contains((TagThrownDamageType)fvrobject.TagThrownDamageType))
+                    else if (Tags.ThrownDamageTypes != null && Tags.ThrownDamageTypes.Any() && !Tags.ThrownDamageTypes.Contains((TagThrownDamageType)fvrobject.TagThrownDamageType))
                     {
                         continue;
                     }
-                    else if (Tags.MeleeStyles != null && Tags.MeleeStyles.Count > 0 && !Tags.MeleeStyles.Contains((TagMeleeStyle)fvrobject.TagMeleeStyle))
+                    else if (Tags.MeleeStyles != null && Tags.MeleeStyles.Any() && !Tags.MeleeStyles.Contains((TagMeleeStyle)fvrobject.TagMeleeStyle))
                     {
                         continue;
                     }
-                    else if (Tags.MeleeHandedness != null && Tags.MeleeHandedness.Count > 0 && !Tags.MeleeHandedness.Contains((TagMeleeHandedness)fvrobject.TagMeleeHandedness))
+                    else if (Tags.MeleeHandedness != null && Tags.MeleeHandedness.Any() && !Tags.MeleeHandedness.Contains((TagMeleeHandedness)fvrobject.TagMeleeHandedness))
                     {
                         continue;
                     }
-                    else if (Tags.MountTypes != null && Tags.MountTypes.Count > 0 && !Tags.MountTypes.Contains((TagFirearmMount)fvrobject.TagAttachmentMount))
+                    else if (Tags.MountTypes != null && Tags.MountTypes.Any() && !Tags.MountTypes.Contains((TagFirearmMount)fvrobject.TagAttachmentMount))
                     {
                         continue;
                     }
-                    else if (Tags.Features != null && Tags.Features.Count > 0 && !Tags.Features.Contains((TagAttachmentFeature)fvrobject.TagAttachmentFeature))
+                    else if (Tags.Features != null && Tags.Features.Any() && !Tags.Features.Contains((TagAttachmentFeature)fvrobject.TagAttachmentFeature))
                     {
                         continue;
                     }
@@ -1298,7 +1302,7 @@ namespace TNHFramework.ObjectTemplates
                     ListOverride = []
                 };
             }
-            else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
+            else if (loadout.ListOverride != null && loadout.ListOverride.Any())
             {
                 PrimaryGroup = new EquipmentGroup
                 {
@@ -1312,7 +1316,7 @@ namespace TNHFramework.ObjectTemplates
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
             }
-            else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
+            else if (loadout.TableDefs != null && loadout.TableDefs.Any())
             {
                 // If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)

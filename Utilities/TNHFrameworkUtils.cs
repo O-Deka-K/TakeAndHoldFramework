@@ -1,9 +1,12 @@
-﻿using Deli.VFS;
+﻿using BepInEx;
+using Deli.VFS;
 using FistVR;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
@@ -46,12 +49,30 @@ namespace TNHFramework.Utilities
         {
             if (group.IDOverride != null)
                 RemoveMissingObjectIDs(group.IDOverride);
+
+            // If IDOverride is now empty, copy IDOverrideBackup
+            if ((group.IDOverride == null || !group.IDOverride.Any()) && group.IDOverrideBackup != null)
+            {
+                RemoveMissingObjectIDs(group.IDOverrideBackup);
+
+                if (group.IDOverrideBackup.Any())
+                    group.IDOverride = [.. group.IDOverrideBackup];
+            }
         }
 
         public static void RemoveUnloadedObjectIDs(ObjectTemplates.V1.EquipmentGroup group)
         {
             if (group.IDOverride != null)
                 RemoveMissingObjectIDs(group.IDOverride);
+
+            // If IDOverride is now empty, copy IDOverrideBackup
+            if ((group.IDOverride == null || !group.IDOverride.Any()) && group.IDOverrideBackup != null)
+            {
+                RemoveMissingObjectIDs(group.IDOverrideBackup);
+
+                if (group.IDOverrideBackup.Any())
+                    group.IDOverride = [.. group.IDOverrideBackup];
+            }
         }
 
         public static void RemoveMissingObjectIDs(List<string> IDOverride)
@@ -121,7 +142,7 @@ namespace TNHFramework.Utilities
                     }
                 }
 
-                if (config.Headwear.Count == 0)
+                if (!config.Headwear.Any())
                     config.Chance_Headwear = 0;
 
                 for (int i = config.Facewear.Count - 1; i >= 0 ; i--)
@@ -133,7 +154,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Facewear.Count == 0)
+                if (!config.Facewear.Any())
                     config.Chance_Facewear = 0;
 
                 for (int i = config.Eyewear.Count - 1; i >= 0 ; i--)
@@ -145,7 +166,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Eyewear.Count == 0)
+                if (!config.Eyewear.Any())
                     config.Chance_Eyewear = 0;
 
                 for (int i = config.Torsowear.Count - 1; i >= 0; i--)
@@ -157,7 +178,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Torsowear.Count == 0)
+                if (!config.Torsowear.Any())
                     config.Chance_Torsowear = 0;
 
                 for (int i = config.Pantswear.Count - 1; i >= 0; i--)
@@ -169,7 +190,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Pantswear.Count == 0)
+                if (!config.Pantswear.Any())
                     config.Chance_Pantswear = 0;
 
                 for (int i = config.Pantswear_Lower.Count - 1; i >= 0; i--)
@@ -181,7 +202,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Pantswear_Lower.Count == 0)
+                if (!config.Pantswear_Lower.Any())
                     config.Chance_Pantswear_Lower = 0;
 
                 for (int i = config.Backpacks.Count - 1; i >= 0; i--)
@@ -193,7 +214,7 @@ namespace TNHFramework.Utilities
                     }
                 }
                 
-                if (config.Backpacks.Count == 0)
+                if (!config.Backpacks.Any())
                     config.Chance_Backpacks = 0;
             }
         }
@@ -299,7 +320,662 @@ namespace TNHFramework.Utilities
             }
         }
 
-        public static IEnumerator SpawnLegacyVaultFile(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M)
+        // This is pretty much a manual process of tagging mods that are incorrectly tagged or missing tags
+        public static void FixModAttachmentTags()
+        {
+            List<FVRObject> attachments = [.. ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Attachment]];
+            Regex regexSup = new(@"^Sup(SLX|SRD|TI|AA|DD|DeadAir|Gemtech|HUXWRX|KAC|Surefire|Hexagon|Silencer)");
+            Regex regexMWORus = new(@"^DotRusSight(NPZPK1|SurplusOKP7D|AxionKobraEKPD)");
+            Regex regexMWOMicroMount = new(@"^Dot(Geissele|Micro)(GBRS|Leap|Mounts|Offset|Shim|Short|SIGShort|SIGTall|Tall|Unity)");
+            Regex regexMWOMicroSight = new(@"^DotMicro(Aimpoint|Holosun|SIGRomeo|Vortex)");
+
+            foreach (FVRObject attachment in attachments)
+            {
+                if (attachment == null)
+                    continue;
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.None || attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.None)
+                {
+                    // Meats ModulShotguns chokes
+                    if (attachment.ItemID.StartsWith("AttSuppChoke") || attachment.ItemID.StartsWith("Choke"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulShotguns barrels
+                    else if (attachment.ItemID.ToLower().StartsWith("attsuppbar") || attachment.ItemID.StartsWith("AttSuppressorBarrel"))
+                    {
+                        // Don't tag these as suppressors
+                        attachment.OSple = false;
+                    }
+                    // Meats ModulAK suppressors
+                    else if (attachment.ItemID.StartsWith("AttSuppressor"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("AR15Muzzle") || attachment.ItemID == "AttSuppCookie")
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR suppressors
+                    else if (attachment.ItemID.StartsWith("AR15Sup") || attachment.ItemID.StartsWith("AttSupp"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulAR iron sights
+                    else if (attachment.ItemID.Contains("IronSight") && (attachment.ItemID.Contains("Front") || attachment.ItemID.Contains("Rear")))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulAR handle sights
+                    else if (attachment.ItemID.StartsWith("IronSightGooseneck") || attachment.ItemID.EndsWith("HandleSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulAero muzzle brakes
+                    else if (attachment.ItemID.StartsWith("Aero_Muzzle"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MCXMB") || attachment.ItemID.StartsWith("MuzzleMPX"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSIG suppressors
+                    else if (attachment.ItemID.StartsWith("MCXSRD") || attachment.ItemID.StartsWith("MCXSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2 muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzleBrake_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2/ModulShotguns suppressors
+                    else if (regexSup.IsMatch(attachment.ItemID))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulMCXSpear scopes
+                    else if (attachment.ItemID.StartsWith("Scope_"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModulSIG/ModulMCX2/ModulSCAR iron sights
+                    else if ((attachment.ItemID.StartsWith("MCX") || attachment.ItemID.StartsWith("SIG") || attachment.ItemID.StartsWith("SCAR")) && attachment.ItemID.Contains("Sight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+
+                        if (attachment.ItemID.Contains("Front"))
+                        {
+                            // Spawn the rear sight together with the front sight
+                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
+
+                            if (IM.OD.ContainsKey(rearSight))
+                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
+                        }
+                        else if (attachment.ItemID.Contains("Rear"))
+                        {
+                            // Don't allow the rear sight to autopopulate into equipment pools
+                            attachment.OSple = false;
+                        }
+                    }
+                    // Meats ModulSCAR muzzle brakes
+                    else if (attachment.ItemID.StartsWith("MuzzSCAR"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModulSCAR underbarrel grenade launchers
+                    else if (attachment.ItemID.StartsWith("EGLM"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.ProjectileWeapon;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats NGSW suppressors
+                    else if (attachment.ItemID.StartsWith("NGSWSpearSup"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
+                    }
+                    // Meats ModernWarfighterOptics magnifiers
+                    else if (attachment.ItemID.StartsWith("DotPicSight") && attachment.name.Contains("Magnifier"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics red dot
+                    else if (attachment.ItemID.StartsWith("DotPicSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Russian
+                    else if (attachment.ItemID.StartsWith("DotRusSight"))
+                    {
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+
+                        // Only some of the Russian-made sights use the Russian mount; the rest are Picatinny
+                        if (regexMWORus.IsMatch(attachment.ItemID))
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Russian;
+                        else
+                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO mounts
+                    else if (attachment.ItemID.StartsWith("DotACROMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics ACRO sights
+                    else if (attachment.ItemID.StartsWith("DotACROSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics Micro mounts
+                    else if (regexMWOMicroMount.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics Micro sights
+                    else if (regexMWOMicroSight.IsMatch(attachment.ItemID))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                    // Meats ModernWarfighterOptics MRD mounts
+                    else if (attachment.ItemID.StartsWith("DotMRDMount"))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                    // Meats ModernWarfighterOptics MRD sights
+                    else if (attachment.ItemID.StartsWith("DotMRDSight"))
+                    {
+                        attachment.OSple = true;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                        attachment.RequiredSecondaryPieces ??= [];
+                    }
+                }
+
+                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Magnification && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE ModernWarfighterRemake Optics
+                    if (attachment.ItemID.StartsWith("FSCE") && (attachment.name.Contains("30mm Mount") || attachment.name.Contains("Adapter")))
+                    {
+                        attachment.OSple = false;
+                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
+                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                    }
+                }
+                else if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Adapter && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
+                {
+                    // FSCE 30mm mounts
+                    if (attachment.ItemID.StartsWith("FSCE.LPVO") || attachment.name.Contains("30mm Mount"))
+                    {
+                        attachment.OSple = false;
+                    }
+                }
+            }
+        }
+
+        // ODK - Check for premades and fix them. They already have attachments, but they may not be registered properly.
+        //       Attachments may also be parented to the main object instead of the mount points.
+        //       Set 'removeSights' to true to get more variety when using 'AddRandomAttachments' feature.
+        public static void FixPremadeFirearm(GameObject spawnedGun, bool removeExtras = false)
+        {
+            FVRFireArm firearm = spawnedGun?.GetComponent<FVRFireArm>();
+            FVRObject gunItem = firearm?.ObjectWrapper;
+
+            if (gunItem == null)
+                return;
+
+            List<FVRFireArmAttachment> attached = spawnedGun.GetComponentsInChildren<FVRFireArmAttachment>(true).ToList();
+
+            if (!attached.Any())
+                return;
+
+            TNHFrameworkLogger.Log($"FixPremadeFirearms: Found ({attached.Count}) attachments on [{spawnedGun.name}]", TNHFrameworkLogger.LogType.TNH);
+
+            Regex regexModulAK = new(@"Modul(AK|RD|PP|SAG|Saiga9)");
+            Regex regexModulAR10 = new(@"Modul(AR10|AER10)");
+            Regex regexModulAR = new(@"Modul(AR|ADAR|DD|M16|Saint|SR25|TX15|Aero|V7)");
+            Regex regexModulSIG = new(@"^MCX(Bllk|Coyote|FDE|Gry|Raptor)");
+            //Regex regexModulShotguns = new(@"Modul(133|153|155|590|870|Auto5|Ithaca|M3|M3|M4)");  // Seems to work fine as-is
+
+            bool isModulAK = regexModulAK.IsMatch(gunItem.ItemID);
+            bool isModulAR10 = regexModulAR10.IsMatch(gunItem.ItemID);
+            bool isModulAR = !isModulAR10 && regexModulAR.IsMatch(gunItem.ItemID);
+            bool isModulSIG = regexModulSIG.IsMatch(gunItem.ItemID);
+
+            // List all mount points
+            List<FVRFireArmAttachmentMount> attachmentMounts = spawnedGun.GetComponentsInChildren<FVRFireArmAttachmentMount>(true).ToList();
+            TNHFrameworkLogger.Log($"FixPremadeFirearms: Found ({attachmentMounts.Count}) mount point(s)", TNHFrameworkLogger.LogType.TNH);
+
+            foreach (FVRFireArmAttachmentMount mount in attachmentMounts)
+            {
+                if (mount == null)
+                    continue;
+
+                string parentID = mount.Parent?.ObjectWrapper?.ItemID ?? "(unknown)";
+                string mountName = mount.name.IsNullOrWhiteSpace() ? "(unknown-mount)" : mount.name;
+
+                TNHFrameworkLogger.Log($"FixPremadeFirearms: Mount point [{parentID}/{mountName}] found", TNHFrameworkLogger.LogType.TNH);
+            }
+
+            foreach (FVRFireArmAttachment attachment in attached)
+            {
+                if (attachment == null)
+                    continue;
+
+                attachment.gameObject?.SetActive(true);
+
+                FVRObject attachmentObject = attachment.ObjectWrapper;
+
+                if (attachmentObject == null)
+                    continue;
+
+                // Check if its parent is a mount point or not
+                //FVRFireArmAttachmentMount mount = attachment.GetComponentInParent<FVRFireArmAttachmentMount>();
+                FVRFireArmAttachmentMount mount = attachment.transform.parent.GetComponent<FVRFireArmAttachmentMount>();
+                string id = attachmentObject.ItemID ?? "(null)";
+
+                if (mount == null)  // Not mounted correctly
+                {
+                    TNHFrameworkLogger.Log($"FixPremadeFirearms: Attachment ID [{id}]", TNHFrameworkLogger.LogType.TNH);
+
+                    if (isModulAK)
+                    {
+                        if (id.ToLower().Contains("dustcover"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_dustcover"));
+                        }
+                        else if (id.ToLower().Contains("fore"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foregrip"));
+                        }
+                        else if (id.ToLower().Contains("grip"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_grip"));
+                        }
+                    }
+                    else if (isModulAR10)
+                    {
+                        if (id.ToLower().Contains("barrel"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_suppresormount"));
+                        }
+                        else if ((id.ToLower().Contains("sight") || id.ToLower().Contains("30mm")) && removeExtras)
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Removing sight [{id}]", TNHFrameworkLogger.LogType.TNH);
+                            UnityEngine.Object.Destroy(attachment.gameObject);
+                        }
+                        else if ((id.ToLower().Contains("sightspike") || attachmentObject.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.IronSight) && id.ToLower().Contains("front"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if ((id.ToLower().Contains("sightspike") || attachmentObject.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.IronSight) && id.ToLower().Contains("rear"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                        }
+                        else if (id.ToLower().Contains("30mm"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                        }
+                        else if (id.ToLower().Contains("sight"))  // Rear ironsight or reflex/scope
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("ar10fore"))  // Make sure we don't match with "forest"
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                        }
+                        else if (id.ToLower().Contains("grip"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().EndsWith("_bottom"));
+                        }
+                        else if (id.ToLower().Contains("piccover"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("tube"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_stockmount"));
+                        }
+                        else if (id.ToLower().Contains("stock"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("gasblock"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (attachmentObject.TagAttachmentMount == FVRObject.OTagFirearmMount.Muzzle)
+                        {
+                            if (removeExtras)
+                            {
+                                TNHFrameworkLogger.Log($"FixPremadeFirearms: Removing sight [{id}]", TNHFrameworkLogger.LogType.TNH);
+                                UnityEngine.Object.Destroy(attachment.gameObject);
+                            }
+                            else
+                            {
+                                TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                                attachment.SetParentage(null);
+                            }
+                        }
+                    }
+                    else if (isModulAR || isModulSIG)
+                    {
+                        if (id.ToLower().Contains("barrel"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_suppresormount"));
+                        }
+                        else if (id.ToLower().Contains("charge"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_upper (1)"));
+                        }
+                        else if (id.ToLower().Contains("sight") && removeExtras)
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Removing sight [{id}]", TNHFrameworkLogger.LogType.TNH);
+                            UnityEngine.Object.Destroy(attachment.gameObject);
+                        }
+                        else if ((id.ToLower().Contains("ironsight") || attachmentObject.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.IronSight) && id.ToLower().Contains("front"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("sight"))  // Rear ironsight or reflex/scope
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("foregrip"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("fore") || id.ToLower().Contains("handguard") || id.Contains("MFR"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                        }
+                        else if (id.ToLower().Contains("grip"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().EndsWith("_bottom"));
+                        }
+                        else if (id.ToLower().Contains("tube"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_stockmount"));
+                        }
+                        else if (id.ToLower().Contains("stock"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (id.ToLower().Contains("upper"))
+                        {
+                            mount = firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().EndsWith("_upper"));
+                        }
+                        else if (id.ToLower().Contains("gasblock"))
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                            attachment.SetParentage(null);
+                        }
+                        else if (attachmentObject.TagAttachmentMount == FVRObject.OTagFirearmMount.Muzzle && removeExtras)
+                        {
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Removing sight [{id}]", TNHFrameworkLogger.LogType.TNH);
+                            UnityEngine.Object.Destroy(attachment.gameObject);
+                        }
+                        else if (id.ToLower().Contains("ar15sup") || id.ToLower().Contains("muzzle") || attachmentObject.TagAttachmentMount == FVRObject.OTagFirearmMount.Muzzle)
+                        {
+                            if (removeExtras)
+                            {
+                                TNHFrameworkLogger.Log($"FixPremadeFirearms: Removing sight [{id}]", TNHFrameworkLogger.LogType.TNH);
+                                UnityEngine.Object.Destroy(attachment.gameObject);
+                            }
+                            else
+                            {
+                                TNHFrameworkLogger.Log($"FixPremadeFirearms: Deferring [{id}] to second pass", TNHFrameworkLogger.LogType.TNH);
+                                attachment.SetParentage(null);
+                            }
+                        }
+                    }
+
+                    if (mount == null)
+                    {
+                        if (!isModulAR && !isModulSIG && !isModulAR10)
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Unknown attachment [{id}]", TNHFrameworkLogger.LogType.TNH);
+                    }
+                    else
+                    {
+                        string parentID = mount.Parent?.ObjectWrapper?.ItemID ?? "(unknown)";
+                        string mountName = mount.name.IsNullOrWhiteSpace() ? "(unknown-mount)" : mount.name;
+                        TNHFrameworkLogger.Log($"FixPremadeFirearms: Registering [{id}] on [{parentID}/{mountName}]", TNHFrameworkLogger.LogType.TNH);
+                        mount.DeRegisterAttachment(attachment);
+                        AttachToMount(attachment, mount);
+                    }
+                }
+                else  // Mounted correctly - Remount in order to fix physics
+                {
+                    string parentID = mount.Parent?.ObjectWrapper?.ItemID ?? "(unknown)";
+                    string mountName = mount.name.IsNullOrWhiteSpace() ? "(unknown-mount)" : mount.name;
+                    TNHFrameworkLogger.Log($"FixPremadeFirearms: Registering [{id}] on [{parentID}/{mountName}] (remount)", TNHFrameworkLogger.LogType.TNH);
+                    mount.DeRegisterAttachment(attachment);
+                    AttachToMount(attachment, mount);
+                }
+            }
+
+            TNHFrameworkLogger.Log($"FixPremadeFirearms: Second pass", TNHFrameworkLogger.LogType.TNH);
+
+            // Second pass
+            foreach (FVRFireArmAttachment attachment in attached)
+            {
+                if (attachment == null)
+                    continue;
+
+                if (attachment.transform?.parent == null)  // Detached
+                {
+                    FVRObject attachmentObject = attachment.ObjectWrapper;
+
+                    if (attachmentObject == null)
+                        continue;
+
+                    FVRFireArmAttachmentMount mount = attachment.GetComponentInParent<FVRFireArmAttachmentMount>();
+                    string id = attachmentObject.ItemID ?? "(null)";
+
+                    TNHFrameworkLogger.Log($"FixPremadeFirearms: Attachment ID [{id}]", TNHFrameworkLogger.LogType.TNH);
+
+                    bool destroyed = false;
+
+                    if (isModulAR10)
+                    {
+                        if (id.ToLower().Contains("sightspike") && id.ToLower().Contains("front"))
+                        {
+                            FVRFireArmAttachment fore = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("fore") && !a.ObjectWrapper.ItemID.ToLower().Contains("grip"));
+
+                            if (fore != null)
+                            {
+                                mount = fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                                mount ??= fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_bottom (1)"));
+                            }
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                        }
+                        else if (id.ToLower().Contains("sightspike") && id.ToLower().Contains("rear"))
+                        {
+                            // Do nothing
+                        }
+                        else if (id.ToLower().Contains("sight"))
+                        {
+                            FVRFireArmAttachment rings = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("30mm"));
+
+                            if (rings != null)
+                            {
+                                mount = rings.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                            }
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                        }
+                        else if (id.ToLower().Contains("piccover"))
+                        {
+                            FVRFireArmAttachment fore = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("fore") && !a.ObjectWrapper.ItemID.ToLower().Contains("grip"));
+
+                            if (fore != null)
+                            {
+                                mount = fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_right"));
+                                mount ??= fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_bottom"));
+                            }
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                        }
+                        else if (id.ToLower().Contains("stock"))
+                        {
+                            FVRFireArmAttachment tube = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("tube"));
+
+                            if (tube != null)
+                                mount = tube.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_stockmount"));
+                        }
+                        else if (id.ToLower().Contains("gasblock"))
+                        {
+                            FVRFireArmAttachment barrel = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("barrel"));
+                            mount = barrel.AttachmentMounts.Single(m => m.name.ToLower().Contains("_gasblock"));
+                        }
+                        else if (attachmentObject.TagAttachmentMount == FVRObject.OTagFirearmMount.Muzzle)
+                        {
+                            FVRFireArmAttachment barrel = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("barrel"));
+                            mount = firearm.AttachmentMounts.First(m => m.name.ToLower().Contains("_suppresormount"));
+                        }
+                    }
+                    else if (isModulAR || isModulSIG)
+                    {
+                        if (id.ToLower().Contains("ironsight") && removeExtras)
+                        {
+                            // Do nothing
+                        }
+                        else if (id.ToLower().Contains("ironsight") && id.ToLower().Contains("front"))
+                        {
+                            FVRFireArmAttachment fore = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("fore") && !a.ObjectWrapper.ItemID.ToLower().Contains("grip"));
+                            FVRFireArmAttachment upper = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("upper"));
+
+                            if (fore != null)
+                            {
+                                mount = fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                                mount ??= fore.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_bottom (1)"));
+                            }
+
+                            if (upper != null)
+                                mount ??= upper.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_foremount"));
+                        }
+                        else if (id.ToLower().Contains("sight"))
+                        {
+                            FVRFireArmAttachment upper = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("upper"));
+
+                            if (upper != null)
+                                mount = upper.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+                        }
+                        else if (id.ToLower().Contains("foregrip"))
+                        {
+                            FVRFireArmAttachment fore = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("fore") && !a.ObjectWrapper.ItemID.ToLower().Contains("grip"));
+                            mount = fore.AttachmentMounts.First(m => m.name.ToLower().Contains("_bottom"));
+                        }
+                        else if (id.ToLower().Contains("stock"))
+                        {
+                            FVRFireArmAttachment tube = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("tube"));
+
+                            if (tube != null)
+                                mount = tube.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_top"));
+
+                            mount ??= firearm.AttachmentMounts.FirstOrDefault(m => m.name.ToLower().Contains("_stockmount"));
+                        }
+                        else if (id.ToLower().Contains("gasblock"))
+                        {
+                            FVRFireArmAttachment barrel = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("barrel"));
+                            mount = barrel.AttachmentMounts.Single(m => m.name.ToLower().Contains("_gasblock"));
+                        }
+                        else if (id.ToLower().Contains("ar15sup") || id.ToLower().Contains("muzzle") || attachmentObject.TagAttachmentMount == FVRObject.OTagFirearmMount.Muzzle)
+                        {
+                            FVRFireArmAttachment barrel = attached.FirstOrDefault(a => a.ObjectWrapper.ItemID.ToLower().Contains("barrel"));
+                            mount = firearm.AttachmentMounts.First(m => m.name.ToLower().Contains("_suppresormount"));
+
+                            if (mount.HasAttachmentsOnIt())
+                            {
+                                TNHFrameworkLogger.Log($"FixPremadeFirearms: Muzzle device already mounted. Removing [{id}]", TNHFrameworkLogger.LogType.TNH);
+                                UnityEngine.Object.Destroy(attachment.gameObject);
+                                mount = null;
+                                destroyed = true;
+                            }
+                        }
+                    }
+
+                    if (mount == null)
+                    {
+                        if (!destroyed)
+                            TNHFrameworkLogger.Log($"FixPremadeFirearms: Unknown attachment [{id}]", TNHFrameworkLogger.LogType.TNH);
+                    }
+                    else
+                    {
+                        string parentID = mount.Parent?.ObjectWrapper?.ItemID ?? "(unknown)";
+                        string mountName = mount.name.IsNullOrWhiteSpace() ? "(unknown-mount)" : mount.name;
+                        TNHFrameworkLogger.Log($"FixPremadeFirearms: Registering [{id}] on [{parentID}/{mountName}]", TNHFrameworkLogger.LogType.TNH);
+                        AttachToMount(attachment, mount);
+                    }
+                }
+            }
+
+            TNHFrameworkLogger.Log($"FixPremadeFirearms: DONE [{spawnedGun.name}]", TNHFrameworkLogger.LogType.TNH);
+        }
+
+        public static IEnumerator SpawnLegacyVaultFile(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation, TNH_Manager M, bool addForce = false)
         {
             IsSpawning = true;
 
@@ -338,6 +1014,9 @@ namespace TNHFramework.Utilities
                     validIndexes.Add(j);
                     gameObject.transform.position = position;
                     gameObject.transform.rotation = Quaternion.identity;
+
+                    if (addForce)
+                        AddSpawningForce(gameObject.GetComponent<Rigidbody>());
                 }
                 else if (gun.Components[j].isMagazine)
                 {
@@ -360,12 +1039,12 @@ namespace TNHFramework.Utilities
                 {
                     toMoveToTrays.Add(gameObject);
                     
-                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Any())
                     {
                         Speedloader component = gameObject.GetComponent<Speedloader>();
                         component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
                     }
-                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Any())
                     {
                         FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
                         component2.ReloadClipWithList(gun.LoadedRoundsInMag);
@@ -375,7 +1054,7 @@ namespace TNHFramework.Utilities
                 gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
             }
             
-            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
+            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Any())
             {
                 myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
                 myGun.Magazine.IsInfinite = false;
@@ -383,7 +1062,7 @@ namespace TNHFramework.Utilities
             
             int BreakIterator = 200;
             
-            while (toDealWith.Count > 0 && BreakIterator > 0)
+            while (toDealWith.Any() && BreakIterator > 0)
             {
                 BreakIterator--;
                 
@@ -447,10 +1126,8 @@ namespace TNHFramework.Utilities
             return a + gun.forward * data.PosOffset.z;
         }
 
-        public static IEnumerator SpawnItemRoutine(TNH_Manager M, Vector3 position, Quaternion rotation, FVRObject o)
+        public static IEnumerator SpawnItemRoutine(TNH_Manager M, Vector3 position, Quaternion rotation, FVRObject o, bool addForce = false)
         {
-            TNHFrameworkLogger.Log($"SpawnItemRoutine: START [{o.ItemID}]", TNHFrameworkLogger.LogType.TNH);
-
             if (o == null)
                 yield break;
 
@@ -462,8 +1139,33 @@ namespace TNHFramework.Utilities
             M.AddObjectToTrackedList(LastSpawnedGun);
             LastSpawnedGun.SetActive(true);
 
+            // Add force and torque
+            if (addForce)
+                AddSpawningForce(o.GetGameObject().GetComponent<Rigidbody>());
+
             IsSpawning = false;
             yield break;
+        }
+
+        private static void AttachToMount(FVRFireArmAttachment attachment, FVRFireArmAttachmentMount mount)
+        {
+            if (attachment.CanScaleToMount && mount.CanThisRescale() && mount.GetRootMount().ScaleModifier > 0.01f)
+                attachment.ScaleToMount(mount);
+
+            attachment.AttachToMount(mount, false);
+
+            if (attachment is Suppressor)
+                (attachment as Suppressor).AutoMountWell();
+        }
+
+        // Add force and torque
+        private static void AddSpawningForce(Rigidbody rigidbody)
+        {
+            Vector3 velocity = new(UnityEngine.Random.Range(-0.5f, 0.5f), 1f, UnityEngine.Random.Range(-0.5f, 0.5f));
+            rigidbody.AddForce(velocity.normalized * UnityEngine.Random.Range(2f, 3f), ForceMode.VelocityChange);
+
+            Vector3 torque = new(UnityEngine.Random.Range(-0.5f, 0.5f), UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-1f, 1f));
+            rigidbody.AddRelativeTorque(torque.normalized * UnityEngine.Random.Range(10f, 15f), ForceMode.VelocityChange);
         }
 
         /// <summary>

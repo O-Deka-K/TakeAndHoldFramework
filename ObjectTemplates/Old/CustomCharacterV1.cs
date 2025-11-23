@@ -585,7 +585,8 @@ namespace TNHFramework.ObjectTemplates.V1
         public bool IsCompatibleMagazine;
         public bool AutoPopulateGroup;
         public bool ForceSpawnAllSubPools;
-        public List<string> IDOverride;
+        public List<string> IDOverride = [];
+        public List<string> IDOverrideBackup = [];
         public List<TagEra> Eras;
         public List<TagSet> Sets;
         public List<TagFirearmSize> Sizes;
@@ -668,6 +669,7 @@ namespace TNHFramework.ObjectTemplates.V1
         public void Validate()
         {
             IDOverride ??= [];
+            IDOverrideBackup ??= [];
             Eras ??= [];
             Sets ??= [];
             Sizes ??= [];
@@ -751,7 +753,7 @@ namespace TNHFramework.ObjectTemplates.V1
         {
             List<EquipmentGroup> result;
 
-            if (IsCompatibleMagazine || SubGroups == null || SubGroups.Count == 0)
+            if (IsCompatibleMagazine || SubGroups == null || !SubGroups.Any())
             {
                 result = [this];
                 return result;
@@ -760,7 +762,7 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 result = [];
 
-                if (objects.Count > 0)
+                if (objects.Any())
                 {
                     result.Add(this);
                 }
@@ -774,7 +776,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
             else
             {
-                float thisRarity = (objects.Count == 0) ? 0f : (float)Rarity;
+                float thisRarity = objects.Any() ? (float)Rarity : 0f;
                 float combinedRarity = thisRarity;
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -918,7 +920,7 @@ namespace TNHFramework.ObjectTemplates.V1
                     ListOverride = []
                 };
             }
-            else if (loadout.ListOverride != null && loadout.ListOverride.Count > 0)
+            else if (loadout.ListOverride != null && loadout.ListOverride.Any())
             {
                 PrimaryGroup = new EquipmentGroup
                 {
@@ -932,7 +934,7 @@ namespace TNHFramework.ObjectTemplates.V1
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
             }
-            else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
+            else if (loadout.TableDefs != null && loadout.TableDefs.Any())
             {
                 // If we have just one pool, then the primary pool becomes that pool
                 if (loadout.TableDefs.Count == 1)
