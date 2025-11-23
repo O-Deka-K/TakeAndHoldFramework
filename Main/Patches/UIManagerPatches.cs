@@ -1,10 +1,8 @@
 ﻿using FistVR;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,46 +14,60 @@ namespace TNHFramework.Patches
         private static readonly MethodInfo miPlayButtonSound = typeof(TNH_UIManager).GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miSetCharacter = typeof(TNH_UIManager).GetMethod("SetCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        public static int OffsetCat = 0;
-        public static int OffsetChar = 0;
+        private static readonly FieldInfo fiSelectedCategory = typeof(TNH_UIManager).GetField("m_selectedCategory", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiSelectedCharacter = typeof(TNH_UIManager).GetField("m_selectedCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static OptionsPanel_ButtonSet OBS_Character = null;
+        private static int PageCat = 0;
+        private static int PageChar = 0;
+        private static int LastPlayedChar;
 
         // Performs initial setup of the TNH Scene when loaded
         [HarmonyPatch(typeof(TNH_UIManager), "Start")]
         [HarmonyPrefix]
-        public static bool InitTNH(TNH_UIManager __instance)
+        public static void Start_InitTNH(TNH_UIManager __instance)
         {
             TNHFrameworkLogger.Log("Start method of TNH_UIManager just got called!", TNHFrameworkLogger.LogType.General);
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
             Text itemsText = CreateItemsText(__instance);
             ExpandCharacterUI(__instance);
-            FixModAttachmentTags();
 
             // Perform first time setup of all files
             if (!TNHMenuInitializer.TNHInitialized)
             {
-                SceneLoader sceneHotDog = UnityEngine.Object.FindObjectOfType<SceneLoader>();
+                SceneLoader sceneHotDog = Object.FindObjectOfType<SceneLoader>();
 
                 if (!TNHMenuInitializer.MagazineCacheFailed)
                 {
                     AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHFramework.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, __instance.Categories, __instance.CharDatabase, __instance, TNHFramework.BuildCharacterFiles.Value));
                 }
-
                 // If the magazine cache has previously failed, we shouldn't let the player continue
                 else
                 {
-                    sceneHotDog.gameObject.SetActive(false);
+                    sceneHotDog?.gameObject.SetActive(false);
                     magazineCacheText.text = "FAILED! SEE LOG!";
                 }
-
             }
             else
             {
-                RefreshTNHUI(__instance, __instance.Categories, __instance.CharDatabase);
                 magazineCacheText.text = "CACHE BUILT";
             }
+        }
 
-            return true;
+        [HarmonyPatch(typeof(TNH_UIManager), "Start")]
+        [HarmonyPostfix]
+        public static void Start_InitTNHPost(TNH_UIManager __instance)
+        {
+            TNHFrameworkLogger.Log("Start_InitTNHPost", TNHFrameworkLogger.LogType.General);
+
+            __instance.LBL_CategoryName[0].text = "Loading... Please Wait";
+            __instance.LBL_CategoryName[0].gameObject.SetActive(true);
+
+            for (int i = 1; i < __instance.LBL_CategoryName.Count; i++)
+                __instance.LBL_CategoryName[i].gameObject.SetActive(false);
+
+            RefreshTNHUI(__instance, __instance.Categories, __instance.CharDatabase);
         }
 
         /// <summary>
@@ -65,7 +77,7 @@ namespace TNHFramework.Patches
         /// <returns></returns>
         private static Text CreateMagazineCacheText(TNH_UIManager manager)
         {
-            Text magazineCacheText = UnityEngine.Object.Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            Text magazineCacheText = Object.Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
             magazineCacheText.transform.localScale = new Vector3(2, 2, 2);
             magazineCacheText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -76,7 +88,7 @@ namespace TNHFramework.Patches
 
         private static Text CreateItemsText(TNH_UIManager manager)
         {
-            Text itemsText = UnityEngine.Object.Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            Text itemsText = Object.Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             itemsText.transform.localPosition = new Vector3(-30, 630, 0);
             itemsText.transform.localScale = new Vector3(1, 1, 1);
             itemsText.text = "";
@@ -92,296 +104,91 @@ namespace TNHFramework.Patches
         /// <summary>
         /// Adds more space for characters to be displayed in the TNH menu
         /// </summary>
-        /// <param name="manager"></param>
-        private static void ExpandCharacterUI(TNH_UIManager manager)
+        /// <param name="instance"></param>
+        private static void ExpandCharacterUI(TNH_UIManager instance)
         {
-            // Add additional character buttons
-            OptionsPanel_ButtonSet buttonSet = manager.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
-            List<FVRPointableButton> buttonList = new(buttonSet.ButtonsInSet);
+            LastPlayedChar = GM.TNHOptions.LastPlayedChar;
+            OBS_Character = instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+            List<FVRPointableButton> buttonListChar = [.. OBS_Character.ButtonsInSet];
+            List<FVRPointableButton> buttonListCat = [.. instance.OBS_CharCategory.ButtonsInSet];
+
+            // Add 3 more category slots and character slots
             for (int i = 0; i < 3; i++)
             {
-                Text newCharacterLabel = UnityEngine.Object.Instantiate(manager.LBL_CharacterName[1].gameObject, manager.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
+                Text newLabelChar = Object.Instantiate(instance.LBL_CharacterName[1].gameObject, instance.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
 
-                manager.LBL_CharacterName.Add(newCharacterLabel);
-                buttonList.Add(newCharacterLabel.gameObject.GetComponent<FVRPointableButton>());
+                instance.LBL_CharacterName.Add(newLabelChar);
+                buttonListChar.Add(newLabelChar.gameObject.GetComponent<FVRPointableButton>());
+                
+                Text newLabelCat = Object.Instantiate(instance.LBL_CategoryName[1].gameObject, instance.LBL_CategoryName[1].transform.parent).GetComponent<Text>();
+
+                instance.LBL_CategoryName.Add(newLabelCat);
+                buttonListCat.Add(newLabelCat.gameObject.GetComponent<FVRPointableButton>());
             }
-            buttonSet.ButtonsInSet = buttonList.ToArray();
+
+            OBS_Character.ButtonsInSet = [.. buttonListChar];
+            instance.OBS_CharCategory.ButtonsInSet = [.. buttonListCat];
 
             // Adjust buttons to be tighter together
-            float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
-            for (int i = 0; i < manager.LBL_CharacterName.Count; i++)
+            float posXChar = instance.LBL_CharacterName[0].transform.localPosition.x;
+            float posYChar = instance.LBL_CharacterName[0].transform.localPosition.y;
+
+            for (int i = 0; i < instance.LBL_CharacterName.Count; i++)
             {
-                Button button = manager.LBL_CharacterName[i].gameObject.GetComponent<Button>();
+                instance.LBL_CharacterName[i].gameObject.SetActive(false);
 
-                button.onClick = new Button.ButtonClickedEvent();
+                Button buttonChar = instance.LBL_CharacterName[i].gameObject.GetComponent<Button>();
+                buttonChar.onClick = new Button.ButtonClickedEvent();
 
-                int whatTheFuck = i;
-                button.onClick.AddListener(() => { buttonSet.SetSelectedButton(whatTheFuck); });
-                button.onClick.AddListener(() => { manager.SetSelectedCharacter(whatTheFuck); });
+                int index = i;  // Loop optimization fix - do NOT delete
+                buttonChar.onClick.AddListener(() => { OBS_Character.SetSelectedButton(index); });
+                buttonChar.onClick.AddListener(() => { instance.SetSelectedCharacter(index); });
 
-                if (i > 0)
-                {
-                    prevY -= 35f;
-                    manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
-                }
+                instance.LBL_CharacterName[i].transform.localPosition = new Vector3(posXChar, posYChar, 0);
+                posYChar -= 45f;
             }
-        }
 
-        // This is pretty much a manual process of tagging mods that are incorrectly tagged or missing tags
-        private static void FixModAttachmentTags()
-        {
-            List<FVRObject> attachments = new(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Attachment]);
-            Regex regexSup = new(@"^Sup(SLX|SRD|TI|AA|DD|DeadAir|Gemtech|HUXWRX|KAC|Surefire|Hexagon|Silencer)");
-            Regex regexMWORus = new(@"^DotRusSight(NPZPK1|SurplusOKP7D|AxionKobraEKPD)");
-            Regex regexMWOMicroMount = new(@"^Dot(Geissele|Micro)(GBRS|Leap|Mounts|Offset|Shim|Short|SIGShort|SIGTall|Tall|Unity)");
-            Regex regexMWOMicroSight = new(@"^DotMicro(Aimpoint|Holosun|SIGRomeo|Vortex)");
+            float posXCat = instance.LBL_CategoryName[0].transform.localPosition.x;
+            float posYCat = instance.LBL_CategoryName[0].transform.localPosition.y;
 
-            foreach (FVRObject attachment in attachments)
+            for (int j = 0; j < instance.LBL_CategoryName.Count; j++)
             {
-                if (attachment == null)
-                    continue;
+                Button buttonCat = instance.LBL_CategoryName[j].gameObject.GetComponent<Button>();
+                buttonCat.onClick = new Button.ButtonClickedEvent();
 
-                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.None || attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.None)
-                {
-                    // Meats ModulShotguns chokes
-                    if (attachment.ItemID.StartsWith("AttSuppChoke") || attachment.ItemID.StartsWith("Choke"))
-                    {
-                        // Don't tag these as suppressors
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulShotguns barrels
-                    else if (attachment.ItemID.ToLower().StartsWith("attsuppbar") || attachment.ItemID.StartsWith("AttSuppressorBarrel"))
-                    {
-                        // Don't tag these as suppressors
-                        attachment.OSple = false;
-                    }
-                    // Meats ModulAK suppressors
-                    else if (attachment.ItemID.StartsWith("AttSuppressor"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulAR muzzle brakes
-                    else if (attachment.ItemID.StartsWith("AR15Muzzle") || attachment.ItemID == "AttSuppCookie")
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulAR suppressors
-                    else if (attachment.ItemID.StartsWith("AR15Sup") || attachment.ItemID.StartsWith("AttSupp"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulAR iron sights
-                    else if (attachment.ItemID.Contains("IronSight") && (attachment.ItemID.Contains("Front") || attachment.ItemID.Contains("Rear")))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
+                int index2 = j;  // Loop optimization fix - do NOT delete
+                buttonCat.onClick.AddListener(() => { instance.OBS_CharCategory.SetSelectedButton(index2); });
+                buttonCat.onClick.AddListener(() => { instance.SetSelectedCategory(index2); });
 
-                        if (attachment.ItemID.Contains("Front"))
-                        {
-                            // Spawn the rear sight together with the front sight
-                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
-
-                            if (IM.OD.ContainsKey(rearSight))
-                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
-                        }
-                        else if (attachment.ItemID.Contains("Rear"))
-                        {
-                            // Don't allow the rear sight to autopopulate into equipment pools
-                            attachment.OSple = false;
-                        }
-                    }
-                    // Meats ModulAR handle sights
-                    else if (attachment.ItemID.StartsWith("IronSightGooseneck") || attachment.ItemID.EndsWith("HandleSight"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModulAero muzzle brakes
-                    else if (attachment.ItemID.StartsWith("Aero_Muzzle"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulSIG muzzle brakes
-                    else if (attachment.ItemID.StartsWith("MCXMB") || attachment.ItemID.StartsWith("MuzzleMPX"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulSIG suppressors
-                    else if (attachment.ItemID.StartsWith("MCXSRD") || attachment.ItemID.StartsWith("MCXSup"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2 muzzle brakes
-                    else if (attachment.ItemID.StartsWith("MuzzleBrake_"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulMCX2/ModulMCXSpear/ModulAR2/ModulShotguns suppressors
-                    else if (regexSup.IsMatch(attachment.ItemID))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulMCXSpear scopes
-                    else if (attachment.ItemID.StartsWith("Scope_"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModulSIG/ModulMCX2/ModulSCAR iron sights
-                    else if ((attachment.ItemID.StartsWith("MCX") || attachment.ItemID.StartsWith("SIG") || attachment.ItemID.StartsWith("SCAR")) && attachment.ItemID.Contains("Sight"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.IronSight;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-
-                        if (attachment.ItemID.Contains("Front"))
-                        {
-                            // Spawn the rear sight together with the front sight
-                            string rearSight = attachment.ItemID.Replace("Front", "Rear");
-
-                            if (IM.OD.ContainsKey(rearSight))
-                                attachment.RequiredSecondaryPieces.Add(IM.OD[rearSight]);
-                        }
-                        else if (attachment.ItemID.Contains("Rear"))
-                        {
-                            // Don't allow the rear sight to autopopulate into equipment pools
-                            attachment.OSple = false;
-                        }
-                    }
-                    // Meats ModulSCAR muzzle brakes
-                    else if (attachment.ItemID.StartsWith("MuzzSCAR"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.RecoilMitigation;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModulSCAR underbarrel grenade launchers
-                    else if (attachment.ItemID.StartsWith("EGLM"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.ProjectileWeapon;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats NGSW suppressors
-                    else if (attachment.ItemID.StartsWith("NGSWSpearSup"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Suppression;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Muzzle;
-                    }
-                    // Meats ModernWarfighterOptics magnifiers
-                    else if (attachment.ItemID.StartsWith("DotPicSight") && attachment.name.Contains("Magnifier"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Magnification;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics red dot
-                    else if (attachment.ItemID.StartsWith("DotPicSight"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics Russian
-                    else if (attachment.ItemID.StartsWith("DotRusSight"))
-                    {
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
-
-                        // Only some of the Russian-made sights use the Russian mount; the rest are Picatinny
-                        if (regexMWORus.IsMatch(attachment.ItemID))
-                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Russian;
-                        else
-                            attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics ACRO mounts
-                    else if (attachment.ItemID.StartsWith("DotACROMount"))
-                    {
-                        attachment.OSple = false;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics ACRO sights
-                    else if (attachment.ItemID.StartsWith("DotACROSight"))
-                    {
-                        attachment.OSple = true;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                        attachment.RequiredSecondaryPieces ??= [];
-                    }
-                    // Meats ModernWarfighterOptics Micro mounts
-                    else if (regexMWOMicroMount.IsMatch(attachment.ItemID))
-                    {
-                        attachment.OSple = false;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics Micro sights
-                    else if (regexMWOMicroSight.IsMatch(attachment.ItemID))
-                    {
-                        attachment.OSple = true;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                        attachment.RequiredSecondaryPieces ??= [];
-                    }
-                    // Meats ModernWarfighterOptics MRD mounts
-                    else if (attachment.ItemID.StartsWith("DotMRDMount"))
-                    {
-                        attachment.OSple = false;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                    // Meats ModernWarfighterOptics MRD sights
-                    else if (attachment.ItemID.StartsWith("DotMRDSight"))
-                    {
-                        attachment.OSple = true;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Reflex;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                        attachment.RequiredSecondaryPieces ??= [];
-                    }
-                }
-
-                if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Magnification && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
-                {
-                    // FSCE ModernWarfighterRemake Optics
-                    if (attachment.ItemID.StartsWith("FSCE") && (attachment.name.Contains("30mm Mount") || attachment.name.Contains("Adapter")))
-                    {
-                        attachment.OSple = false;
-                        attachment.TagAttachmentFeature = FVRObject.OTagAttachmentFeature.Adapter;
-                        attachment.TagAttachmentMount = FVRObject.OTagFirearmMount.Picatinny;
-                    }
-                }
-                else if (attachment.TagAttachmentFeature == FVRObject.OTagAttachmentFeature.Adapter && attachment.TagAttachmentMount == FVRObject.OTagFirearmMount.Picatinny)
-                {
-                    // FSCE 30mm mounts
-                    if (attachment.ItemID.StartsWith("FSCE.LPVO") || attachment.name.Contains("30mm Mount"))
-                    {
-                        attachment.OSple = false;
-                    }
-                }
+                instance.LBL_CategoryName[j].transform.localPosition = new Vector3(posXCat, posYCat, 0);
+                posYCat -= 45f;
             }
         }
 
         public static void RefreshTNHUI(TNH_UIManager instance, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase)
         {
+            if (!TNHMenuInitializer.TNHInitialized)
+                return;
+
             TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
+
+            instance.LBL_CategoryName[0].text = "<<Previous<<";
+            instance.LBL_CategoryName[0].gameObject.SetActive(true);
+
+            instance.LBL_CategoryName[11].text = ">>Next>>";
+            instance.LBL_CategoryName[11].gameObject.SetActive(true);
+
+            instance.LBL_CharacterName[0].text = "<<Previous<<";
+            instance.LBL_CharacterName[0].gameObject.SetActive(true);
+
+            instance.LBL_CharacterName[11].text = ">>Next>>";
+            instance.LBL_CharacterName[11].gameObject.SetActive(true);
 
             // Load all characters into the UI
             foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
             {
-                bool flag = false;
-                foreach (TNH_UIManager.CharacterCategory category in Categories)
-                {
-                    if (category.CategoryName == character.Value.Custom.CategoryData.Name)
-                    {
-                        flag = true;
-                        break;
-                    }
-                }
-
-                if (!flag)
+                // Add new category if it doesn't exist yet
+                if (!Categories.Any(o => o.CategoryName == character.Value.Custom.CategoryData.Name))
                 {
                     Categories.Insert(character.Value.Custom.CategoryData.Priority, new TNH_UIManager.CharacterCategory()
                     {
@@ -390,6 +197,7 @@ namespace TNHFramework.Patches
                     });
                 }
 
+                // Add character to category
                 if (!Categories[(int)character.Value.Def.Group].Characters.Contains(character.Key))
                 {
                     Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
@@ -397,115 +205,192 @@ namespace TNHFramework.Patches
                 }
             }
 
-            // Update the UI
-            Traverse instanceTraverse = Traverse.Create(instance);
-            int selectedCategory = (int)instanceTraverse.Field("m_selectedCategory").GetValue();
-            int selectedCharacter = (int)instanceTraverse.Field("m_selectedCharacter").GetValue();
+            // Refresh categories and characters
+            try
+            {
+                miSetCharacter.Invoke(instance, [(TNH_Char)LastPlayedChar]);
+                SetCharacterCategoryFromCharacter(instance, (TNH_Char)GM.TNHOptions.LastPlayedChar);
+            }
+            catch
+            {
+                miSetCharacter.Invoke(instance, [TNH_Char.DD_BeginnerBlake]);
+                SetCharacterCategoryFromCharacter(instance, TNH_Char.DD_BeginnerBlake);
+            }
+        }
 
-            instanceTraverse.Method("SetSelectedCategory", selectedCategory).GetValue();
-            instance.OBS_CharCategory.SetSelectedButton(selectedCharacter);
+        public static void SetCharacterCategoryFromCharacter(TNH_UIManager instance, TNH_Char c)
+        {
+            for (int i = 0; i < instance.Categories.Count; i++)
+            {
+                for (int j = 0; j < instance.Categories[i].Characters.Count; j++)
+                {
+                    if (c == instance.Categories[i].Characters[j])
+                    {
+                        //m_selectedCategory = i;
+                        //m_selectedCharacter = j;
+                        fiSelectedCategory.SetValue(instance, i);
+                        fiSelectedCharacter.SetValue(instance, j);
+
+                        PageCat = i / 10;
+                        PageChar = j / 10;
+
+                        DisplayCategories(instance);
+                        DisplayCharacters(instance, i);
+
+                        instance.SetSelectedCategory((i % 10) + 1);
+                        instance.OBS_CharCategory.SetSelectedButton((i % 10) + 1);
+
+                        instance.SetSelectedCharacter((j % 10) + 1);
+                        OBS_Character.SetSelectedButton((j % 10) + 1);
+
+                        return;
+                    }
+                }
+            }
         }
 
         [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategory")]
         [HarmonyPrefix]
-        public static bool SetCategoryUIPatch(TNH_UIManager __instance, ref int ___m_selectedCategory, int cat)
+        public static bool SetSelectedCategory_UIPatch(TNH_UIManager __instance, ref int ___m_selectedCategory, int cat)
         {
-            //TNHFrameworkLogger.Log("Category number " + cat + ", offset " + OffsetCat + ", max is " + __instance.Categories.Count, TNHFrameworkLogger.LogType.TNH);
+            if (!TNHMenuInitializer.TNHInitialized)
+                return false;
 
-            ___m_selectedCategory = cat + OffsetCat;
-            OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[0].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+            //TNHFrameworkLogger.Log("SetSelectedCategory: Category number " + cat + ", page " + PageCat + ", max is " + __instance.Categories.Count, TNHFrameworkLogger.LogType.TNH);
+            int prevCat = ___m_selectedCategory;
 
-            // Probably better done with a switch statement and a single int, but i just wanna get this done first
-            int adjust = 0;
-            if (cat == OffsetCat)
-                adjust = Math.Max(-2, 0 - OffsetCat);
-            else if (cat == OffsetCat + 1)
-                adjust = Math.Max(-1, 0 - OffsetCat);
-            else if (cat == 6 && __instance.Categories.Count > 8)
-                adjust = Math.Min(1, __instance.Categories.Count - OffsetCat - 8);
-            else if (cat == 7 && __instance.Categories.Count > 8)
-                adjust = Math.Min(2, __instance.Categories.Count - OffsetCat - 8);
-
-            //TNHFrameworkLogger.Log("Adjust is " + adjust, TNHFrameworkLogger.LogType.TNH);
-
-            OffsetCat += adjust;
-            buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
-
-            //__instance.PlayButtonSound(0);
-            miPlayButtonSound.Invoke(__instance, [0]);
-
-            for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
+            if (cat == 0)
             {
-                //TNHFrameworkLogger.Log("Category iterator is " + i, TNHFrameworkLogger.LogType.TNH);
-
-                if (i + OffsetCat < __instance.Categories.Count)
+                if (PageCat > 0)
                 {
-                    __instance.LBL_CategoryName[i].gameObject.SetActive(true);
-                    __instance.LBL_CategoryName[i].text = (i + OffsetCat + 1).ToString() + ". " + __instance.Categories[i + OffsetCat].CategoryName;
+                    PageCat--;
+                    cat = 1;
                 }
                 else
                 {
-                    __instance.LBL_CategoryName[i].gameObject.SetActive(false);
+                    cat = prevCat % 10 + 1;
                 }
+
+                __instance.OBS_CharCategory.SetSelectedButton(cat);
+            }
+            else if (cat == 11)
+            {
+                if (PageCat < (__instance.Categories.Count - 1) / 10)
+                {
+                    PageCat++;
+                    cat = 1;
+                }
+                else
+                {
+                    cat = prevCat % 10 + 1;
+                }
+
+                __instance.OBS_CharCategory.SetSelectedButton(cat);
             }
 
-            OffsetChar = 0;
-            __instance.SetSelectedCharacter(0);
+            //__instance.PlayButtonSound(0);
+            miPlayButtonSound.Invoke(__instance, [0]);
+            DisplayCategories(__instance);
+
+            ___m_selectedCategory = cat - 1 + PageCat * 10;
+
+            if (___m_selectedCategory != prevCat)
+            {
+                PageChar = 0;
+                __instance.SetSelectedCharacter(1);
+                OBS_Character.SetSelectedButton(1);
+            }
 
             return false;
         }
 
+        public static void DisplayCategories(TNH_UIManager instance)
+        {
+            // Adjust category labels according to PageCat
+            for (int i = 0; i < instance.LBL_CategoryName.Count - 2; i++)
+            {
+                if (i + PageCat * 10 < instance.Categories.Count)
+                {
+                    instance.LBL_CategoryName[i + 1].gameObject.SetActive(true);
+                    instance.LBL_CategoryName[i + 1].text = (i + 1 + PageCat * 10).ToString() + ". " + instance.Categories[i + PageCat * 10].CategoryName;
+                }
+                else
+                {
+                    instance.LBL_CategoryName[i + 1].gameObject.SetActive(false);
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCharacter")]
         [HarmonyPrefix]
-        public static bool SetCharacterUIPatch(TNH_UIManager __instance, int ___m_selectedCategory, int ___m_selectedCharacter, int i)
+        public static bool SetSelectedCharacter_UIPatch(TNH_UIManager __instance, int ___m_selectedCategory, ref int ___m_selectedCharacter, int i)
         {
-            //TNHFrameworkLogger.Log("Character number " + i + ", offset " + OffsetChar + ", max is " + __instance.Categories[___m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
+            if (!TNHMenuInitializer.TNHInitialized)
+                return false;
 
-            ___m_selectedCharacter = i + OffsetChar;
-            OptionsPanel_ButtonSet buttonSet = __instance.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+            //TNHFrameworkLogger.Log("SetSelectedCharacter: Character number " + i + ", page " + PageChar + ", max is " + __instance.Categories[___m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
 
-            int adjust = 0;
-            if (i == OffsetChar)
-                adjust = Math.Max(-2, 0 - OffsetChar);
-            else if (i == OffsetChar + 1)
-                adjust = Math.Max(-1, 0 - OffsetChar);
-            else if (i == 10 && __instance.Categories[___m_selectedCategory].Characters.Count > 12)
-                adjust = Math.Min(1, __instance.Categories[___m_selectedCategory].Characters.Count - OffsetChar - 12);
-            else if (i == 11 && __instance.Categories[___m_selectedCategory].Characters.Count > 12)
-                adjust = Math.Min(2, __instance.Categories[___m_selectedCategory].Characters.Count - OffsetChar - 12);
+            if (i == 0)
+            {
+                if (PageChar > 0)
+                {
+                    PageChar--;
+                    i = 1;
+                }
+                else
+                {
+                    i = ___m_selectedCharacter % 10 + 1;
+                }
 
-            //TNHFrameworkLogger.Log("Adjust is " + adjust, TNHFrameworkLogger.LogType.TNH);
+                OBS_Character.SetSelectedButton(i);
+            }
+            else if (i == 11)
+            {
+                if (PageChar < (__instance.Categories[___m_selectedCategory].Characters.Count - 1) / 10)
+                {
+                    PageChar++;
+                    i = 1;
+                }
+                else
+                {
+                    i = ___m_selectedCharacter % 10 + 1;
+                }
 
-            OffsetChar += adjust;
-            buttonSet.SetSelectedButton(buttonSet.selectedButton - adjust);
+                OBS_Character.SetSelectedButton(i);
+            }
+
+            //__instance.PlayButtonSound(1);
+            miPlayButtonSound.Invoke(__instance, [1]);
+            DisplayCharacters(__instance, ___m_selectedCategory);
+
+            ___m_selectedCharacter = i - 1 + PageChar * 10;
 
             TNH_Char character = __instance.Categories[___m_selectedCategory].Characters[___m_selectedCharacter];
             if (LoadedTemplateManager.LoadedCharacterDict.ContainsKey(character))
                 LoadedTemplateManager.CurrentCharacter = LoadedTemplateManager.LoadedCharacterDict[character].Custom;
 
             //__instance.SetCharacter(character);
-            //__instance.PlayButtonSound(1);
             miSetCharacter.Invoke(__instance, [character]);
-            miPlayButtonSound.Invoke(__instance, [1]);
 
-            for (int j = 0; j < __instance.LBL_CharacterName.Count; j++)
+            return false;
+        }
+
+        public static void DisplayCharacters(TNH_UIManager instance, int selectedCategory)
+        {
+            // Adjust character labels according to PageChar
+            for (int i = 0; i < instance.LBL_CharacterName.Count - 2; i++)
             {
-                //TNHFrameworkLogger.Log("Char iterator is " + j, TNHFrameworkLogger.LogType.TNH);
-
-                if (j + OffsetChar < __instance.Categories[___m_selectedCategory].Characters.Count)
+                if (i + PageChar * 10 < instance.Categories[selectedCategory].Characters.Count)
                 {
-                    __instance.LBL_CharacterName[j].gameObject.SetActive(true);
-
-                    TNH_CharacterDef def = __instance.CharDatabase.GetDef(__instance.Categories[___m_selectedCategory].Characters[j + OffsetChar]);
-                    __instance.LBL_CharacterName[j].text = (j + OffsetChar + 1).ToString() + ". " + def.DisplayName;
+                    instance.LBL_CharacterName[i + 1].gameObject.SetActive(true);
+                    TNH_CharacterDef def = instance.CharDatabase.GetDef(instance.Categories[selectedCategory].Characters[i + PageChar * 10]);
+                    instance.LBL_CharacterName[i + 1].text = (i + 1 + PageChar * 10).ToString() + ". " + def.DisplayName;
                 }
                 else
                 {
-                    __instance.LBL_CharacterName[j].gameObject.SetActive(false);
+                    instance.LBL_CharacterName[i + 1].gameObject.SetActive(false);
                 }
             }
-
-            return false;
         }
     }
 }
