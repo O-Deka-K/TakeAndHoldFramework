@@ -8,6 +8,7 @@ using Stratum.Extensions;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TNHFramework.Patches;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -26,6 +27,10 @@ namespace TNHFramework
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> ConvertFilesToYAML;
         public static ConfigEntry<bool> AlwaysMagUpgrader;
+        public static ConfigEntry<bool> SosigItemDropVibrate;
+        public static ConfigEntry<bool> FixModAttachmentTags;
+        public static ConfigEntry<bool> FixLegacyModulGuns;
+        public static ConfigEntry<bool> FixWurstMod;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
@@ -80,6 +85,30 @@ namespace TNHFramework
 
             if (EnableDebugText.Value)
                 harmony.PatchAll(typeof(DebugPatches));
+
+            if (FixWurstMod.Value)
+                UnpatchWurstMod(harmony);
+        }
+
+        private void UnpatchWurstMod(Harmony harmony)
+        {
+            // ODK - This removes the navmesh patches from WurstMod 2.2.5. They're broken because of vanilla changes.
+            var methods = Harmony.GetAllPatchedMethods()?.Where(o => o.DeclaringType == typeof(Sosig) && o.Name == "LegsUpdate_MoveToPoint" ||
+                                                                     o.DeclaringType == typeof(NavMeshLinkExtension) && o.Name == "Start");
+
+            if (methods != null)
+            {
+                foreach (var method in methods)
+                {
+                    var patch = Harmony.GetPatchInfo(method)?.Prefixes?.FirstOrDefault(o => o.owner == "com.koba.plugins.wurstmod");
+
+                    if (patch != null)
+                    {
+                        TNHFrameworkLogger.Log($"Removing WurstMod patch ({method.DeclaringType}.{method.Name})", TNHFrameworkLogger.LogType.TNH);
+                        harmony.Unpatch(method, HarmonyPatchType.Prefix, "com.koba.plugins.wurstmod");
+                    }
+                }
+            }
         }
 
         public override void OnSetup(IStageContext<Empty> ctx)
@@ -150,6 +179,29 @@ namespace TNHFramework
                                     true,
                                     "If true, all Mag Duplicators become Mag Upgraders. This is default legacy TNHTweaker behavior.\n" +
                                     "If false, Mag Duplicators and Mag Upgraders are different. Mag Upgraders allow you to buy a new mag for your current gun, while Mag Duplicators don't.");
+
+            SosigItemDropVibrate = Config.Bind("General",
+                                    "SosigItemDropVibrate",
+                                    true,
+                                    "If true, vibrate the controllers when a Sosig spawns an item on death. This doesn't apply to health drops.");
+
+            FixModAttachmentTags = Config.Bind("General",
+                                    "FixModAttachmentTags",
+                                    true,
+                                    "If true, fix mod attachment tags for known mods so that they can spawn in TNH.\n" +
+                                    "Handles older mods by Meat_banano and FSCE.");
+
+            FixLegacyModulGuns = Config.Bind("General",
+                                    "FixLegacyModulGuns",
+                                    true,
+                                    "If true, try to fix Modul guns that have preset attachments (premades). The attachments fall through the floor if you remove them.\n" +
+                                    "Handles older non-ModulWorkshop mods by Meat_banano.");
+
+            FixWurstMod = Config.Bind("General",
+                                    "FixWurstMod",
+                                    true,
+                                    "If true, Unpatch broken patches from WurstMod 2.2.5.\n" +
+                                    "These patches were broken by changes to H3VR and never fixed. They cause annoying errors in the log.");
 
             ConvertFilesToYAML = Config.Bind("General",
                                     "ConvertFilesToYAML",
