@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using FistVR;
 using System.Collections.Generic;
+using System.Linq;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -33,28 +34,19 @@ namespace TNHFramework
                     if (selectedGroup.IsCompatibleMagazine)
                     {
                         FVRObject mag = FirearmUtils.GetAmmoContainerForEquipped(selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity, character.GlobalObjectBlacklist, character.GetMagazineBlacklist());
-                        if (mag != null)
-                        {
-                            selectedItem = mag.ItemID;
-                        }
-                        else
-                        {
+                        if (mag == null)
                             TNHFrameworkLogger.Log("Spawning nothing since group was compatible magazines, and could not find a compatible magazine for player", TNHFrameworkLogger.LogType.TNH);
-                            //return;
-                        }
+                        else
+                            selectedItem = mag.ItemID;
                     }
                     else
                     {
                         var list = selectedGroup.GetObjects();
 
-                        if (list.Count == 0)
-                        {
+                        if (!list.Any())
                             TNHFrameworkLogger.Log("Spawning nothing since group was empty", TNHFrameworkLogger.LogType.TNH);
-                        }
                         else
-                        {
                             selectedItem = list.GetRandom();
-                        }
                     }
 
                     // If list is empty, then there's nothing to spawn
@@ -66,27 +58,42 @@ namespace TNHFramework
                         TNHFrameworkLogger.Log($"Spawning vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
 
                         GameObject newObject = new("SosigDropMarker");
-                        newObject.transform.position = transform.position + (Vector3.up * 0.1f * spawnedItems);
-                        newObject.transform.rotation = transform.rotation;
+                        newObject.transform.position = transform.position + (Vector3.up * 0.1f * (spawnedItems + 1));
+                        newObject.transform.rotation = Quaternion.identity;
                         newObject.transform.localScale = transform.localScale;
                         VaultSystem.SpawnVaultFile(LoadedTemplateManager.LoadedVaultFiles[selectedItem], newObject.transform, true, false, false, out _, Vector3.zero);
                         Destroy(newObject, 10f);
                     }
-                    else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem))
+                    else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem) && LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem] != null)
                     {
                         TNHFrameworkLogger.Log($"Spawning legacy vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
                         AnvilManager.Run(TNHFrameworkUtils.SpawnLegacyVaultFile(LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem],
-                            transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation, M));
+                            transform.position + (Vector3.up * 0.1f * (spawnedItems + 1)), Quaternion.identity, M, true));
                     }
-                    else
+                    else if (IM.OD[selectedItem] != null)
                     {
                         TNHFrameworkLogger.Log($"Spawning item {selectedItem}", TNHFrameworkLogger.LogType.TNH);
-                        AnvilManager.Run(TNHFrameworkUtils.SpawnItemRoutine(M, transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation, IM.OD[selectedItem]));
+                        AnvilManager.Run(TNHFrameworkUtils.SpawnItemRoutine(M, transform.position + (Vector3.up * 0.1f * (spawnedItems + 1)), Quaternion.identity, IM.OD[selectedItem], true));
                     }
 
                     spawnedItems++;
+
+                    // Haptic buzz for dropped item
+                    if (TNHFramework.SosigItemDropVibrate.Value)
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            FVRViveHand hand = GM.CurrentMovementManager.Hands[i];
+                            hand.Buzz(hand.Buzzer.Buzz_GunShot);
+                        }
+                    }
                 }
             }
+        }
+
+        void OnApplicationQuit()
+        {
+            dontDrop = true;
         }
     }
 }
