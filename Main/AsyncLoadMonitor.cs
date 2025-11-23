@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace TNHFramework
@@ -9,7 +10,7 @@ namespace TNHFramework
 
         public static float GetProgress()
         {
-            if (CallbackList.Count == 0)
+            if (!CallbackList.Any())
                 return 1;
 
             float totalStatus = 0;
@@ -17,13 +18,9 @@ namespace TNHFramework
             for (int i = CallbackList.Count - 1; i >= 0; i--)
             {
                 if (CallbackList[i].IsCompleted)
-                {
                     CallbackList.RemoveAt(i);
-                }
                 else
-                {
                     totalStatus += CallbackList[i].Progress;
-                }
             }
 
             return totalStatus / CallbackList.Count;

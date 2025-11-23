@@ -228,14 +228,14 @@ namespace TNHFramework
                     continue;
                 }
 
-                if ((firearm.CompatibleSingleRounds == null || firearm.CompatibleSingleRounds.Count == 0) &&
+                if ((firearm.CompatibleSingleRounds == null || !firearm.CompatibleSingleRounds.Any()) &&
                     TNHFramework.CartridgeDictionary.ContainsKey(roundType))
                 {
                     TNHFrameworkLogger.Log($"Giving firearm {firearm.DisplayName} new rounds of type {roundType}", TNHFrameworkLogger.LogType.General);
                     firearm.CompatibleSingleRounds = TNHFramework.CartridgeDictionary[roundType];
                 }
 
-                if ((firearm.CompatibleMagazines == null || firearm.CompatibleMagazines.Count == 0) &&
+                if ((firearm.CompatibleMagazines == null || !firearm.CompatibleMagazines.Any()) &&
                     TNHFramework.MagazineDictionary.ContainsKey(magazineType) &&
                     magazineType != FireArmMagazineType.mNone)
                 {
@@ -243,7 +243,7 @@ namespace TNHFramework
                     firearm.CompatibleMagazines = TNHFramework.MagazineDictionary[magazineType];
                 }
 
-                if ((firearm.CompatibleClips == null || firearm.CompatibleClips.Count == 0) &&
+                if ((firearm.CompatibleClips == null || !firearm.CompatibleClips.Any()) &&
                     TNHFramework.StripperDictionary.ContainsKey(clipType) &&
                     clipType != FireArmClipType.None)
                 {
@@ -251,7 +251,7 @@ namespace TNHFramework
                     firearm.CompatibleClips = TNHFramework.StripperDictionary[clipType];
                 }
 
-                if ((firearm.CompatibleSpeedLoaders == null || firearm.CompatibleSpeedLoaders.Count == 0) &&
+                if ((firearm.CompatibleSpeedLoaders == null || !firearm.CompatibleSpeedLoaders.Any()) &&
                     firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver)
                 {
                     if (firearmComp == null)

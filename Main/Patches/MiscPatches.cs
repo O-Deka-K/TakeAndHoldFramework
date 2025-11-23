@@ -1,6 +1,7 @@
 ﻿using FistVR;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -132,7 +133,7 @@ namespace TNHFramework.Patches
         {
             // Kludge. Since open bolt guns are never saved with chambered rounds, we can edit the vault file to add one to trigger this.
             // Note that a round will be taken from the magazine, so there's no actual +1 round.
-            if (rounds.Count > 0)
+            if (rounds.Any())
             {
                 //__instance.ToggleFireSelector();
                 miToggleFireSelector.Invoke(__instance, []);

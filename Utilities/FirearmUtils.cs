@@ -65,7 +65,7 @@ namespace TNHFramework.Utilities
             }
 
             // If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
-            if (compatibleContainers.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines != null)
+            if (!compatibleContainers.Any() && smallestIfEmpty && firearm.CompatibleMagazines != null)
             {
                 FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines, globalObjectBlacklist);
                 if (magazine != null)
@@ -101,7 +101,7 @@ namespace TNHFramework.Utilities
             }
 
             // If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
-            if (compatibleMagazines.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines is not null)
+            if (!compatibleMagazines.Any() && smallestIfEmpty && firearm.CompatibleMagazines is not null)
             {
                 FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines, globalObjectBlacklist, blacklist);
                 if (magazine != null)
@@ -196,7 +196,7 @@ namespace TNHFramework.Utilities
         /// <returns>An FVRObject for the smallest magazine. Can be null if magazines list is empty</returns>
         public static FVRObject GetSmallestCapacityMagazine(List<FVRObject> magazines, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
-            if (magazines == null || magazines.Count == 0)
+            if (magazines == null || !magazines.Any())
                 return null;
 
             // This was done with a list because whenever there are multiple smallest magazines of the same size, we want to return a random one from those options
@@ -261,7 +261,7 @@ namespace TNHFramework.Utilities
             // Refresh the FVRObject to have data directly from object dictionary
             item = IM.OD[item.ItemID];
 
-            return (item.CompatibleSingleRounds != null && item.CompatibleSingleRounds.Count != 0) || (item.CompatibleClips != null && item.CompatibleClips.Count > 0) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Count > 0) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Count != 0);
+            return (item.CompatibleSingleRounds != null && item.CompatibleSingleRounds.Any()) || (item.CompatibleClips != null && item.CompatibleClips.Any()) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Any()) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Any());
         }
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace TNHFramework.Utilities
             // Refresh the FVRObject to have data directly from object dictionary
             item = IM.OD[item.ItemID];
 
-            return (item.CompatibleClips != null && item.CompatibleClips.Count > 0) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Count > 0) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Count != 0);
+            return (item.CompatibleClips != null && item.CompatibleClips.Any()) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Any()) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Any());
         }
 
         /// <summary>

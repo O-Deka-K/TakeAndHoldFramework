@@ -32,7 +32,7 @@ namespace TNHFramework.Patches
         {
             // Create a pool of valid patrols
             // This allows us to generate one patrol of each type before generating more
-            if (TNHFramework.PatrolIndexPool == null || TNHFramework.PatrolIndexPool.Count == 0)
+            if (TNHFramework.PatrolIndexPool == null || !TNHFramework.PatrolIndexPool.Any())
             {
                 for (int i = 0; i < patrols.Count; i++)
                 {
@@ -42,7 +42,7 @@ namespace TNHFramework.Patches
             }
 
             // No valid patrols left
-            if (TNHFramework.PatrolIndexPool.Count == 0)
+            if (!TNHFramework.PatrolIndexPool.Any())
             {
                 TNHFrameworkLogger.Log("No valid patrols can spawn", TNHFrameworkLogger.LogType.TNH);
                 return -1;
@@ -127,7 +127,7 @@ namespace TNHFramework.Patches
                     {
                         GenerateValidPatrolReplacement(__instance, ref ___m_patrolSquads, ___m_curLevel, supplyIndex, ___m_curHoldIndex, true);
                     }
-                    else if (level.Patrols.Count > 0)
+                    else if (level.Patrols.Any())
                     {
                         TNHFrameworkLogger.Log($"Player is in Supply {supplyIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
 
@@ -172,7 +172,7 @@ namespace TNHFramework.Patches
                 // Player is in a hold point
                 else if (holdIndex > -1)
                 {
-                    if (!__instance.UsesClassicPatrolBehavior && level.Patrols.Count > 0)
+                    if (!__instance.UsesClassicPatrolBehavior && level.Patrols.Any())
                     {
                         TNHFrameworkLogger.Log($"Player is in Hold {holdIndex} (S {__instance.SupplyPoints.Count}, H {__instance.HoldPoints.Count})", TNHFrameworkLogger.LogType.TNH);
 
@@ -232,7 +232,7 @@ namespace TNHFramework.Patches
                         patrolSquad.Squad.RemoveAt(i);
                 }
 
-                if (patrolSquad.Squad.Count > 0)
+                if (patrolSquad.Squad.Any())
                 {
                     if (__instance.UsesAlertPatrolSystem && ___m_AlertTickDownTime > 0f)
                     {
@@ -340,7 +340,7 @@ namespace TNHFramework.Patches
 
                             TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigName}]", TNHFrameworkLogger.LogType.TNH);
                         }
-                        else if (patrol.EnemyType.Count > 0)
+                        else if (patrol.EnemyType.Any())
                         {
                             SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()];
                             template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
@@ -583,7 +583,7 @@ namespace TNHFramework.Patches
                 PatrolPoints = [.. PatrolPoints],
                 IsPatrollingUp = true,
                 ID_Leader = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType],
-                ID_Regular = (patrol.EnemyType.Count > 0) ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None,
+                ID_Regular = (patrol.EnemyType.Any()) ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None,
                 HoldPointStart = patrolIndex,  // Commandeering this to hold patrolIndex because it's not used anywhere
                 IFF = patrol.IFFUsed,
                 IndexOfNextSpawn = 0,

@@ -315,7 +315,7 @@ namespace TNHFramework
                             MagazineBlacklistEntry entry = (blacklist.ContainsKey(firearm.ObjectWrapper.ItemID) ? blacklist[firearm.ObjectWrapper.ItemID] : null);
                             List<FVRObject> spawnableMags = FirearmUtils.GetCompatibleMagazines(firearm.ObjectWrapper, -1, -1, false, character.GlobalObjectBlacklist, entry);
 
-                            if (spawnableMags.Count > 0)
+                            if (spawnableMags.Any())
                             {
                                 purchaseMag = FirearmUtils.GetSmallestCapacityMagazine(spawnableMags, character.GlobalObjectBlacklist, entry);
                                 selectedObject = firearm;

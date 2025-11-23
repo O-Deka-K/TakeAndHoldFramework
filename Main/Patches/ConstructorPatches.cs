@@ -62,7 +62,7 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (___m_displayedClasses.Count == 0)
+            if (!___m_displayedClasses.Any())
             {
                 ___m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[0].Class);
             }
@@ -427,7 +427,7 @@ namespace TNHFramework.Patches
                             List<FVRObject> compatibleClips = mainObject.CompatibleClips;
 
                             // If we are supposed to spawn magazines and clips, perform special logic for that
-                            if (group.SpawnMagAndClip && compatibleMagazines.Count > 0 && compatibleClips.Count > 0 && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
+                            if (group.SpawnMagAndClip && compatibleMagazines.Any() && compatibleClips.Any() && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
                             {
                                 TNHFrameworkLogger.Log("Spawning with both magazine and clips", TNHFrameworkLogger.LogType.TNH);
 
@@ -460,19 +460,19 @@ namespace TNHFramework.Patches
                                 FVRObject ammoObject;
                                 int numSpawned = 0;
 
-                                if (compatibleMagazines.Count > 0 && group.NumMagsSpawned > 0)
+                                if (compatibleMagazines.Any() && group.NumMagsSpawned > 0)
                                 {
                                     ammoObject = compatibleMagazines.GetRandom();
                                     numSpawned = group.NumMagsSpawned;
                                     ammoSpawn = constructor.SpawnPoint_Mag;
                                 }
-                                else if (compatibleClips.Count > 0 && group.NumClipsSpawned > 0)
+                                else if (compatibleClips.Any() && group.NumClipsSpawned > 0)
                                 {
                                     ammoObject = compatibleClips.GetRandom();
                                     numSpawned = group.NumClipsSpawned;
                                     ammoSpawn = constructor.SpawnPoint_Mag;
                                 }
-                                else if (mainObject.CompatibleSpeedLoaders != null && mainObject.CompatibleSpeedLoaders.Count > 0 && group.NumClipsSpawned > 0)
+                                else if (mainObject.CompatibleSpeedLoaders != null && mainObject.CompatibleSpeedLoaders.Any() && group.NumClipsSpawned > 0)
                                 {
                                     ammoObject = mainObject.CompatibleSpeedLoaders.GetRandom();
                                     numSpawned = group.NumClipsSpawned;
@@ -525,7 +525,7 @@ namespace TNHFramework.Patches
                             objectSpawnCount++;
                         }
                         // If this object has bespoke attachments we'll try to spawn one
-                        else if (mainObject.BespokeAttachments.Count > 0 && Random.value < group.BespokeAttachmentChance)
+                        else if (mainObject.BespokeAttachments.Any() && Random.value < group.BespokeAttachmentChance)
                         {
                             TNHFrameworkLogger.Log("Spawning bespoke attachment", TNHFrameworkLogger.LogType.TNH);
                             FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
@@ -566,17 +566,17 @@ namespace TNHFramework.Patches
             {
                 sightObj = M.GetObjectTable(M.C.RequireSightTable).GetRandomObject();
 
-                if (sightObj.RequiredSecondaryPieces.Count > 0)
+                if (sightObj.RequiredSecondaryPieces.Any())
                     requiredAttachment_B = sightObj.RequiredSecondaryPieces[0];
             }
             // Check the bespoke attachment chance here
             // In vanilla TNH, it ALWAYS spawns a bespoke attachment if there is one
-            else if (weapon.BespokeAttachments.Count > 0 && Random.value < bespokeAttachmentChance)
+            else if (weapon.BespokeAttachments.Any() && Random.value < bespokeAttachmentChance)
             {
                 sightObj = weapon.BespokeAttachments[Random.Range(0, weapon.BespokeAttachments.Count)];
             }
 
-            if (weapon.RequiredSecondaryPieces.Count > 0)
+            if (weapon.RequiredSecondaryPieces.Any())
                 requiredAttachment_B = weapon.RequiredSecondaryPieces[0];
 
             bool spawnAmmoAsBox = false;

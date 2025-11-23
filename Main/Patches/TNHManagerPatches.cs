@@ -1,6 +1,7 @@
 ﻿using FistVR;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
@@ -229,7 +230,7 @@ namespace TNHFramework.Patches
         public static void TakeCleanup(TNH_Manager __instance, ref HashSet<FVRPhysicalObject> ___m_knownObjsHash, ref List<FVRPhysicalObject> ___m_knownObjs,
             ref int ___knownObjectCheckIndex)
         {
-            if (___m_knownObjs.Count <= 0)
+            if (!___m_knownObjs.Any())
                 return;
 
             ___knownObjectCheckIndex++;
@@ -306,11 +307,11 @@ namespace TNHFramework.Patches
             // Fill out the sosig's config based on the difficulty
             SosigConfig config;
 
-            if (__instance.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Count > 0)
+            if (__instance.AI_Difficulty == TNHModifier_AIDifficulty.Arcade && customTemplate.ConfigsEasy.Any())
             {
                 config = customTemplate.ConfigsEasy.GetRandom<SosigConfig>();
             }
-            else if (customTemplate.Configs.Count > 0)
+            else if (customTemplate.Configs.Any())
             {
                 config = customTemplate.Configs.GetRandom<SosigConfig>();
             }
@@ -334,7 +335,7 @@ namespace TNHFramework.Patches
             sosig.InitHands();
 
             // Equip the sosig's weapons
-            if (customTemplate.WeaponOptions.Count > 0)
+            if (customTemplate.WeaponOptions.Any())
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptions.GetRandom<string>()].GetGameObject();
                 SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
@@ -343,13 +344,13 @@ namespace TNHFramework.Patches
             if (character.ForceAllAgentWeapons)
                 AllowAllWeapons = true;
 
-            if (customTemplate.WeaponOptionsSecondary.Count > 0 && AllowAllWeapons && customTemplate.SecondaryChance >= Random.value)
+            if (customTemplate.WeaponOptionsSecondary.Any() && AllowAllWeapons && customTemplate.SecondaryChance >= Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsSecondary.GetRandom<string>()].GetGameObject();
                 SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
             }
 
-            if (customTemplate.WeaponOptionsTertiary.Count > 0 && AllowAllWeapons && customTemplate.TertiaryChance >= Random.value)
+            if (customTemplate.WeaponOptionsTertiary.Any() && AllowAllWeapons && customTemplate.TertiaryChance >= Random.value)
             {
                 GameObject weaponPrefab = IM.OD[customTemplate.WeaponOptionsTertiary.GetRandom<string>()].GetGameObject();
                 SosigPatches.EquipSosigWeapon(sosig, weaponPrefab, __instance.AI_Difficulty);
@@ -359,41 +360,41 @@ namespace TNHFramework.Patches
             OutfitConfig outfitConfig = customTemplate.OutfitConfigs.GetRandom<OutfitConfig>();  // ODK - Validate OutfitConfigs
 
             int torsoIndex = -1;
-            if (outfitConfig.Torsowear.Count > 0 && outfitConfig.Chance_Torsowear >= Random.value)
+            if (outfitConfig.Torsowear.Any() && outfitConfig.Chance_Torsowear >= Random.value)
                 torsoIndex = SosigPatches.EquipSosigClothing(outfitConfig.Torsowear, sosig.Links[1], -1, outfitConfig.ForceWearAllTorso);
 
-            if (outfitConfig.Headwear.Count > 0 && outfitConfig.Chance_Headwear >= Random.value)
+            if (outfitConfig.Headwear.Any() && outfitConfig.Chance_Headwear >= Random.value)
             {
                 int headIndex = (outfitConfig.HeadUsesTorsoIndex) ? torsoIndex : -1;
                 SosigPatches.EquipSosigClothing(outfitConfig.Headwear, sosig.Links[0], headIndex, outfitConfig.ForceWearAllHead);
             }
 
             int pantsIndex = -1;
-            if (outfitConfig.Pantswear.Count > 0 && outfitConfig.Chance_Pantswear >= Random.value)
+            if (outfitConfig.Pantswear.Any() && outfitConfig.Chance_Pantswear >= Random.value)
             {
                 pantsIndex = (outfitConfig.PantsUsesTorsoIndex) ? torsoIndex : -1;
                 pantsIndex = SosigPatches.EquipSosigClothing(outfitConfig.Pantswear, sosig.Links[2], pantsIndex, outfitConfig.ForceWearAllPants);
             }
 
-            if (outfitConfig.Pantswear_Lower.Count > 0 && outfitConfig.Chance_Pantswear_Lower >= Random.value)
+            if (outfitConfig.Pantswear_Lower.Any() && outfitConfig.Chance_Pantswear_Lower >= Random.value)
             {
                 int pantsLowerIndex = (outfitConfig.PantsLowerUsesPantsIndex) ? pantsIndex : -1;
                 SosigPatches.EquipSosigClothing(outfitConfig.Pantswear_Lower, sosig.Links[3], pantsLowerIndex, outfitConfig.ForceWearAllPantsLower);
             }
 
-            if (outfitConfig.Facewear.Count > 0 && outfitConfig.Chance_Facewear >= Random.value)
+            if (outfitConfig.Facewear.Any() && outfitConfig.Chance_Facewear >= Random.value)
                 SosigPatches.EquipSosigClothing(outfitConfig.Facewear, sosig.Links[0], -1, outfitConfig.ForceWearAllFace);
 
-            if (outfitConfig.Eyewear.Count > 0 && outfitConfig.Chance_Eyewear >= Random.value)
+            if (outfitConfig.Eyewear.Any() && outfitConfig.Chance_Eyewear >= Random.value)
                 SosigPatches.EquipSosigClothing(outfitConfig.Eyewear, sosig.Links[0], -1, outfitConfig.ForceWearAllEye);
 
-            if (outfitConfig.Backpacks.Count > 0 && outfitConfig.Chance_Backpacks >= Random.value)
+            if (outfitConfig.Backpacks.Any() && outfitConfig.Chance_Backpacks >= Random.value)
                 SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[1], -1, outfitConfig.ForceWearAllBackpacks);
 
-            if (outfitConfig.TorosDecoration.Count > 0 && outfitConfig.Chance_TorosDecoration >= Random.value)
+            if (outfitConfig.TorosDecoration.Any() && outfitConfig.Chance_TorosDecoration >= Random.value)
                 SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[1], -1, outfitConfig.ForceWearAllTorosDecorations);
 
-            if (outfitConfig.Belt.Count > 0 && outfitConfig.Chance_Belt >= Random.value)
+            if (outfitConfig.Belt.Any() && outfitConfig.Chance_Belt >= Random.value)
                 SosigPatches.EquipSosigClothing(outfitConfig.Backpacks, sosig.Links[2], -1, outfitConfig.ForceWearAllBelts);
 
             // Set up the sosig's orders

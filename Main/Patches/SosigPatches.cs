@@ -1,6 +1,7 @@
 ﻿using FistVR;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
@@ -23,7 +24,7 @@ namespace TNHFramework.Patches
 
             if (tem.SosigEnemyID != SosigEnemyID.None)
             {
-                if (tem.OutfitConfig.Count > 0 && LoadedTemplateManager.LoadedSosigsDict.ContainsKey(tem))
+                if (tem.OutfitConfig.Any() && LoadedTemplateManager.LoadedSosigsDict.ContainsKey(tem))
                 {
                     OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigsDict[tem].OutfitConfigs.GetRandom();
 
@@ -130,6 +131,9 @@ namespace TNHFramework.Patches
 
         public static int EquipSosigClothing(List<string> options, List<GameObject> playerClothing, Transform link, int index, bool wearAll)
         {
+            if (!options.Any())
+                return -1;
+
             if (wearAll)
             {
                 foreach (string clothing in options)
