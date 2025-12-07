@@ -184,6 +184,8 @@ namespace TNHFramework.Patches
             instance.LBL_CharacterName[11].text = ">>Next>>";
             instance.LBL_CharacterName[11].gameObject.SetActive(true);
 
+            Dictionary<int, List<CharacterTemplate>> sortedDic = [];
+
             // Load all characters into the UI
             foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
             {
@@ -200,16 +202,35 @@ namespace TNHFramework.Patches
                 // Add character to category
                 if (!Categories[(int)character.Value.Def.Group].Characters.Contains(character.Key))
                 {
-                    Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
+                    if (character.Value.Custom.isCustom)
+                    {
+                        int cat = (int)character.Value.Def.Group;
+
+                        if (sortedDic.ContainsKey(cat))
+                            sortedDic[cat].Add(character.Value);
+                        else
+                            sortedDic.Add(cat, [character.Value]);
+                    }
+                    else
+                    {
+                        Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
+                    }
+
                     CharDatabase.Characters.Add(character.Value.Def);
                 }
+            }
+
+            // Sort the custom characters before adding them
+            foreach (KeyValuePair<int, List<CharacterTemplate>> character in sortedDic)
+            {
+                Categories[character.Key].Characters.AddRange([.. character.Value.OrderBy(o => o.Def.DisplayName).Select(o => o.Def.CharacterID)]);
             }
 
             // Refresh categories and characters
             try
             {
                 miSetCharacter.Invoke(instance, [(TNH_Char)LastPlayedChar]);
-                SetCharacterCategoryFromCharacter(instance, (TNH_Char)GM.TNHOptions.LastPlayedChar);
+                SetCharacterCategoryFromCharacter(instance, (TNH_Char)LastPlayedChar);
             }
             catch
             {
