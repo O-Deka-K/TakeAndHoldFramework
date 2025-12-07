@@ -16,7 +16,7 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
-        public static bool InitTNH(TNH_Manager __instance, bool ___m_hasInit)
+        public static bool DelayedInit_InitTNH(TNH_Manager __instance, bool ___m_hasInit)
         {
             if (!___m_hasInit)
                 __instance.CharDB.Characters = TNHMenuInitializer.SavedCharacters;
@@ -37,6 +37,8 @@ namespace TNHFramework.Patches
         public static bool SetPhase_Take_Replacement(TNH_Manager __instance, ref List<int> ___m_activeSupplyPointIndicies, ref TNH_Progression.Level ___m_curLevel,
             ref int ___m_lastHoldIndex, ref int ___m_curHoldIndex, ref TNH_HoldPoint ___m_curHoldPoint, TNH_PointSequence ___m_curPointSequence, int ___m_level)
         {
+            TNHFrameworkLogger.Log($"Beginning TAKE PHASE -- Level {___m_level}", TNHFrameworkLogger.LogType.TNH);
+
             Level level = LoadedTemplateManager.CurrentLevel;
 
             TNHFramework.SpawnedConstructors.Clear();
@@ -157,6 +159,20 @@ namespace TNHFramework.Patches
                 {
                     //__instance.GenerateInitialTakeSentryPatrols(___m_curLevel.PatrolChallenge, -1, ___m_curHoldIndex, ___m_curHoldIndex, false);
                     miGenerateInitialTakeSentryPatrols.Invoke(__instance, [___m_curLevel.PatrolChallenge, -1, ___m_curHoldIndex, ___m_curHoldIndex, false]);
+                }
+            }
+
+            // Spawn Institution constructs
+            foreach (Construct_Volume construct in __instance.ConstructSpawners)
+            {
+                if (___m_curHoldIndex >= 0)
+                {
+                    if (!___m_curHoldPoint.ExcludeConstructVolumes.Contains(construct))
+                        construct.SpawnConstructs(___m_level);
+                }
+                else
+                {
+                    construct.SpawnConstructs(___m_level);
                 }
             }
 
@@ -302,7 +318,7 @@ namespace TNHFramework.Patches
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
             SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[t];
 
-            TNHFrameworkLogger.Log("Spawning sosig: " + customTemplate.SosigEnemyID, TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log("Spawning sosig: " + customTemplate.DisplayName, TNHFrameworkLogger.LogType.TNH);
 
             // Fill out the sosig's config based on the difficulty
             SosigConfig config;
