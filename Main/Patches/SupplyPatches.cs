@@ -156,7 +156,7 @@ namespace TNHFramework.Patches
             if (panelTypes.Count < 1 || numPanels < 1)
                 return false;
 
-            numPanels = Mathf.Clamp(numPanels, 0, __instance.SpawnPoints_Panels.Count);
+            numPanels = Mathf.Clamp(numPanels, 0, __instance.SpawnPoints_Panels.Count - NumConstructors);
 
             for (int i = NumConstructors; i < NumConstructors + numPanels; i++)
             {
