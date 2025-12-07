@@ -2,7 +2,7 @@
 A successor to DevynDaMonster's [TNH Tweaker](https://thunderstore.io/c/h3vr/p/devyndamonster/TakeAndHoldTweaker/), TNH Framework aims to act as a base for anyone who wants to implement custom content for [Hot Dogs, Horseshoes & Hand Grenades](https://store.steampowered.com/app/450540/Hot_Dogs_Horseshoes__Hand_Grenades/)'s Take & Hold gamemode.
 
 ## H3VR Build Version
-This is for H3VR build 119, which is currently on Main branch (as of Dec 2025). It will probably also work for previous builds. It will NOT work on Experimental branch, as there are many incompatible changes. There will be a separate version of TNH Framework for Experimental branch (and later 1.0).
+This is for H3VR build 119, which is currently on Main branch (as of Dec 2025). It will probably continue to work for previous builds. It will NOT work on Experimental branch, as there are many incompatible changes. There will be a separate version of TNH Framework for Experimental branch (and later 1.0).
 
 ## Note
 I've added extra robustness and validation checks to take care of invalid values, missing item IDs, and other errors that previously caused this mod to break. This build has been tested with EVERY custom character on Thunderstore. As far as I can tell, they're all working now.
@@ -36,6 +36,9 @@ Please see the CHANGELOG for the full list of changes from TNH Tweaker.
 There are two ways to access the TNH Framework options:
 1. In r2modman, go to Config editor > h3vr.tnhframework.cfg > Edit Config.
 2. In game, spawn the mod panel using your wrist menu. Go to Plugins > TNHFramework.
+
+## Wiki (Coming Soon)
+See the [Wiki](https://thunderstore.io/c/h3vr/p/ISD/TNHFramework/wiki/) for more detailed information, including information on specific custom characters.
 
 ## Installation
 Install via the [r2modman](https://thunderstore.io/c/h3vr/p/ebkr/r2modman/) mod manager.
