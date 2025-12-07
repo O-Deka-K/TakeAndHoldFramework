@@ -57,18 +57,15 @@ namespace TNHFramework.ObjectTemplates
 
         public SavedGun GetSavedGun()
         {
-            if (gun == null)
+            gun ??= new SavedGun
             {
-                gun = new SavedGun
-                {
-                    FileName = FileName,
-                    Components = Components.Select(o => o.GetGunComponent()).ToList(),
-                    LoadedRoundsInMag = LoadedRoundsInMag,
-                    LoadedRoundsInChambers = LoadedRoundsInChambers,
-                    SavedFlags = SavedFlags,
-                    DateMade = default
-                };
-            }
+                FileName = FileName,
+                Components = Components.Select(o => o.GetGunComponent()).ToList(),
+                LoadedRoundsInMag = LoadedRoundsInMag,
+                LoadedRoundsInChambers = LoadedRoundsInChambers,
+                SavedFlags = SavedFlags,
+                DateMade = default
+            };
 
             return gun;
         }
