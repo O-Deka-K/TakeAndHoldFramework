@@ -50,13 +50,13 @@ namespace TNHFramework.Utilities
             if (group.IDOverride != null)
                 RemoveMissingObjectIDs(group.IDOverride);
 
-            // If IDOverride is now empty, copy IDOverrideBackup
+            // If IDOverride is now empty, use IDOverrideBackup
             if ((group.IDOverride == null || !group.IDOverride.Any()) && group.IDOverrideBackup != null)
             {
                 RemoveMissingObjectIDs(group.IDOverrideBackup);
 
                 if (group.IDOverrideBackup.Any())
-                    group.IDOverride = [.. group.IDOverrideBackup];
+                    group.IDOverride = group.IDOverrideBackup;
             }
         }
 
@@ -65,13 +65,13 @@ namespace TNHFramework.Utilities
             if (group.IDOverride != null)
                 RemoveMissingObjectIDs(group.IDOverride);
 
-            // If IDOverride is now empty, copy IDOverrideBackup
+            // If IDOverride is now empty, use IDOverrideBackup
             if ((group.IDOverride == null || !group.IDOverride.Any()) && group.IDOverrideBackup != null)
             {
                 RemoveMissingObjectIDs(group.IDOverrideBackup);
 
                 if (group.IDOverrideBackup.Any())
-                    group.IDOverride = [.. group.IDOverrideBackup];
+                    group.IDOverride = group.IDOverrideBackup;
             }
         }
 
@@ -130,93 +130,162 @@ namespace TNHFramework.Utilities
 
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
+            template.SosigPrefabs.RemoveAll(o => !IM.OD.ContainsKey(o));
+            if (!template.SosigPrefabs.Any())
+                template.SosigPrefabs.Add("SosigBody_Default");
+
+            template.WeaponOptions.RemoveAll(o => !IM.OD.ContainsKey(o));
+            template.WeaponOptionsSecondary.RemoveAll(o => !IM.OD.ContainsKey(o));
+            template.WeaponOptionsTertiary.RemoveAll(o => !IM.OD.ContainsKey(o));
+
             // Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
             {
-                for (int i = config.Headwear.Count - 1; i >= 0 ; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Headwear[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
-                        config.Headwear.RemoveAt(i);
-                    }
-                }
-
+                config.Headwear.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Headwear.Any())
                     config.Chance_Headwear = 0;
 
-                for (int i = config.Facewear.Count - 1; i >= 0 ; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Facewear[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
-                        config.Facewear.RemoveAt(i);
-                    }
-                }
-                
-                if (!config.Facewear.Any())
-                    config.Chance_Facewear = 0;
-
-                for (int i = config.Eyewear.Count - 1; i >= 0 ; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Eyewear[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
-                        config.Eyewear.RemoveAt(i);
-                    }
-                }
-                
+                config.Eyewear.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Eyewear.Any())
                     config.Chance_Eyewear = 0;
 
-                for (int i = config.Torsowear.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Torsowear[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
-                        config.Torsowear.RemoveAt(i);
-                    }
-                }
-                
+                config.Facewear.RemoveAll(o => !IM.OD.ContainsKey(o));
+                if (!config.Facewear.Any())
+                    config.Chance_Facewear = 0;
+
+                config.Torsowear.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Torsowear.Any())
                     config.Chance_Torsowear = 0;
 
-                for (int i = config.Pantswear.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Pantswear[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
-                        config.Pantswear.RemoveAt(i);
-                    }
-                }
-                
+                config.Pantswear.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Pantswear.Any())
                     config.Chance_Pantswear = 0;
 
-                for (int i = config.Pantswear_Lower.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
-                        config.Pantswear_Lower.RemoveAt(i);
-                    }
-                }
-                
+                config.Pantswear_Lower.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Pantswear_Lower.Any())
                     config.Chance_Pantswear_Lower = 0;
 
-                for (int i = config.Backpacks.Count - 1; i >= 0; i--)
-                {
-                    if (!IM.OD.ContainsKey(config.Backpacks[i]))
-                    {
-                        TNHFrameworkLogger.LogWarning("Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
-                        config.Backpacks.RemoveAt(i);
-                    }
-                }
-                
+                config.Backpacks.RemoveAll(o => !IM.OD.ContainsKey(o));
                 if (!config.Backpacks.Any())
                     config.Chance_Backpacks = 0;
+
+                config.TorosDecoration.RemoveAll(o => !IM.OD.ContainsKey(o));
+                if (!config.TorosDecoration.Any())
+                    config.Chance_TorosDecoration = 0;
+
+                config.Belt.RemoveAll(o => !IM.OD.ContainsKey(o));
+                if (!config.Belt.Any())
+                    config.Chance_Belt = 0;
             }
+        }
+
+        public static SosigEnemyID ParseEnemyType(string enemyType)
+        {
+            SosigEnemyID id;
+
+            try
+            {
+                id = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), enemyType, true);
+            }
+            catch
+            {
+                if (enemyType.StartsWith("M_Greas", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.M_GreaseGremlins_Guard;
+                else if (enemyType.StartsWith("M_Grin", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.M_GrinchyGoobs_Guard;
+                else if (enemyType.StartsWith("M_Merc", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.M_MercWiener_Guard;
+                else if (enemyType.StartsWith("M_Pops", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.M_Popsicles_Guard;
+                else if (enemyType.StartsWith("M_Veggi", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.M_VeggieDawgs_Guard;
+                else if (enemyType.StartsWith("W_Tan", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.W_Tan_Guard;
+                else if (enemyType.StartsWith("W_Brown", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.W_Brown_Guard;
+                else if (enemyType.StartsWith("W_Grey", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.W_Grey_Guard;
+                else if (enemyType.StartsWith("W_Gray", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.W_Grey_Guard;
+                else if (enemyType.StartsWith("W_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.W_Green_Guard;
+                else if (enemyType.StartsWith("D_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.D_Gunfighter;
+                else if (enemyType.StartsWith("J_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.J_Guard;
+                else if (enemyType.StartsWith("H_Bre", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.H_BreadCrabZombie_Standard;
+                else if (enemyType.StartsWith("H_Ober", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.H_OberwurstSoldier_Shotgun;
+                else if (enemyType.StartsWith("H_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.H_CivicErection_Pistol;
+                else if (enemyType.StartsWith("MF_Blue", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.MF_BlueFranks_Scout;
+                else if (enemyType.StartsWith("MF_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.MF_RedHots_Scout;
+                else if (enemyType.StartsWith("Mountain", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.MountainMeat_Pistol;
+                else if (enemyType.StartsWith("RW_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.RW_Rot;
+                else if (enemyType.StartsWith("RWP_Pac", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.RWP_PacSquad_Trooper;
+                else if (enemyType.StartsWith("RWP_Pros", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.RWP_Prospector_Pistol;
+                else if (enemyType.StartsWith("RWP_Skul", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.RWP_Skulker_Pistol;
+                else if (enemyType.StartsWith("RWP_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.RWP_Cultist;
+                else if (enemyType.StartsWith("Junkbot", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Junkbot_Patrol;
+                else if (enemyType.StartsWith("MG_Spec", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.MG_Special_Duelist;
+                else if (enemyType.StartsWith("MG_", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.MG_Soldier_LInfantry_Rifle;
+                else if (enemyType.StartsWith("Kolbasa_PMC", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_PMC_Pistols;
+                else if (enemyType.StartsWith("Kolbasa_Swe", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_SweatyPMC_Rifle;
+                else if (enemyType.StartsWith("Kolbasa_Bos", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_Boss_Kotleta;
+                else if (enemyType.StartsWith("Kolbas", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_Scavenger_Pistols;
+                else if (enemyType.StartsWith("Comperator_Heavy_Tier1", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Heavy_Tier1_DoubleBarrels;
+                else if (enemyType.StartsWith("Comperator_Heavy_Tier2", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Heavy_Tier2_Shotgun;
+                else if (enemyType.StartsWith("Comperator_Heavy_Tier4", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Heavy_Tier4_Rifle;
+                else if (enemyType.StartsWith("Comperator_Heavy_Tier5", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Heavy_Tier5_LMG;
+                else if (enemyType.StartsWith("Comperator_Heavy", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Heavy_Tier3_Pistols;
+                else if (enemyType.StartsWith("Comperator_Medium_Tier1", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Medium_Tier1_DoubleBarrels;
+                else if (enemyType.StartsWith("Comperator_Medium_Tier2", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Medium_Tier2_BoltAction;
+                else if (enemyType.StartsWith("Comperator_Medium_Tier4", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Medium_Tier4_DMR;
+                else if (enemyType.StartsWith("Comperator_Medium_Tier5", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Medium_Tier5_LMG;
+                else if (enemyType.StartsWith("Comperator_Medium", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Medium_Tier3_Pistols;
+                else if (enemyType.StartsWith("Comperator_Light_Tier1", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Light_Tier1_Melee;
+                else if (enemyType.StartsWith("Comperator_Light_Tier2", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Light_Tier2_Shotgun;
+                else if (enemyType.StartsWith("Comperator_Light_Tier4", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Light_Tier4_SMG;
+                else if (enemyType.StartsWith("Comperator_Light_Tier5", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Light_Tier5_PDW;
+                else if (enemyType.StartsWith("Comp", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Comperator_Light_Tier3_Pistols;
+                else
+                    id = SosigEnemyID.M_Swat_Guard;
+
+                TNHFrameworkLogger.Log($"Sosig ID [{enemyType}] does not exist! Substituting with [{id}]", TNHFrameworkLogger.LogType.General);
+            }
+
+            return id;
         }
 
         /// <summary>
@@ -979,10 +1048,9 @@ namespace TNHFramework.Utilities
         {
             IsSpawning = true;
 
+            GameObject rootObj = null;
             List<GameObject> toDealWith = [];
-            List<GameObject> toMoveToTrays = [];
             FVRFireArm myGun = null;
-            FVRFireArmMagazine myMagazine = null;
             List<int> validIndexes = [];
             Dictionary<GameObject, SavedGunComponent> dicGO = [];
             Dictionary<int, GameObject> dicByIndex = [];
@@ -1001,113 +1069,153 @@ namespace TNHFramework.Utilities
                 GameObject gameObject = UnityEngine.Object.Instantiate(IM.OD[gun.Components[j].ObjectID].GetGameObject());
                 M.AddObjectToTrackedList(gameObject);
 
+                if (j == 0)
+                {
+                    rootObj = gameObject;
+                    validIndexes.Add(j);
+                }
+
+                FVRPhysicalObject component = gameObject.GetComponent<FVRPhysicalObject>();
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
+                component.ConfigureFromFlagDic(gun.Components[j].Flags);
 
                 if (gun.Components[j].isFirearm)
                 {
+                    TNHFrameworkLogger.Log($"Firearm [{gun.Components[j].ObjectID}] is index ({j})", TNHFrameworkLogger.LogType.General);
                     myGun = gameObject.GetComponent<FVRFireArm>();
                     savedGun.ApplyFirearmProperties(myGun);
 
                     LastSpawnedGun = gameObject;
 
-                    validIndexes.Add(j);
                     gameObject.transform.position = position;
                     gameObject.transform.rotation = Quaternion.identity;
 
-                    if (addForce)
-                        AddSpawningForce(gameObject.GetComponent<Rigidbody>());
+                    if (myGun.Magazine != null && myGun.Magazine.IsIntegrated)
+                    {
+                        myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
+                        myGun.Magazine.IsInfinite = false;
+                    }
+
+                    myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
                 }
                 else if (gun.Components[j].isMagazine)
                 {
-                    myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
-                    validIndexes.Add(j);
-                    
-                    if (myMagazine != null)
-                    {
-                        gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
-                        gameObject.transform.rotation = myGun.GetMagMountPos(myMagazine.IsBeltBox).rotation;
-                        myMagazine.Load(myGun);
-                        myMagazine.IsInfinite = false;
-                    }
+                    TNHFrameworkLogger.Log($"Reloading magazine [{gun.Components[j].ObjectID}] attached to ({gun.Components[j].ObjectAttachedTo})", TNHFrameworkLogger.LogType.General);
+                    toDealWith.Add(gameObject);
+                    FVRFireArmMagazine component2 = gameObject.GetComponent<FVRFireArmMagazine>();
+                    component2.ReloadMagWithList(gun.LoadedRoundsInMag);
+                    component2.IsInfinite = false;
                 }
                 else if (gun.Components[j].isAttachment)
                 {
                     toDealWith.Add(gameObject);
                 }
-                else
+                else if (gameObject.GetComponent<FVRFireArmRound>() != null && gun.LoadedRoundsInMag.Any())
                 {
-                    toMoveToTrays.Add(gameObject);
-                    
-                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Any())
+                    FVRFireArmRound component3 = gameObject.GetComponent<FVRFireArmRound>();
+
+                    for (int k = 0; k < gun.LoadedRoundsInMag.Count; k++)
                     {
-                        Speedloader component = gameObject.GetComponent<Speedloader>();
-                        component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
+                        component3.AddProxy(gun.LoadedRoundsInMag[k], AM.GetRoundSelfPrefab(component3.RoundType, gun.LoadedRoundsInMag[k]));
                     }
-                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Any())
-                    {
-                        FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
-                        component2.ReloadClipWithList(gun.LoadedRoundsInMag);
-                    }
+
+                    component3.UpdateProxyDisplay();
                 }
-               
-                gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
+                else if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Any())
+                {
+                    Speedloader component4 = gameObject.GetComponent<Speedloader>();
+                    component4.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
+                }
+                else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Any())
+                {
+                    FVRFireArmClip component5 = gameObject.GetComponent<FVRFireArmClip>();
+                    component5.ReloadClipWithList(gun.LoadedRoundsInMag);
+                }
             }
             
-            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Any())
-            {
-                myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
-                myGun.Magazine.IsInfinite = false;
-            }
-            
-            int BreakIterator = 200;
-            
+            int BreakIterator = 400;
             while (toDealWith.Any() && BreakIterator > 0)
             {
                 BreakIterator--;
                 
-                for (int k = toDealWith.Count - 1; k >= 0; k--)
+                for (int l = toDealWith.Count - 1; l >= 0; l--)
                 {
-                    SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
-                    
+                    SavedGunComponent savedGunComponent = dicGO[toDealWith[l]];
+
+                    // Correction for older vault files
+                    if (savedGunComponent.ObjectAttachedTo == -1)
+                        savedGunComponent.ObjectAttachedTo = 0;
+
                     if (validIndexes.Contains(savedGunComponent.ObjectAttachedTo))
                     {
-                        GameObject gameObject2 = toDealWith[k];
-                        FVRFireArmAttachment component3 = gameObject2.GetComponent<FVRFireArmAttachment>();
-                        FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
-                        gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
-                        gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
-                        
-                        if (component3.CanScaleToMount && mount.CanThisRescale())
-                            component3.ScaleToMount(mount);
-                        
-                        component3.AttachToMount(mount, false);
-                        
-                        if (component3 is Suppressor)
-                            (component3 as Suppressor).AutoMountWell();
-                        
-                        validIndexes.Add(savedGunComponent.Index);
-                        toDealWith.RemoveAt(k);
+                        GameObject gameObject2 = toDealWith[l];
+                        if (gameObject2.GetComponent<FVRFireArmAttachment>() != null)
+                        {
+                            FVRFireArmAttachment component6 = gameObject2.GetComponent<FVRFireArmAttachment>();
+                            FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
+                            gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
+                            gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
+
+                            if (component6.CanScaleToMount && mount.CanThisRescale())
+                                component6.ScaleToMount(mount);
+
+                            component6.AttachToMount(mount, false);
+
+                            if (component6 is Suppressor)
+                                (component6 as Suppressor).AutoMountWell();
+
+                            validIndexes.Add(savedGunComponent.Index);
+                            toDealWith.RemoveAt(l);
+                        }
+                        else if (gameObject2.GetComponent<FVRFireArmMagazine>() != null)
+                        {
+                            FVRFireArmMagazine component7 = gameObject2.GetComponent<FVRFireArmMagazine>();
+
+                            GameObject gameObject3 = dicByIndex[savedGunComponent.ObjectAttachedTo];
+                            FVRFireArm component8 = gameObject3.GetComponent<FVRFireArm>();
+                            AttachableFirearmPhysicalObject component9 = gameObject3.GetComponent<AttachableFirearmPhysicalObject>();
+
+                            SavedGunComponent savedGunComponent2 = dicGO[gameObject2];
+                            TNHFrameworkLogger.Log($"Attaching magazine [{savedGunComponent.ObjectID}] to [{savedGunComponent2.ObjectID}] ({savedGunComponent2.MountAttachedTo})", TNHFrameworkLogger.LogType.General);
+
+                            if (savedGunComponent2.MountAttachedTo < 0)
+                            {
+                                if (component8 != null)
+                                {
+                                    TNHFrameworkLogger.Log($"  Regular magazine", TNHFrameworkLogger.LogType.General);
+                                    component7.transform.position = component8.GetMagMountPos(component7.IsBeltBox).position;
+                                    component7.transform.rotation = component8.GetMagMountPos(component7.IsBeltBox).rotation;
+                                    component7.Load(component8);
+                                }
+
+                                if (component9 != null)
+                                {
+                                    TNHFrameworkLogger.Log($"  Attachable firearm magazine", TNHFrameworkLogger.LogType.General);
+                                    component7.transform.position = component9.FA.MagazineMountPos.position;
+                                    component7.transform.rotation = component9.FA.MagazineMountPos.rotation;
+                                    component7.Load(component9.FA);
+                                }
+                            }
+                            else if (component8 != null)
+                            {
+                                TNHFrameworkLogger.Log($"  Secondary magazine slot", TNHFrameworkLogger.LogType.General);
+                                component7.transform.position = component8.SecondaryMagazineSlots[savedGunComponent2.MountAttachedTo].MagazineMountPos.position;
+                                component7.transform.rotation = component8.SecondaryMagazineSlots[savedGunComponent2.MountAttachedTo].MagazineMountPos.rotation;
+                                component7.LoadIntoSecondary(component8, savedGunComponent2.MountAttachedTo);
+                            }
+
+                            toDealWith.RemoveAt(l);
+                        }
                     }
                 }
             }
             
-            int trayIndex = 0;
-            int itemIndex = 0;
-           
-            for (int l = 0; l < toMoveToTrays.Count; l++)
-            {
-                toMoveToTrays[l].transform.position = position + (float)itemIndex * 0.1f * Vector3.up;
-                toMoveToTrays[l].transform.rotation = rotation;
-                itemIndex++;
-                trayIndex++;
-                
-                if (trayIndex > 2)
-                    trayIndex = 0;
-            }
-            
-            myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
-            myGun.transform.rotation = rotation;
+            rootObj.transform.position = position;
+            rootObj.transform.rotation = rotation;
+
+            if (addForce)
+                AddSpawningForce(rootObj.GetComponent<Rigidbody>());
 
             IsSpawning = false;
             yield break;
@@ -1139,6 +1247,10 @@ namespace TNHFramework.Utilities
             M.AddObjectToTrackedList(LastSpawnedGun);
             LastSpawnedGun.SetActive(true);
 
+            // ODK - Check for premades and fix them. They already have attachments, but they aren't registered properly.
+            if (TNHFramework.FixLegacyModulGuns.Value)
+                FixPremadeFirearm(LastSpawnedGun, true);
+
             // Add force and torque
             if (addForce)
                 AddSpawningForce(o.GetGameObject().GetComponent<Rigidbody>());
@@ -1149,6 +1261,9 @@ namespace TNHFramework.Utilities
 
         private static void AttachToMount(FVRFireArmAttachment attachment, FVRFireArmAttachmentMount mount)
         {
+            if (attachment == null || mount == null)
+                return;
+
             if (attachment.CanScaleToMount && mount.CanThisRescale() && mount.GetRootMount().ScaleModifier > 0.01f)
                 attachment.ScaleToMount(mount);
 
@@ -1161,6 +1276,9 @@ namespace TNHFramework.Utilities
         // Add force and torque
         private static void AddSpawningForce(Rigidbody rigidbody)
         {
+            if (rigidbody == null)
+                return;
+
             Vector3 velocity = new(UnityEngine.Random.Range(-0.5f, 0.5f), 1f, UnityEngine.Random.Range(-0.5f, 0.5f));
             rigidbody.AddForce(velocity.normalized * UnityEngine.Random.Range(2f, 3f), ForceMode.VelocityChange);
 
