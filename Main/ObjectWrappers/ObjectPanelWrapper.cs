@@ -42,6 +42,7 @@ namespace TNHFramework
         private Text priceText_0;
         private Text priceText_1;
         private Text priceText_2;
+        private Text capacityText;
 
         private FVRPhysicalObject selectedObject = null;
         private FVRFireArmMagazine detectedMag = null;
@@ -83,6 +84,10 @@ namespace TNHFramework
             Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
+
+            Transform capacityTransform = Instantiate(titleTransform.gameObject, titleTransform.parent).transform;
+            capacityTransform.localPosition = new Vector3(0, -30, 0);
+            capacityText = capacityTransform.gameObject.GetComponent<Text>();
 
             Transform iconTransform_0 = canvasHolder.Find("Icon_0");
             iconTransform_0.localPosition = new Vector3(-270, -200, 0);
@@ -129,6 +134,8 @@ namespace TNHFramework
             priceText_0.text = "x" + DupeCost;
             priceText_1.text = "x" + UpgradeCost;
             priceText_2.text = "x" + PurchaseCost;
+
+            capacityText.text = string.Empty;
         }
 
         private Text AddPriceText(Transform iconTransform, Vector3 localPosition)
@@ -219,9 +226,6 @@ namespace TNHFramework
                 original.M.SubtractTokens(PurchaseCost);
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
-
-                ClearSelection();
-                UpdateIcons();
             }
         }
 
@@ -356,6 +360,8 @@ namespace TNHFramework
             int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
 
+            capacityText.text = string.Empty;
+
             if (detectedMag != null || detectedSpeedLoader != null)
             {
                 DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
@@ -378,6 +384,8 @@ namespace TNHFramework
                     UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
                     if (numTokens >= UpgradeCost)
                         numTokensSelected = UpgradeCost;
+
+                    capacityText.text = $"{detectedMag.m_capacity} -> {upgradeMag.MagazineCapacity}";
                 }
             }
 
