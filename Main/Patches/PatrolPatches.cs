@@ -84,6 +84,9 @@ namespace TNHFramework.Patches
 
             Level level = LoadedTemplateManager.CurrentLevel;
 
+            if (!level.Patrols.Any())
+                return false;
+
             int maxPatrols = (__instance.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking) ?
                 level.Patrols[0].MaxPatrolsLimited : level.Patrols[0].MaxPatrols;
 
@@ -157,7 +160,7 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = level.Patrols[patrolIndex];
 
-                            // Anton pls fix - GetSpawnPoints() sometimes uses wrong type
+                            // Fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, supplyIndex, supplyIndex, ___m_curHoldIndex));
                             List<Vector3> spawnPoints = (List<Vector3>)miGetSpawnPoints.Invoke(__instance, [firstPoint, firstSpawnPointType]);
                             List<Vector3> forwardVectors = (List<Vector3>)miGetForwardVectors.Invoke(__instance, []);
@@ -202,7 +205,7 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = level.Patrols[patrolIndex];
 
-                            // Anton pls fix - GetSpawnPoints() sometimes uses wrong type
+                            // Fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, holdIndex, holdIndex, ___m_curHoldIndex));
                             List<Vector3> spawnPoints = (List<Vector3>)miGetSpawnPoints.Invoke(__instance, [firstPoint, firstSpawnPointType]);
                             List<Vector3> forwardVectors = (List<Vector3>)miGetForwardVectors.Invoke(__instance, []);
