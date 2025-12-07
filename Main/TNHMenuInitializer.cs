@@ -95,6 +95,9 @@ namespace TNHFramework
                 TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher finished!", TNHFrameworkLogger.LogType.General);
             }
 
+            if (TNHFramework.FixModAttachmentTags.Value)  // ODK
+                TNHFrameworkUtils.FixModAttachmentTags();
+
             // Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
             SavedCharacters = CharDatabase.Characters;
