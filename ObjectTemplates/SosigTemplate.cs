@@ -55,7 +55,7 @@ namespace TNHFramework.ObjectTemplates
         public void Validate()
         {
             // Fix any null values that came from the JSON file
-            SosigPrefabs ??= [];
+            SosigPrefabs ??= ["SosigBody_Default"];
 
             Configs ??= [];
             foreach (SosigConfig config in Configs)
@@ -78,7 +78,7 @@ namespace TNHFramework.ObjectTemplates
             WeaponOptions ??= [];
             WeaponOptionsSecondary ??= [];
             WeaponOptionsTertiary ??= [];
-            
+
             DroppedObjectPool ??= new();
             DroppedObjectPool.Validate();
         }
