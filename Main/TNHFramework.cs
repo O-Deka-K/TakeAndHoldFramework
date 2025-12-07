@@ -28,12 +28,17 @@ namespace TNHFramework
         public static ConfigEntry<bool> ConvertFilesToYAML;
         public static ConfigEntry<bool> AlwaysMagUpgrader;
         public static ConfigEntry<bool> SosigItemDropVibrate;
+        public static ConfigEntry<int> MagUpgradeThreshold;
         public static ConfigEntry<bool> FixModAttachmentTags;
         public static ConfigEntry<bool> FixLegacyModulGuns;
         public static ConfigEntry<bool> FixWurstMod;
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
+        public static ConfigEntry<bool> EnableBlister;
+        public static ConfigEntry<bool> EnableFloater;
+        public static ConfigEntry<bool> EnableIris;
+        public static ConfigEntry<bool> EnableSentinel;
 
         public static string InfoPath;
         public static string OutputFilePath;
@@ -61,9 +66,7 @@ namespace TNHFramework
             InfoPath = Path.GetDirectoryName(Info.Location);
 
             if (TNHFrameworkLogger.BepLog == null)
-            {
                 TNHFrameworkLogger.Init();
-            }
 
             TNHFrameworkLogger.Log("Hello World (from TNHFramework)", TNHFrameworkLogger.LogType.General);
 
@@ -185,19 +188,24 @@ namespace TNHFramework
                                     true,
                                     "If true, vibrate the controllers when a Sosig spawns an item on death. This doesn't apply to health drops.");
 
-            FixModAttachmentTags = Config.Bind("General",
+            MagUpgradeThreshold = Config.Bind("General",
+                                    "MagUpgradeThreshold",
+                                    10,
+                                    "When upgrading a magazine, it will upgrade to the next mag that has greater than or equal to this number more than the current mag if possible.");
+
+            FixModAttachmentTags = Config.Bind("Fixes",
                                     "FixModAttachmentTags",
                                     true,
                                     "If true, fix mod attachment tags for known mods so that they can spawn in TNH.\n" +
                                     "Handles older mods by Meat_banano and FSCE.");
 
-            FixLegacyModulGuns = Config.Bind("General",
+            FixLegacyModulGuns = Config.Bind("Fixes",
                                     "FixLegacyModulGuns",
-                                    true,
+                                    false,
                                     "If true, try to fix Modul guns that have preset attachments (premades). The attachments fall through the floor if you remove them.\n" +
                                     "Handles older non-ModulWorkshop mods by Meat_banano.");
 
-            FixWurstMod = Config.Bind("General",
+            FixWurstMod = Config.Bind("Fixes",
                                     "FixWurstMod",
                                     true,
                                     "If true, Unpatch broken patches from WurstMod 2.2.5.\n" +
@@ -242,6 +250,26 @@ namespace TNHFramework
                                     "EnableDebugText",
                                     false,
                                     "If true, some text will appear in TNH maps showing additional info");
+
+            EnableBlister = Config.Bind("Institution Constructs",
+                                    "EnableBlister",
+                                    true,
+                                    "If true, enable blister constructs. Lasers that scan in an arc and trigger an alert when tripped.");
+
+            EnableFloater = Config.Bind("Institution Constructs",
+                                    "EnableFloater",
+                                    true,
+                                    "If true, enable floater constructs. Floating proximity mines that follow you.");
+
+            EnableIris = Config.Bind("Institution Constructs",
+                                    "EnableIris",
+                                    true,
+                                    "If true, enable iris constructs. Floating constructs that fire a destructive laser.");
+
+            EnableSentinel = Config.Bind("Institution Constructs",
+                                    "EnableSentinel",
+                                    true,
+                                    "If true, enable sentinel constructs. Large floating monoliths than scan using lasers and trigger an alert.");
 
             TNHFrameworkLogger.AllowLogging = allowLog.Value;
             TNHFrameworkLogger.LogCharacter = printCharacters.Value;
