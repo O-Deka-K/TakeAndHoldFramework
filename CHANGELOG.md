@@ -103,3 +103,50 @@
 - When using the BuildCharacterFiles option, write out both .json and .yaml files.
 - Slightly improved TNHTweaker patcher so that you can always re-enable TNH Tweaker in r2modman if needed.
 - Optimized code by compiling in release mode.
+
+## [0.2.3] - 2025-12-06
+
+### Features
+
+- Backported from build 120: Mag Upgrade panel chooses next highest magazine above a given threshold. Threshold is configurable in options.
+- Backported from build 120: Text shows current magazine capacity vs. upgraded capacity on Mag Upgrade panel.
+- Backported from build 120: Spawn supply guards in a coroutine to reduce hitching.
+- Revamped character selection UI to make it easier to choose between many characters.
+- Character selection UI now restores the last played character.
+- Only throw grenades between Hold waves for custom characters. This feature was removed entirely in the vanilla game.
+- Implemented "HeadUsesTorsoIndex", "PantsUsesTorsoIndex" and "PantsLowerUsesPantsIndex" options for sosig outfits.
+- Spawn sosig drops in a coroutine to prevent hitching.
+- Added haptic buzz when a sosig drops an item (not health). This can be disabled in options.
+- Added a small force to make sosig item drops pop upwards when spawned.
+- Added IDOverrideBackup for each equipment pool within an equipment group.
+
+### Fixes
+
+- Fixed Hold Seed "Random" option so that it allows for more variability as intended (specifying a numbered seed makes play more consistent for competition).
+- Fixed "PowerupTypes" tags not working.
+- Prevent invalid sosig IDs from making the character not appear in the list.
+- Fixed sosigs not wearing torso decorations and belts.
+- Fixed sosig item drop positioning so that large items don't clip into the ground.
+- Fixed vault gun spawning method to be closer to vanilla version. It should be able to handle attachable firearms now.
+- Fixed equipment pool selection so that repeats don't happen as often.
+- Prevent Mag Upgrade panel from deselecting the firearm when buying a new mag. This was causing a glitch in the button icons.
+- Fixed the case where specifying no patrols during a Take phase would break the game.
+- Added missing entry in safe hold index table for Northeast Dakota.
+- Added fix for mod attachment tags so that they can spawn in TNH. This affects specific older mods, like ones by Meats_banano. This fix can be disabled in options.
+- Added fix for premade guns with incorrect attachment physics. This fix is disabled by default because it doesn't work properly with FTW_Arms_Modular_Vector, but it can be enabled in options.
+- Added fix for WurstMod. It has patched methods that were broken due to changes in H3VR. This fix can be disabled in options.
+- Applied global blacklist to mag upgrades.
+- Check for round in magazine tube before putting one in extractor for tube-fed shotguns (vault gun fix).
+- Check for no valid rounds when purchasing ammo.
+- Limit cases where more objects (items, sosigs, encryptions) are requested than there are spawn points for.
+- Added many more checks to prevent null/invalid object errors.
+- Fixed icon not appearing in mod options panel.
+
+### Miscellaneous
+
+- Removed "DespawnBetweenWaves" and "UsesVFX" options.
+- Number of turrets can now spawn +/-1 like in vanilla.
+- Changed Ammo Reloader clip spawn audio fix from Harmony transpiler patch into Harmony replacement patch.
+- Changed many replaced methods back into Harmony patches.
+- Changed Harmony replacement patches into prefix or postfix patches whereever possible.
+- Removed debug log messages that weren't very useful.
