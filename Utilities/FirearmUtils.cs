@@ -1,7 +1,7 @@
 ﻿using FistVR;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
 
@@ -199,39 +199,23 @@ namespace TNHFramework.Utilities
             if (magazines == null || !magazines.Any())
                 return null;
 
-            // This was done with a list because whenever there are multiple smallest magazines of the same size, we want to return a random one from those options
-            List<FVRObject> smallestMagazines = [];
+            List<FVRObject> eligibleMagazines = [.. magazines];
+            if (blacklist != null)
+                eligibleMagazines.RemoveAll(o => !blacklist.IsMagazineAllowed(o.ItemID));
 
-            foreach (FVRObject magazine in magazines)
-            {
-                if (blacklist != null && !blacklist.IsMagazineAllowed(magazine.ItemID))
-                    continue;
+            if (globalObjectBlacklist != null)
+                eligibleMagazines.RemoveAll(o => globalObjectBlacklist.Contains(o.ItemID));
 
-                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
-                    continue;
-
-                if (!smallestMagazines.Any())
-                {
-                    smallestMagazines.Add(magazine);
-                }
-                // If we find a new smallest mag, clear the list and add the new smallest
-                else if (magazine.MagazineCapacity < smallestMagazines[0].MagazineCapacity)
-                {
-                    smallestMagazines.Clear();
-                    smallestMagazines.Add(magazine);
-                }
-                // If the magazine is the same capacity as current smallest, add it to the list
-                else if (magazine.MagazineCapacity == smallestMagazines[0].MagazineCapacity)
-                {
-                    smallestMagazines.Add(magazine);
-                }
-            }
-
-            if (!smallestMagazines.Any())
+            if (!eligibleMagazines.Any())
                 return null;
 
-            // Return a random magazine from the smallest
-            return smallestMagazines.GetRandom();
+            int minCapacity = eligibleMagazines.Min(o => o.MagazineCapacity);
+            List<FVRObject> smallestMagazines = [.. eligibleMagazines.Where(o => o.MagazineCapacity == minCapacity)];
+
+            if (smallestMagazines.Any())
+                return smallestMagazines.GetRandom();
+
+            return null;
         }
 
         /// <summary>
@@ -281,10 +265,10 @@ namespace TNHFramework.Utilities
         }
 
         /// <summary>
-        /// Returns the next largest magazine when compared to the current magazine. Only magazines from the possibleMagazines list are considered as next largest magazine candidates
+        /// Returns the next largest magazine when compared to the current magazine.
         /// </summary>
         /// <param name="currentMagazine">The base magazine FVRObject, for which we are getting the next largest magazine</param>
-        /// <param name="possibleMagazines">A list of magazine FVRObjects, which are the candidates for being the next largest magazine</param>
+        /// <param name="globalObjectBlacklist">A global list of ItemIDs that are not allowed to appear</param>
         /// <param name="blacklistedMagazines">A list of ItemIDs for magazines that will be excluded</param>
         /// <returns>An FVRObject for the next largest magazine. Can be null if no next largest magazine is found</returns>
         public static FVRObject GetNextHighestCapacityMagazine(FVRObject currentMagazine, List<string> globalObjectBlacklist = null, List<string> blacklistedMagazines = null)
@@ -293,51 +277,30 @@ namespace TNHFramework.Utilities
 
             if (!IM.CompatMags.ContainsKey(currentMagazine.MagazineType))
             {
-                TNHFrameworkLogger.LogError($"magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
+                TNHFrameworkLogger.LogError($"Magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
                 return null;
             }
 
-            // We make this a list so that when several next largest mags have the same capacity, we can return a random magazine from that selection
-            List<FVRObject> nextLargestMagazines = [];
-            List<FVRObject> largestMagazines = [];
-            int largestCapacity = 0;
+            int magThreshold = Mathf.Max(1, TNHFramework.MagUpgradeThreshold.Value);
+            List<FVRObject> eligibleMagazines = [.. IM.CompatMags[currentMagazine.MagazineType].Where(o => o.MagazineCapacity >= currentMagazine.MagazineCapacity + magThreshold)];
 
-            foreach (FVRObject magazine in IM.CompatMags[currentMagazine.MagazineType])
-            {
-                if (blacklistedMagazines != null && blacklistedMagazines.Contains(magazine.ItemID))
-                    continue;
+            if (blacklistedMagazines != null)
+                eligibleMagazines.RemoveAll(o => blacklistedMagazines.Contains(o.ItemID));
 
-                if (globalObjectBlacklist != null && globalObjectBlacklist.Contains(magazine.ItemID))
-                    continue;
+            if (globalObjectBlacklist != null)
+                eligibleMagazines.RemoveAll(o => globalObjectBlacklist.Contains(o.ItemID));
 
-                if (magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity > largestCapacity)
-                {
-                    nextLargestMagazines.Clear();
-                    largestMagazines.Add(magazine);
-                    largestCapacity = magazine.MagazineCapacity;
-                }
-                else if (magazine.MagazineCapacity == largestCapacity)
-                {
-                    largestMagazines.Add(magazine);
-                }
+            if (!eligibleMagazines.Any())
+                return null;
 
-                if (!nextLargestMagazines.Any() && magazine.MagazineCapacity > currentMagazine.MagazineCapacity + 9)
-                {
-                    nextLargestMagazines.Add(magazine);
-                }
-                else if (nextLargestMagazines.Any() && magazine.MagazineCapacity > currentMagazine.MagazineCapacity + 9 && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
-                {
-                    nextLargestMagazines.Clear();
-                    nextLargestMagazines.Add(magazine);
-                }
-                else if (nextLargestMagazines.Any() && magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
-                {
-                    nextLargestMagazines.Add(magazine);
-                }
-            }
+            int nextCapacity = eligibleMagazines.Min(o => o.MagazineCapacity);
+            List<FVRObject> nextLargestMagazines = [.. eligibleMagazines.Where(o => o.MagazineCapacity == nextCapacity)];
 
             if (nextLargestMagazines.Any())
                 return nextLargestMagazines.GetRandom();
+
+            int largestCapacity = eligibleMagazines.Max(o => o.MagazineCapacity);
+            List<FVRObject> largestMagazines = [.. eligibleMagazines.Where(o => o.MagazineCapacity == largestCapacity)];
 
             if (currentMagazine.MagazineCapacity < largestCapacity && largestMagazines.Any())
                 return largestMagazines.GetRandom();
@@ -418,11 +381,7 @@ namespace TNHFramework.Utilities
                 maxCapacity = 9999;
 
             // Go through and remove any items that have no ammo containers
-            for (int i = heldItems.Count - 1; i >= 0; i--)
-            {
-                if (!FVRObjectHasAmmoContainer(heldItems[i]))
-                    heldItems.RemoveAt(i);
-            }
+            heldItems.RemoveAll(o => !FVRObjectHasAmmoContainer(o));
 
             // Now go through all items that do have ammo containers, and try to get an ammo container for one of them
             heldItems.Shuffle();
