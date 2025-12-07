@@ -16,11 +16,30 @@ namespace TNHFramework.Patches
         private static readonly MethodInfo miSpawnHoldEnemyGroup = typeof(TNH_HoldPoint).GetMethod("SpawnHoldEnemyGroup", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miGetMaxTargsInHold = typeof(TNH_HoldPoint).GetMethod("GetMaxTargsInHold", BindingFlags.Instance | BindingFlags.NonPublic);
 
+        [HarmonyPatch(typeof(TNH_HoldPoint), "Init")]
+        [HarmonyPostfix]
+        public static void Init_DisableConstructs(TNH_HoldPoint __instance)
+        {
+            foreach (Construct_Volume construct in __instance.M.ConstructSpawners)
+            {
+                if (!TNHFramework.EnableBlister.Value && construct is Construct_Blister_Volume)
+                    __instance.ExcludeConstructVolumes.Add(construct);
+                else if (!TNHFramework.EnableFloater.Value && construct is Construct_Floater_Volume)
+                    __instance.ExcludeConstructVolumes.Add(construct);
+                else if (!TNHFramework.EnableIris.Value && construct is Construct_Iris_Volume)
+                    __instance.ExcludeConstructVolumes.Add(construct);
+                else if (!TNHFramework.EnableSentinel.Value && construct is Construct_Sentinel_Path)
+                    __instance.ExcludeConstructVolumes.Add(construct);
+            }
+        }
+
         // Anton pls fix - Use TNHSeed
         [HarmonyPatch(typeof(TNH_HoldPoint), "BeginPhase")]
         [HarmonyPostfix]
-        public static void BeginPhase_TNHSeed(ref float ___m_tickDownToNextGroupSpawn, TNH_HoldChallenge.Phase ___m_curPhase)
+        public static void BeginPhase_TNHSeed(ref float ___m_tickDownToNextGroupSpawn, TNH_HoldChallenge.Phase ___m_curPhase, int ___m_phaseIndex)
         {
+            TNHFrameworkLogger.Log($"Beginning HOLD PHASE -- Wave {___m_phaseIndex}", TNHFrameworkLogger.LogType.TNH);
+
             ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * 0.8f;
 
             if (GM.TNHOptions.TNHSeed < 0)
