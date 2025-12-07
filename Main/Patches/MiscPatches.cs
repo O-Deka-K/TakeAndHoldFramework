@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using UnityEngine;
 
 namespace TNHFramework.Patches
 {
@@ -14,30 +15,55 @@ namespace TNHFramework.Patches
 
         // Anton pls fix - Wrong sound plays when purchasing a clip at the new ammo reloader panel
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "Button_SpawnClip")]
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> Button_SpawnClip_AudioFix(IEnumerable<CodeInstruction> instructions)
+        [HarmonyPrefix]
+        public static bool Button_SpawnClip_AudioFix(TNH_AmmoReloader2 __instance, bool ___hasDisplayedType, bool ___m_isConfirmingPurchase,
+            TNH_AmmoReloader2.AmmoReloaderSelectedObject ___m_selectedObjectType, FVRFireArm ___m_selectedFA, FireArmRoundType ___m_displayedType,
+            List<FireArmRoundClass> ___m_displayedClasses, int ___m_selectedClass)
         {
-            List<CodeInstruction> code = [.. instructions];
-            List<CodeInstruction> codeToInsert =
-            [
-                new(OpCodes.Ldc_I4_1),
-                new(OpCodes.Stloc_0),
-            ];
-
-            // Find the insertion index
-            for (int i = 0; i < code.Count - 2; i++)
+            if (!___hasDisplayedType || ___m_isConfirmingPurchase)
             {
-                // Search for "if (obj.CompatibleClips.Count > 0)"
-                if (code[i].opcode == OpCodes.Ldfld &&
-                    code[i + 1].opcode == OpCodes.Ldc_I4_0 &&
-                    code[i + 2].opcode == OpCodes.Ble)
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Fail, __instance.transform.position);
+                return false;
+            }
+
+            bool found = false;
+            if (___m_selectedObjectType == TNH_AmmoReloader2.AmmoReloaderSelectedObject.Gun && ___m_selectedFA != null && ___m_displayedType == ___m_selectedFA.RoundType && IM.OD.ContainsKey(___m_selectedFA.ObjectWrapper.ItemID))
+            {
+                FVRObject firearmObj = IM.OD[___m_selectedFA.ObjectWrapper.ItemID];
+
+                if (firearmObj.CompatibleClips.Count > 0)
                 {
-                    code.InsertRange(i + 3, codeToInsert);
-                    break;
+                    found = true;
+                    FVRObject clipObj = firearmObj.CompatibleClips[0];
+                    GameObject clip = Object.Instantiate(clipObj.GetGameObject(), __instance.Spawnpoint_Round.position, __instance.Spawnpoint_Round.rotation);
+                    __instance.M.AddObjectToTrackedList(clip);
+
+                    FireArmRoundClass roundClip = ___m_displayedClasses[___m_selectedClass];
+                    FVRFireArmClip clipComp = clip.GetComponent<FVRFireArmClip>();
+                    clipComp.ReloadClipWithType(roundClip);
+                }
+                else if (firearmObj.CompatibleMagazines.Count > 0)
+                {
+                    FVRObject magazineObj = firearmObj.CompatibleMagazines[0];
+                    GameObject magazineGO = magazineObj.GetGameObject();
+
+                    FVRFireArmMagazine magazineComp = magazineGO.GetComponent<FVRFireArmMagazine>();
+
+                    if (magazineComp.IsEnBloc)
+                    {
+                        found = true;
+                        GameObject magazine = Object.Instantiate(magazineGO, __instance.Spawnpoint_Round.position, __instance.Spawnpoint_Round.rotation);
+                        __instance.M.AddObjectToTrackedList(magazine);
+
+                        FireArmRoundClass roundMag = ___m_displayedClasses[___m_selectedClass];
+                        magazineComp = magazine.GetComponent<FVRFireArmMagazine>();
+                        magazineComp.ReloadMagWithType(roundMag);
+                    }
                 }
             }
 
-            return code;
+            SM.PlayCoreSound(FVRPooledAudioType.UIChirp, (found ? __instance.AudEvent_Spawn : __instance.AudEvent_Fail), __instance.transform.position);
+            return false;
         }
 
         // Anton pls fix - Don't play line to advance to next node when completing last hold
@@ -75,6 +101,20 @@ namespace TNHFramework.Patches
             if (___m_level < ___m_maxLevels)
             {
                 __instance.EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt);
+            }
+        }
+
+        // Anton pls fix - DicSafeHoldIndiciesForSupplyPoint has missing entry. Also, DicSafeSupplyIndiciesForHoldPoint never has 32.
+        [HarmonyPatch(typeof(TNH_Manager), "PrimeSafeDics")]
+        [HarmonyPostfix]
+        public static void PrimeSafeDics_MissingEntryFix(TNH_Manager __instance)
+        {
+            // For Northest Dakota, there's a missing entry
+            if (__instance.DicSafeHoldIndiciesForSupplyPoint.Any() && __instance.SupplyPoints.Count == 38 && __instance.HoldPoints.Count == 32)
+            {
+
+                if (!__instance.DicSafeHoldIndiciesForSupplyPoint.ContainsKey(32))
+                    __instance.DicSafeHoldIndiciesForSupplyPoint.Add(32, [25, 26, 27, 29]);
             }
         }
 
