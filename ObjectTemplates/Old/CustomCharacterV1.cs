@@ -183,7 +183,6 @@ namespace TNHFramework.ObjectTemplates.V1
             if (character == null)
             {
                 ValidAmmoSets ??= [];
-                
                 ValidAmmoEras ??= [];
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
@@ -255,17 +254,13 @@ namespace TNHFramework.ObjectTemplates.V1
             foreach (Level level in Levels)
             {
                 if (level.GetLevel().Equals(currLevel))
-                {
                     return level;
-                }
             }
 
             foreach (Level level in LevelsEndless)
             {
                 if (level.GetLevel().Equals(currLevel))
-                {
                     return level;
-                }
             }
 
             return null;
@@ -278,9 +273,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 foreach (Phase phase in level.HoldPhases)
                 {
                     if (phase.GetPhase().Equals(currPhase))
-                    {
                         return phase;
-                    }
                 }
             }
 
@@ -289,9 +282,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 foreach (Phase phase in level.HoldPhases)
                 {
                     if (phase.GetPhase().Equals(currPhase))
-                    {
                         return phase;
-                    }
                 }
             }
 
@@ -485,15 +476,13 @@ namespace TNHFramework.ObjectTemplates.V1
                 };
 
                 if (PrimaryGroup != null)
-                {
                     pool.Rarity = PrimaryGroup.Rarity;
-                }
                 else
-                {
                     pool.Rarity = 1;
-                }
 
                 pool.TableDef = PrimaryGroup.GetObjectTableDef();
+                pool.TableDef.SpawnsInLargeCase = SpawnsInLargeCase;
+                pool.TableDef.SpawnsInSmallCase = SpawnsInSmallCase;
             }
 
             return pool;
@@ -504,9 +493,7 @@ namespace TNHFramework.ObjectTemplates.V1
             if (pool != null)
             {
                 if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
-                {
                     pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[IconName];
-                }
 
                 if (PrimaryGroup != null)
                 {
@@ -537,13 +524,9 @@ namespace TNHFramework.ObjectTemplates.V1
         public List<EquipmentGroup> GetSpawnedEquipmentGroups()
         {
             if (PrimaryGroup != null)
-            {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
-            }
             else if (BackupGroup != null)
-            {
                 return BackupGroup.GetSpawnedEquipmentGroups();
-            }
 
             TNHFrameworkLogger.LogWarning("EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
             return [];
@@ -615,6 +598,7 @@ namespace TNHFramework.ObjectTemplates.V1
         {
             Category = ObjectCategory.Firearm;
             IDOverride = [];
+            IDOverrideBackup = [];
             Eras = [];
             Sets = [];
             Sizes = [];
@@ -628,6 +612,7 @@ namespace TNHFramework.ObjectTemplates.V1
             MeleeStyles = [];
             MeleeHandedness = [];
             MountTypes = [];
+            PowerupTypes = [];
             ThrownTypes = [];
             ThrownDamageTypes = [];
             SubGroups = [];
@@ -763,9 +748,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 result = [];
 
                 if (objects.Any())
-                {
                     result.Add(this);
-                }
 
                 foreach (EquipmentGroup group in SubGroups)
                 {
@@ -797,9 +780,7 @@ namespace TNHFramework.ObjectTemplates.V1
                     {
                         progress += SubGroups[i].Rarity;
                         if (randomSelection < progress)
-                        {
                             return SubGroups[i].GetSpawnedEquipmentGroups();
-                        }
                     }
                 }
             }
@@ -817,9 +798,7 @@ namespace TNHFramework.ObjectTemplates.V1
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
                 if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
-                {
                     return false;
-                }
             }
 
             // Before we add anything from the IDOverride list, remove anything that isn't loaded
@@ -827,9 +806,7 @@ namespace TNHFramework.ObjectTemplates.V1
 
             // Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
-            {
                 objects.AddRange(IDOverride);
-            }
 
             // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
@@ -862,7 +839,7 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             // The table is valid if it has items in it, or is a compatible magazine
-            return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
+            return objects.Any() || IsCompatibleMagazine || (SubGroups != null && SubGroups.Any());
         }
 
         public string ToString(int level)
@@ -954,6 +931,7 @@ namespace TNHFramework.ObjectTemplates.V1
                         Rarity = 1,
                         SubGroups = []
                     };
+
                     foreach (ObjectTableDef table in loadout.TableDefs)
                     {
                         EquipmentGroup group = new EquipmentGroup(table)
@@ -982,9 +960,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 };
 
                 if (PrimaryGroup != null)
-                {
                     loadout.TableDefs = [PrimaryGroup.GetObjectTableDef()];
-                }
             }
 
             return loadout;
@@ -1142,13 +1118,8 @@ namespace TNHFramework.ObjectTemplates.V1
 
                     HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
                 };
-                level.HoldChallenge.Phases = [];
-                foreach (Phase phase in HoldPhases)
-                {
-                    level.HoldChallenge.Phases.Add(phase.GetPhase());
-                }
-                //level.HoldChallenge.Phases = HoldPhases.Select(o => o.GetPhase()).ToList();
 
+                level.HoldChallenge.Phases = HoldPhases.Select(o => o.GetPhase()).ToList();
                 level.SupplyChallenge = SupplyChallenge.GetTakeChallenge();
                 level.PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge));
                 level.PatrolChallenge.Patrols = Patrols.Select(o => o.GetPatrol()).ToList();
@@ -1175,54 +1146,54 @@ namespace TNHFramework.ObjectTemplates.V1
             {
                 MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
                 MinSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
-
-                foreach (Phase phase in HoldPhases)
-                {
-                    phase.DelayedInit(isCustom);
-                }
             }
+
+            TakeChallenge.DelayedInit();
+
+            foreach (Phase phase in HoldPhases)
+            {
+                phase.DelayedInit(isCustom);
+            }
+
+            SupplyChallenge.DelayedInit();
+
+            foreach (Patrol patrol in Patrols)
+            {
+                patrol.DelayedInit(isCustom);
+            }
+
+            Patrols.RemoveAll(o => o.LeaderType == null);
         }
 
         public bool LevelUsesSosig(string id)
         {
             if (TakeChallenge.EnemyType == id)
-            {
                 return true;
-            }
-            else if (SupplyChallenge.EnemyType == id)
-            {
+
+            if (SupplyChallenge.EnemyType == id)
                 return true;
-            }
 
             foreach (Patrol patrol in Patrols)
             {
                 if (patrol.LeaderType == id)
-                {
                     return true;
-                }
 
                 foreach (string sosigID in patrol.EnemyType)
                 {
                     if (sosigID == id)
-                    {
                         return true;
-                    }
                 }
             }
 
             foreach (Phase phase in HoldPhases)
             {
                 if (phase.LeaderType == id)
-                {
                     return true;
-                }
 
                 foreach (string sosigID in phase.EnemyType)
                 {
                     if (sosigID == id)
-                    {
                         return true;
-                    }
                 }
             }
 
@@ -1265,13 +1236,9 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
-                {
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
-                }
                 else
-                {
-                    takeChallenge.GID = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType);
-                }
+                    takeChallenge.GID = TNHFrameworkUtils.ParseEnemyType(EnemyType);
 
                 takeChallenge.NumTurrets = NumTurrets;
                 takeChallenge.NumGuards = NumGuards;
@@ -1279,6 +1246,12 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             return takeChallenge;
+        }
+
+        public void DelayedInit()
+        {
+            if (!LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
+                EnemyType = "M_Swat_Guard";
         }
     }
 
@@ -1363,22 +1336,14 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
-                {
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
-                }
                 else
-                {
-                    phase.EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType[0]);
-                }
+                    phase.EType = TNHFrameworkUtils.ParseEnemyType(EnemyType[0]);
 
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
-                {
                     phase.LType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[LeaderType];
-                }
                 else
-                {
-                    phase.LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), LeaderType);
-                }
+                    phase.LType = TNHFrameworkUtils.ParseEnemyType(LeaderType);
             }
 
             return phase;
@@ -1386,7 +1351,14 @@ namespace TNHFramework.ObjectTemplates.V1
 
         public void DelayedInit(bool isCustom)
         {
-            if (!isCustom)
+            if (isCustom)
+            {
+                EnemyType.RemoveAll(o => !LoadedTemplateManager.SosigIDDict.ContainsKey(o));
+
+                if (!EnemyType.Any())
+                    EnemyType.Add("M_Swat_Guard");
+            }
+            else
             {
                 if (Encryptions[0] == TNH_EncryptionType.Static)
                 {
@@ -1453,22 +1425,14 @@ namespace TNHFramework.ObjectTemplates.V1
 
                 // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
-                {
                     patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
-                }
                 else
-                {
-                    patrol.EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType[0]);
-                }
+                    patrol.EType = TNHFrameworkUtils.ParseEnemyType(EnemyType[0]);
 
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
-                {
                     patrol.LType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[LeaderType];
-                }
                 else
-                {
-                    patrol.LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), LeaderType);
-                }
+                    patrol.LType = TNHFrameworkUtils.ParseEnemyType(LeaderType);
 
                 patrol.PatrolSize = PatrolSize;
                 patrol.MaxPatrols = MaxPatrols;
@@ -1479,6 +1443,20 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             return patrol;
+        }
+
+        public void DelayedInit(bool isCustom)
+        {
+            if (isCustom)
+            {
+                EnemyType.RemoveAll(o => !LoadedTemplateManager.SosigIDDict.ContainsKey(o));
+
+                if (!EnemyType.Any())
+                    EnemyType.Add("M_Swat_Guard");
+
+                if (!LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
+                    LeaderType = EnemyType[0];
+            }
         }
     }
 }
