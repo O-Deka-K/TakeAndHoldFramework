@@ -1,13 +1,13 @@
 # Take & Hold Framework
 A successor to DevynDaMonster's [TNH Tweaker](https://thunderstore.io/c/h3vr/p/devyndamonster/TakeAndHoldTweaker/), TNH Framework aims to act as a base for anyone who wants to implement custom content for [Hot Dogs, Horseshoes & Hand Grenades](https://store.steampowered.com/app/450540/Hot_Dogs_Horseshoes__Hand_Grenades/)'s Take & Hold gamemode.
 
-## Note
-This is an Extended Beta Release (AKA perpetual beta) version. It is completely functional and maintains most of the functionality of the original TNH Tweaker. Starting with version 0.3.0, it will begin to have new features. As H3VR is constantly evolving, TNH Framework will evolve with it.
+## H3VR Build Version
+This is for H3VR build 119, which is currently on Main branch (as of Dec 2025). It will NOT work on Experimental branch, as there are many incompatible changes. There will be a separate version of TNH Framework for Experimental branch (and later 1.0).
 
 ## What is this?
-This is a successor to TNH Tweaker. It originally started as an update to it, making it compatible with Institution and whatnot. It still is largely based upon TNH Tweaker, and I would like to massively thank Devyn for his work on it. I would've simply pushed this out as TNH Tweaker (updated) or whatever, but I have grander ambitions for the future that would ideally do with a rebrand, and for compatibility's sake, it's best if I rebrand now. 
+This is a successor to TNH Tweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNH Tweaker. It's up to date with the latest changes in build 119.
 
-As Devyn is no longer working on H3VR mods, this is will be the most up-to-date version.
+As Devyn is no longer working on H3VR mods, this is will be more up-to-date than TNH Tweaker.
 
 ## I still have Take & Hold Tweaker installed, what should I do?
 Short version: Leave it installed. TNH Framework will handle everything for you.
@@ -18,9 +18,17 @@ TNH Framework has a patcher included that will modify TNH Tweaker's files. If yo
 As of right now, this mod does the following:
 - Adds support for custom characters using YAML, with legacy support for TNH Tweaker/Deli-based custom characters.
 - Optional replacement for Magazine Patcher. No longer will you have crashes due to using too much RAM while loading.
-- Full Institution support.
+- Full Institution support, with options to disable each type of construct separately.
 - TNH Tweaker bugfixes.
 - Vanilla game bugfixes.
+- Legacy mod fixes.
+- Backported features from Experimetal build.
+- Global blacklist for any type of item.
+
+## Options
+There are two ways to access the TNH Framework options:
+1. In r2modman, go to Config editor > h3vr.tnhframework.cfg > Edit Config.
+2. In game, spawn the mod panel using your wrist menu. Go to Plugins > TNHFramework.
 
 ## Installation
 Install via the [r2modman](https://thunderstore.io/c/h3vr/p/ebkr/r2modman/) mod manager.
@@ -31,7 +39,7 @@ Install via the [r2modman](https://thunderstore.io/c/h3vr/p/ebkr/r2modman/) mod 
 You can also refer to Devyn's [original TNH Tweaker guide](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki).
 
 ## Credits
-- **APintOfGravy** - Main author, code contributor.
-- **O-Deka-K** - Major code contributor.
+- **O-Deka-K** - Main code contributor.
+- **APintOfGravy** - Original author (of the fork), code contributor.
 - **Ethiom101** - Text editor, general nuisance, corruptor of builds.
-- **DevynDaMonster** - Creator of the original Take & Hold Tweaker - of which this is forked from.
+- **DevynDaMonster** - Creator of the original Take & Hold Tweaker.
