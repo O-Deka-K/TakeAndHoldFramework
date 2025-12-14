@@ -162,3 +162,4 @@
 - Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
 - Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
 - Adjusted number of guards spawned at supply points.
+- Added ODekaK-MagazinePatcher as a dependency.
