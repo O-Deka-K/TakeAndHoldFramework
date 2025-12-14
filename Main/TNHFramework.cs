@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.3")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.4")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -29,6 +29,7 @@ namespace TNHFramework
         public static ConfigEntry<bool> AlwaysMagUpgrader;
         public static ConfigEntry<bool> SosigItemDropVibrate;
         public static ConfigEntry<int> MagUpgradeThreshold;
+        public static ConfigEntry<bool> InjectModBackpacks;
         public static ConfigEntry<bool> FixModAttachmentTags;
         public static ConfigEntry<bool> FixLegacyModulGuns;
         public static ConfigEntry<bool> FixWurstMod;
@@ -192,6 +193,11 @@ namespace TNHFramework
                                     "MagUpgradeThreshold",
                                     10,
                                     "When upgrading a magazine, it will upgrade to the next mag that has greater than or equal to this number more than the current mag if possible.");
+
+            InjectModBackpacks = Config.Bind("General",
+                                    "InjectModBackpacks",
+                                    true,
+                                    "If true, add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.");
 
             FixModAttachmentTags = Config.Bind("Fixes",
                                     "FixModAttachmentTags",
