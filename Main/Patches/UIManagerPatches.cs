@@ -184,28 +184,52 @@ namespace TNHFramework.Patches
             instance.LBL_CharacterName[11].text = ">>Next>>";
             instance.LBL_CharacterName[11].gameObject.SetActive(true);
 
-            Dictionary<int, List<CharacterTemplate>> sortedDic = [];
-
             // Load all characters into the UI
+
+            Dictionary<string, int> catDic = new()
+            {
+                ["Daring Defaults"] = 0,
+                ["Wieners Through Time"] = 1,
+                ["Memetastic Meats"] = 2,
+                ["Competitive Casings"] = 3,
+            };
+
             foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
             {
+                ObjectTemplates.CategoryInfo catData = character.Value.Custom.CategoryData;
+
+                if (!catDic.ContainsKey(catData.Name))
+                    catDic.Add(catData.Name, Mathf.Max(4, catData.Priority));
+            }
+
+            var sortedCat = from entry in catDic orderby entry.Value ascending select entry.Key;
+
+            foreach (var cat in sortedCat)
+            {
                 // Add new category if it doesn't exist yet
-                if (!Categories.Any(o => o.CategoryName == character.Value.Custom.CategoryData.Name))
+                if (!Categories.Any(o => o.CategoryName == cat))
                 {
-                    Categories.Insert(character.Value.Custom.CategoryData.Priority, new TNH_UIManager.CharacterCategory()
+                    Categories.Add(new TNH_UIManager.CharacterCategory()
                     {
-                        CategoryName = character.Value.Custom.CategoryData.Name,
+                        CategoryName = cat,
                         Characters = []
                     });
                 }
+            }
+
+            Dictionary<int, List<CharacterTemplate>> sortedDic = [];
+
+            foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
+            {
+                int cat = Categories.FindIndex(o => o.CategoryName == character.Value.Custom.CategoryData.Name);
 
                 // Add character to category
-                if (!Categories[(int)character.Value.Def.Group].Characters.Contains(character.Key))
+                if (!Categories[cat].Characters.Contains(character.Key))
                 {
+                    character.Value.Custom.CategoryData.Priority = cat;
+
                     if (character.Value.Custom.isCustom)
                     {
-                        int cat = (int)character.Value.Def.Group;
-
                         if (sortedDic.ContainsKey(cat))
                             sortedDic[cat].Add(character.Value);
                         else
@@ -213,7 +237,7 @@ namespace TNHFramework.Patches
                     }
                     else
                     {
-                        Categories[(int)character.Value.Def.Group].Characters.Add(character.Key);
+                        Categories[cat].Characters.Add(character.Key);
                     }
 
                     CharDatabase.Characters.Add(character.Value.Def);
