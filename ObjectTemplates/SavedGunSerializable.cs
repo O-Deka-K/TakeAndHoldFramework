@@ -8,7 +8,7 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-    public class SavedGunSerializable
+    public class SavedGunSerializable()
     {
         public string FileName;
         public List<FireArmRoundClass> LoadedRoundsInMag;
@@ -25,9 +25,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private SavedGun gun;
 
-        public SavedGunSerializable() { }
-
-        public SavedGunSerializable(SavedGun gun)
+        public SavedGunSerializable(SavedGun gun) : this()
         {
             FileName = gun.FileName;
             Components = gun.Components.Select(o => new SavedGunComponentSerializable(o)).ToList();

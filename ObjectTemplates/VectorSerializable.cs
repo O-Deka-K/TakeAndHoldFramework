@@ -3,7 +3,7 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-    public class Vector2Serializable
+    public class Vector2Serializable()
     {
         public float x;
         public float y;
@@ -11,9 +11,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private Vector2 v;
 
-        public Vector2Serializable() { }
-
-        public Vector2Serializable(Vector2 v)
+        public Vector2Serializable(Vector2 v) : this()
         {
             x = v.x;
             y = v.y;
@@ -27,7 +25,7 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    public class Vector2IntSerializable
+    public class Vector2IntSerializable()
     {
         public int x;
         public int y;
@@ -35,9 +33,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private Vector2 v;
 
-        public Vector2IntSerializable() { }
-
-        public Vector2IntSerializable(Vector2 v)
+        public Vector2IntSerializable(Vector2 v) : this()
         {
             x = (int)v.x;
             y = (int)v.y;
@@ -51,7 +47,7 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    public class Vector3IntSerializable
+    public class Vector3IntSerializable()
     {
         public int x;
         public int y;
@@ -60,9 +56,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private Vector3 v;
 
-        public Vector3IntSerializable() { }
-
-        public Vector3IntSerializable(Vector3 v)
+        public Vector3IntSerializable(Vector3 v) : this()
         {
             x = (int)v.x;
             y = (int)v.y;
@@ -77,7 +71,7 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    public class Vector3Serializable
+    public class Vector3Serializable()
     {
         public float x;
         public float y;
@@ -86,9 +80,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private Vector3 v;
 
-        public Vector3Serializable() { }
-
-        public Vector3Serializable(Vector3 v)
+        public Vector3Serializable(Vector3 v) : this()
         {
             x = v.x;
             y = v.y;
