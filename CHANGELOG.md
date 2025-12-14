@@ -1,4 +1,5 @@
 ## [0.1.0] - 2024-07-04
+
 - First release, based on devyndamonster-TakeAndHoldTweaker 1.7.9.
 - Removed requirements for Deli and Magazine Patcher, now just optional.
 - Swapped plugin from loading via Deli to loading via Stratum.
@@ -18,16 +19,20 @@
 - Fixed the bug where selecting past the 6th character wouldn't work.
 
 ## [0.1.1] - 2024-07-04
+
 - Changed manifest to say TNHFramework instead of TNHTweaker. 
 
 ## [0.1.2] - 2024-07-05
+
 - Added EnableScoring boolean to config in order to allow uploading of scores to custom TNH Dashboard.
 - Fixed character loader to load one character at a time.
 
 ## [0.1.3] - 2024-09-03
+
 - EDIT: Forgot to push changes, so 0.1.3 is no different from 0.1.2.
 
 ## [0.1.4] - 2024-09-05
+
 - Updated logger to say TNHFramework instead of TNHTweaker.
 - Fixed sosig item drops (e.g. PMC Pete, PorkUnknown).
 - Fixed patrol cadence. Patrols were always spawning immediately.
@@ -150,3 +155,9 @@
 - Changed many replaced methods back into Harmony patches.
 - Changed Harmony replacement patches into prefix or postfix patches whereever possible.
 - Removed debug log messages that weren't very useful.
+
+## [0.2.4] - 2025-12-13
+
+- Added "InjectModBackpacks" option. This will add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.
+- Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
+- Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
