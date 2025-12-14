@@ -19,7 +19,9 @@ namespace TNHFramework.Patches
         public static bool DelayedInit_InitTNH(TNH_Manager __instance, bool ___m_hasInit)
         {
             if (!___m_hasInit)
+            {
                 __instance.CharDB.Characters = TNHMenuInitializer.SavedCharacters;
+            }
 
             return true;
         }
@@ -439,7 +441,7 @@ namespace TNHFramework.Patches
                     component.character = character;
                     component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
                     component.group = new(customTemplate.DroppedObjectPool);
-                    component.group.DelayedInit(character.GlobalObjectBlacklist);
+                    component.group.DelayedInit(character.GlobalObjectBlacklist, false);
                 }
             }
 
