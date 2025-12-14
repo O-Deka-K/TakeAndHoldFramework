@@ -415,9 +415,11 @@ namespace TNHFramework.Patches
             numToSpawn += numSpawnBonus;
 
             if (!LoadedTemplateManager.CurrentCharacter.isCustom)
+            {
                 numToSpawn = Mathf.Clamp(numToSpawn, 0, 5);
+                fiNumSpawnBonus.SetValue(point, numSpawnBonus + 1);
+            }
 
-            fiNumSpawnBonus.SetValue(point, numSpawnBonus + 1);
             numToSpawn = Mathf.Clamp(numToSpawn, 0, point.SpawnPoints_Sosigs_Defense.Count);
 
             TNHFrameworkLogger.Log($"Spawning {numToSpawn} supply guards", TNHFrameworkLogger.LogType.TNH);
@@ -437,6 +439,37 @@ namespace TNHFramework.Patches
             }
 
             yield break;
+        }
+
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnTakeEnemyGroup")]
+        [HarmonyPrefix]
+        public static bool SpawnTakeEnemyGroupReplacement(TNH_SupplyPoint __instance, ref int ___numSpawnBonus, ref List<Sosig> ___m_activeSosigs)
+        {
+            __instance.SpawnPoints_Sosigs_Defense.Shuffle<Transform>();
+
+            int numToSpawn = Random.Range(__instance.T.NumGuards - 1, __instance.T.NumGuards + 1);
+            numToSpawn += ___numSpawnBonus;
+
+            if (!LoadedTemplateManager.CurrentCharacter.isCustom)
+            {
+                numToSpawn = Mathf.Clamp(numToSpawn, 0, 5);
+                ___numSpawnBonus++;
+            }
+
+            numToSpawn = Mathf.Clamp(numToSpawn, 0, __instance.SpawnPoints_Sosigs_Defense.Count);
+
+            TNHFrameworkLogger.Log($"Spawning {numToSpawn} supply guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
+
+            for (int i = 0; i < numToSpawn; i++)
+            {
+                Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
+
+                Sosig enemy = __instance.M.SpawnEnemy(template, transform.position, transform.rotation, __instance.T.IFFUsed, false, transform.position, true);
+                ___m_activeSosigs.Add(enemy);
+            }
+
+            return false;
         }
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "ConfigureAtBeginning")]
