@@ -189,9 +189,4 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- This target copies dll to the folder, for quicker debbugging -->
-  <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(ProfileString)' != '' ">
-    <Message Text="ProfileString present, copying dll to $(ProfileString)" />
-    <Copy SourceFiles="$(OutDir)TNHFramework.dll" DestinationFolder="$(ProfileString)" OverwriteReadOnlyFiles="true" />
-  </Target>
 </Project>
