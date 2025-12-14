@@ -227,9 +227,10 @@ namespace TNHFramework.Patches
             __instance.SpawnPoints_Sosigs_Defense.Shuffle();
             //__instance.SpawnPoints_Sosigs_Defense.Shuffle();
 
-            TNHFrameworkLogger.Log($"Spawning {__instance.T.NumGuards} hold guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
+            int numGuards = Mathf.Clamp(__instance.T.NumGuards, 0, __instance.SpawnPoints_Sosigs_Defense.Count);
+            TNHFrameworkLogger.Log($"Spawning {numGuards} hold guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
 
-            for (int i = 0; i < __instance.T.NumGuards && i < __instance.SpawnPoints_Sosigs_Defense.Count; i++)
+            for (int i = 0; i < numGuards; i++)
             {
                 Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
                 //Debug.Log("Take challenge sosig ID : " + __instance.T.GID);
