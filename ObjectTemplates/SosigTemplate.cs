@@ -7,7 +7,7 @@ using Valve.Newtonsoft.Json;
 
 namespace TNHFramework.ObjectTemplates
 {
-    public class SosigTemplate
+    public class SosigTemplate()
     {
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
@@ -27,9 +27,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private SosigEnemyTemplate template;
 
-        public SosigTemplate() { }
-
-        public SosigTemplate(SosigEnemyTemplate template)
+        public SosigTemplate(SosigEnemyTemplate template) : this()
         {
             DisplayName = template.DisplayName;
             SosigEnemyCategory = template.SosigEnemyCategory;
@@ -144,7 +142,7 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    public class SosigConfig
+    public class SosigConfig()
     {
         public float ViewDistance;
         public float HearingDistance;
@@ -180,10 +178,10 @@ namespace TNHFramework.ObjectTemplates
         public float DamMult_Thermal;
         public float DamMult_Chilling;
         public float DamMult_EMP;
-        public List<float> LinkDamageMultipliers;
-        public List<float> LinkStaggerMultipliers;
-        public List<Vector2Serializable> StartingLinkIntegrity;
-        public List<float> StartingChanceBrokenJoint;
+        public List<float> LinkDamageMultipliers = [];
+        public List<float> LinkStaggerMultipliers = [];
+        public List<Vector2Serializable> StartingLinkIntegrity = [];
+        public List<float> StartingChanceBrokenJoint = [];
         public float ShudderThreshold;
         public float ConfusionThreshold;
         public float ConfusionMultiplier;
@@ -209,8 +207,7 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private SosigConfigTemplate template;
 
-        public SosigConfig() { }
-        public SosigConfig(SosigConfigTemplate template)
+        public SosigConfig(SosigConfigTemplate template) : this()
         {
             ViewDistance = template.ViewDistance;
             HearingDistance = template.HearingDistance;
