@@ -199,12 +199,10 @@ namespace TNHFramework.Patches
                 ObjectTemplates.CategoryInfo catData = character.Value.Custom.CategoryData;
 
                 if (!catDic.ContainsKey(catData.Name))
-                    catDic.Add(catData.Name, Mathf.Max(4, catData.Priority));
+                    catDic.Add(catData.Name, Mathf.Max(0, catData.Priority));
             }
 
-            var sortedCat = from entry in catDic orderby entry.Value ascending select entry.Key;
-
-            foreach (var cat in sortedCat)
+            foreach (string cat in catDic.OrderBy(o => o.Value).Select(o => o.Key))
             {
                 // Add new category if it doesn't exist yet
                 if (!Categories.Any(o => o.CategoryName == cat))
@@ -217,6 +215,7 @@ namespace TNHFramework.Patches
                 }
             }
 
+            // Sort the custom characters by name
             Dictionary<int, List<CharacterTemplate>> sortedDic = [];
 
             foreach (KeyValuePair<TNH_Char, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
@@ -226,7 +225,7 @@ namespace TNHFramework.Patches
                 // Add character to category
                 if (!Categories[cat].Characters.Contains(character.Key))
                 {
-                    character.Value.Custom.CategoryData.Priority = cat;
+                    character.Value.Custom.CharacterGroup = cat;
 
                     if (character.Value.Custom.isCustom)
                     {
