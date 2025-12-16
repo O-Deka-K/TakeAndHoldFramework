@@ -485,7 +485,7 @@ namespace TNHFramework
 
             Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
             backgroundImage.sprite = background;
-;
+
             PurchaseIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
 
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
