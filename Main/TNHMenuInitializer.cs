@@ -740,32 +740,6 @@ namespace TNHFramework
                         sw.Close();
                     }
                 }
-
-                TNHFrameworkLogger.Log("Copying V2 JSON vault files", TNHFrameworkLogger.LogType.File);
-
-                var mode = ItemSpawnerV2.VaultFileDisplayMode.SingleObjects;
-                string[] vaultFileList = VaultSystem.GetFileListForDisplayMode(mode, CynJsonSortingMode.Alphabetical);
-
-                string vaultPath = Path.Combine(CynJson.GetOrCreateH3VRDataPath(), VaultSystem.rootFolderName);
-                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetCatFolderName(mode));
-                //vaultPath = Path.Combine(vaultPath, VaultSystem.GetSubcatFolderName(mode));
-                vaultPath = Path.Combine(vaultPath, (string)miGetCatFolderName.Invoke(null, [mode]));
-                vaultPath = Path.Combine(vaultPath, (string)miGetSubcatFolderName.Invoke(null, [mode]));
-
-                foreach (string vaultFileName in vaultFileList)
-                {
-                    //string filename = vaultFileName + VaultSystem.GetSuffix(mode);
-                    string filename = vaultFileName + (string)miGetSuffix.Invoke(null, [mode]);
-
-                    try
-                    {
-                        File.Copy(Path.Combine(vaultPath, filename), Path.Combine(path, filename), true);
-                    }
-                    catch (Exception ex)
-                    {
-                        TNHFrameworkLogger.LogError($"Vault File {filename} could not be copied: {ex}");
-                    }
-                }
             }
             catch (Exception ex)
             {
