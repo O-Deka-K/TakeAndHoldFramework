@@ -19,8 +19,6 @@ namespace TNHFramework.Patches
 
         private static readonly FieldInfo fiAllowEntry = typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiSpawnedCase = typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo fiLevel = typeof(TNH_Manager).GetField("m_level", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo fiWeaponCases = typeof(TNH_Manager).GetField("m_weaponCases", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static float BespokeAttachmentChance = 0f;
 
@@ -146,7 +144,7 @@ namespace TNHFramework.Patches
         {
             if (!TNHFramework.SpawnedPoolsDictionary.TryGetValue(t, out List<EquipmentPoolDef.PoolEntry> validPools) || !validPools.Any())
             {
-                validPools = poolDef.Entries.Where(o => o.Type == t && o.MinLevelAppears <= level && level <= o.MaxLevelAppears).ToList();
+                validPools = [.. poolDef.Entries.Where(o => o.Type == t && o.MinLevelAppears <= level && level <= o.MaxLevelAppears)];
                 TNHFramework.SpawnedPoolsDictionary[t] = validPools;
             }
 
