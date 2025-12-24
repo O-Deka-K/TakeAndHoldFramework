@@ -87,7 +87,8 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="MagazinePatcher">
-      <HintPath>$(ProfileString)\devyndamonster-MagazinePatcher\MagazinePatcher\MagazinePatcher.dll</HintPath>
+      <HintPath>lib\MagazinePatcher.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
