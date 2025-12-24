@@ -415,11 +415,9 @@ namespace TNHFramework.Patches
             numToSpawn += numSpawnBonus;
 
             if (!LoadedTemplateManager.CurrentCharacter.isCustom)
-            {
                 numToSpawn = Mathf.Clamp(numToSpawn, 0, 5);
-                fiNumSpawnBonus.SetValue(point, numSpawnBonus + 1);
-            }
 
+            fiNumSpawnBonus.SetValue(point, numSpawnBonus + 1);
             numToSpawn = Mathf.Clamp(numToSpawn, 0, point.SpawnPoints_Sosigs_Defense.Count);
 
             TNHFrameworkLogger.Log($"Spawning {numToSpawn} supply guards", TNHFrameworkLogger.LogType.TNH);
