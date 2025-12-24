@@ -28,7 +28,7 @@ namespace TNHFramework.ObjectTemplates
         public SavedGunSerializable(SavedGun gun) : this()
         {
             FileName = gun.FileName;
-            Components = gun.Components.Select(o => new SavedGunComponentSerializable(o)).ToList();
+            Components = [.. gun.Components.Select(o => new SavedGunComponentSerializable(o))];
             LoadedRoundsInMag = gun.LoadedRoundsInMag;
             LoadedRoundsInChambers = gun.LoadedRoundsInChambers;
             SavedFlags = gun.SavedFlags;
@@ -39,26 +39,12 @@ namespace TNHFramework.ObjectTemplates
             this.gun = gun;
         }
 
-        public void Validate()
-        {
-            LoadedRoundsInMag ??= [];
-            LoadedRoundsInChambers ??= [];
-            SavedFlags ??= [];
-            FireSelectorModes ??= [];
-
-            Components ??= [];
-            foreach (SavedGunComponentSerializable component in Components)
-            {
-                component.Validate();
-            }
-        }
-
         public SavedGun GetSavedGun()
         {
             gun ??= new SavedGun
             {
                 FileName = FileName,
-                Components = Components.Select(o => o.GetGunComponent()).ToList(),
+                Components = [.. Components.Select(o => o.GetGunComponent())],
                 LoadedRoundsInMag = LoadedRoundsInMag,
                 LoadedRoundsInChambers = LoadedRoundsInChambers,
                 SavedFlags = SavedFlags,
@@ -164,7 +150,7 @@ namespace TNHFramework.ObjectTemplates
                     {
                         modeList.Add(mode.GetHandgunMode());
                     }
-                    handgunComp.FireSelectorModes = modeList.ToArray();
+                    handgunComp.FireSelectorModes = [.. modeList];
                 }
 
                 if (OverrideFireRate)
@@ -187,7 +173,7 @@ namespace TNHFramework.ObjectTemplates
                     {
                         modeList.Add(mode.GetClosedBoltMode());
                     }
-                    closedBoltComp.FireSelector_Modes = modeList.ToArray();
+                    closedBoltComp.FireSelector_Modes = [.. modeList];
                 }
 
                 if (OverrideFireRate)
@@ -210,7 +196,7 @@ namespace TNHFramework.ObjectTemplates
                     {
                         modeList.Add(mode.GetOpenBoltMode());
                     }
-                    openBoltComp.FireSelector_Modes = modeList.ToArray();
+                    openBoltComp.FireSelector_Modes = [.. modeList];
                 }
                 
                 if (OverrideFireRate)
@@ -259,11 +245,6 @@ namespace TNHFramework.ObjectTemplates
             Flags = component.Flags;
 
             this.component = component;
-        }
-
-        public void Validate()
-        {
-            Flags ??= [];
         }
 
         public SavedGunComponent GetGunComponent()

@@ -12,17 +12,17 @@ namespace TNHFramework.ObjectTemplates
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
         public string SosigEnemyID;
-        public List<string> SosigPrefabs;
-        public List<SosigConfig> Configs;
-        public List<SosigConfig> ConfigsEasy;
-        public List<OutfitConfig> OutfitConfigs;
-        public List<string> WeaponOptions;
-        public List<string> WeaponOptionsSecondary;
-        public List<string> WeaponOptionsTertiary;
+        public List<string> SosigPrefabs = [];
+        public List<SosigConfig> Configs = [];
+        public List<SosigConfig> ConfigsEasy = [];
+        public List<OutfitConfig> OutfitConfigs = [];
+        public List<string> WeaponOptions = [];
+        public List<string> WeaponOptionsSecondary = [];
+        public List<string> WeaponOptionsTertiary = [];
         public float SecondaryChance;
         public float TertiaryChance;
         public float DroppedLootChance;
-        public V1.EquipmentGroup DroppedObjectPool;
+        public V1.EquipmentGroup DroppedObjectPool = new();
 
         [JsonIgnore]
         private SosigEnemyTemplate template;
@@ -35,50 +35,19 @@ namespace TNHFramework.ObjectTemplates
             SecondaryChance = template.SecondaryChance;
             TertiaryChance = template.TertiaryChance;
 
-            SosigPrefabs = template.SosigPrefabs.Select(o => o.ItemID).ToList();
-            WeaponOptions = template.WeaponOptions.Select(o => o.ItemID).ToList();
-            WeaponOptionsSecondary = template.WeaponOptions_Secondary.Select(o => o.ItemID).ToList();
-            WeaponOptionsTertiary = template.WeaponOptions_Tertiary.Select(o => o.ItemID).ToList();
+            SosigPrefabs = [.. template.SosigPrefabs.Select(o => o.ItemID)];
+            WeaponOptions = [.. template.WeaponOptions.Select(o => o.ItemID)];
+            WeaponOptionsSecondary = [.. template.WeaponOptions_Secondary.Select(o => o.ItemID)];
+            WeaponOptionsTertiary = [.. template.WeaponOptions_Tertiary.Select(o => o.ItemID)];
 
-            Configs = template.ConfigTemplates.Select(o => new SosigConfig(o)).ToList();
-            ConfigsEasy = template.ConfigTemplates_Easy.Select(o => new SosigConfig(o)).ToList();
-            OutfitConfigs = template.OutfitConfig.Select(o => new OutfitConfig(o)).ToList();
+            Configs = [.. template.ConfigTemplates.Select(o => new SosigConfig(o))];
+            ConfigsEasy = [.. template.ConfigTemplates_Easy.Select(o => new SosigConfig(o))];
+            OutfitConfigs = [.. template.OutfitConfig.Select(o => new OutfitConfig(o))];
 
             DroppedLootChance = 0;
             DroppedObjectPool = new();
 
             this.template = template;
-        }
-
-        public void Validate()
-        {
-            // Fix any null values that came from the JSON file
-            SosigPrefabs ??= ["SosigBody_Default"];
-
-            Configs ??= [];
-            foreach (SosigConfig config in Configs)
-            {
-                config.Validate();
-            }
-
-            ConfigsEasy ??= [];
-            foreach (SosigConfig config in Configs)
-            {
-                config.Validate();
-            }
-
-            OutfitConfigs ??= [];
-            foreach (OutfitConfig config in OutfitConfigs)
-            {
-                config.Validate();
-            }
-
-            WeaponOptions ??= [];
-            WeaponOptionsSecondary ??= [];
-            WeaponOptionsTertiary ??= [];
-
-            DroppedObjectPool ??= new();
-            DroppedObjectPool.Validate();
         }
 
         public SosigEnemyTemplate GetSosigEnemyTemplate()
@@ -95,20 +64,15 @@ namespace TNHFramework.ObjectTemplates
                 template.TertiaryChance = TertiaryChance;
 
                 TNHFrameworkLogger.Log("Getting sosig config", TNHFrameworkLogger.LogType.Character);
-                template.ConfigTemplates = [];
-                foreach (SosigConfig temp in Configs)
-                {
-                    if (temp == null)
-                    {
-                        TNHFrameworkLogger.LogError("One of the sosig configs is null!");
-                        continue;
-                    }
 
-                    template.ConfigTemplates.Add(temp.GetConfigTemplate());
-                }
+                Configs.RemoveAll(o => o == null);
+                template.ConfigTemplates = [.. Configs.Select(o => o.GetConfigTemplate())];
 
-                template.ConfigTemplates_Easy = ConfigsEasy.Select(o => o.GetConfigTemplate()).ToList();
-                template.OutfitConfig = OutfitConfigs.Select(o => o.GetOutfitConfig()).ToList();
+                ConfigsEasy.RemoveAll(o => o == null);
+                template.ConfigTemplates_Easy = [.. ConfigsEasy.Select(o => o.GetConfigTemplate())];
+
+                OutfitConfigs.RemoveAll(o => o == null);
+                template.OutfitConfig = [.. OutfitConfigs.Select(o => o.GetOutfitConfig())];
             }
 
             return template;
@@ -122,10 +86,10 @@ namespace TNHFramework.ObjectTemplates
 
                 TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
 
-                template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
-                template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();
-                template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
-                template.WeaponOptions_Tertiary = WeaponOptionsTertiary.Select(o => IM.OD[o]).ToList();
+                template.SosigPrefabs = [.. SosigPrefabs.Select(o => IM.OD[o])];
+                template.WeaponOptions = [.. WeaponOptions.Select(o => IM.OD[o])];
+                template.WeaponOptions_Secondary = [.. WeaponOptionsSecondary.Select(o => IM.OD[o])];
+                template.WeaponOptions_Tertiary = [.. WeaponOptionsTertiary.Select(o => IM.OD[o])];
 
                 foreach (OutfitConfig outfit in OutfitConfigs)
                 {
@@ -144,65 +108,82 @@ namespace TNHFramework.ObjectTemplates
 
     public class SosigConfig()
     {
-        public float ViewDistance;
-        public float HearingDistance;
-        public float MaxFOV;
-        public float SearchExtentsModifier;
+        public float ViewDistance = 250f;
+        public Vector3Serializable StateSightRangeMults = new(new Vector3(0.1f, 0.35f, 1f));
+        public float HearingDistance = 300f;
+        public Vector3Serializable StateHearingRangeMults = new(new Vector3(0.6f, 1f, 1f));
+        public float MaxFOV = 105f;
+        public Vector3Serializable StateFOVMults = new(new Vector3(0.5f, 0.6f, 1f));
+        public bool HasABrain = true;
+        public bool HasNightVision;
+        public bool RegistersPassiveThreats;
         public bool DoesAggroOnFriendlyFire;
-        public bool HasABrain;
-        public bool DoesDropWeaponsOnBallistic;
-        public bool CanPickupRanged;
-        public bool CanPickupMelee;
-        public bool CanPickupOther;
-        public int TargetCapacity;
-        public float TargetTrackingTime;
-        public float NoFreshTargetTime;
-        public float AssaultPointOverridesSkirmishPointWhenFurtherThan;
-        public float RunSpeed;
-        public float WalkSpeed;
-        public float SneakSpeed;
-        public float CrawlSpeed;
-        public float TurnSpeed;
-        public float MaxJointLimit;
-        public float MovementRotMagnitude;
-        public float TotalMustard;
-        public float BleedDamageMult;
-        public float BleedRateMultiplier;
-        public float BleedVFXIntensity;
-        public float DamMult_Projectile;
-        public float DamMult_Explosive;
-        public float DamMult_Melee;
-        public float DamMult_Piercing;
-        public float DamMult_Blunt;
-        public float DamMult_Cutting;
-        public float DamMult_Thermal;
-        public float DamMult_Chilling;
-        public float DamMult_EMP;
+        public bool IgnoresNeedForWeapons;
+        public float SearchExtentsModifier = 1f;
+        public bool DoesDropWeaponsOnBallistic = true;
+        public bool CanPickupRanged = true;
+        public bool CanPickupMelee = true;
+        public bool CanPickupOther = true;
+        public float MaxThreatingIFFReactionRange_Visual = 50f;
+        public float MaxThreatingIFFReactionRange_Sonic = 50f;
+        public float AggroSensitivityMultiplier = 1f;
+        public float EntityRecognitionSpeedMultiplier = 1f;
+        public float CombatTargetIdentificationSpeedMultiplier = 1f;
+        public int TargetCapacity = 5;
+        public float TargetTrackingTime = 2f;
+        public float NoFreshTargetTime = 1.5f;
+        public float AssaultPointOverridesSkirmishPointWhenFurtherThan = 200f;
+        public float TimeInSkirmishToAlert = 1f;
+        public float RunSpeed = 3.5f;
+        public float WalkSpeed = 1.4f;
+        public float SneakSpeed = 0.6f;
+        public float CrawlSpeed = 0.3f;
+        public float TurnSpeed = 2f;
+        public float MaxJointLimit = 6f;
+        public float MovementRotMagnitude = 10f;
+        public bool AppliesDamageResistToIntegrityLoss;
+        public float TotalMustard = 100f;
+        public float BleedDamageMult = 0.5f;
+        public float BleedRateMultiplier = 1f;
+        public float BleedVFXIntensity = 0.2f;
+        public float DamMult_Projectile = 1f;
+        public float DamMult_Explosive = 1f;
+        public float DamMult_Melee = 1f;
+        public float DamMult_Piercing = 1f;
+        public float DamMult_Blunt = 1f;
+        public float DamMult_Cutting = 1f;
+        public float DamMult_Thermal = 1f;
+        public float DamMult_Chilling = 1f;
+        public float DamMult_EMP = 1f;
         public List<float> LinkDamageMultipliers = [];
         public List<float> LinkStaggerMultipliers = [];
         public List<Vector2Serializable> StartingLinkIntegrity = [];
         public List<float> StartingChanceBrokenJoint = [];
-        public float ShudderThreshold;
-        public float ConfusionThreshold;
-        public float ConfusionMultiplier;
-        public float ConfusionTimeMax;
-        public float StunThreshold;
-        public float StunMultiplier;
-        public float StunTimeMax;
-        public bool CanBeGrabbed;
-        public bool CanBeSevered;
-        public bool CanBeStabbed;
-        public bool CanBeSurpressed;
-        public float SuppressionMult;
-        public bool DoesJointBreakKill_Head;
+        public float ShudderThreshold = 2f;
+        public float ConfusionThreshold = 0.3f;
+        public float ConfusionMultiplier = 6f;
+        public float ConfusionTimeMax = 4f;
+        public float StunThreshold = 1.4f;
+        public float StunMultiplier = 2f;
+        public float StunTimeMax = 4f;
+        public bool CanBeKnockedOut = true;
+        public float MaxUnconsciousTime = 90f;
+        public bool CanBeGrabbed = true;
+        public bool CanBeSevered = true;
+        public bool CanBeStabbed = true;
+        public bool CanBeSurpressed = true;
+        public float SuppressionMult = 1f;
+        public bool DoesJointBreakKill_Head = true;
         public bool DoesJointBreakKill_Upper;
         public bool DoesJointBreakKill_Lower;
-        public bool DoesSeverKill_Head;
-        public bool DoesSeverKill_Upper;
-        public bool DoesSeverKill_Lower;
-        public bool DoesExplodeKill_Head;
-        public bool DoesExplodeKill_Upper;
-        public bool DoesExplodeKill_Lower;
+        public bool DoesSeverKill_Head = true;
+        public bool DoesSeverKill_Upper = true;
+        public bool DoesSeverKill_Lower = true;
+        public bool DoesExplodeKill_Head = true;
+        public bool DoesExplodeKill_Upper = true;
+        public bool DoesExplodeKill_Lower = true;
+        //public bool OverrideSpeech = false;
+        //public SosigSpeechSet OverrideSpeechSet;
 
         [JsonIgnore]
         private SosigConfigTemplate template;
@@ -210,19 +191,31 @@ namespace TNHFramework.ObjectTemplates
         public SosigConfig(SosigConfigTemplate template) : this()
         {
             ViewDistance = template.ViewDistance;
+            StateSightRangeMults = new(template.StateSightRangeMults);
             HearingDistance = template.HearingDistance;
+            StateHearingRangeMults = new(template.StateHearingRangeMults);
             MaxFOV = template.MaxFOV;
-            SearchExtentsModifier = template.SearchExtentsModifier;
-            DoesAggroOnFriendlyFire = template.DoesAggroOnFriendlyFire;
+            StateFOVMults = new(template.StateFOVMults);
             HasABrain = template.HasABrain;
+            HasNightVision = template.HasNightVision;
+            RegistersPassiveThreats = template.RegistersPassiveThreats;
+            DoesAggroOnFriendlyFire = template.DoesAggroOnFriendlyFire;
+            IgnoresNeedForWeapons = template.IgnoresNeedForWeapons;
+            SearchExtentsModifier = template.SearchExtentsModifier;
             DoesDropWeaponsOnBallistic = template.DoesDropWeaponsOnBallistic;
             CanPickupRanged = template.CanPickup_Ranged;
             CanPickupMelee = template.CanPickup_Melee;
             CanPickupOther = template.CanPickup_Other;
+            MaxThreatingIFFReactionRange_Visual = template.MaxThreatingIFFReactionRange_Visual;
+            MaxThreatingIFFReactionRange_Sonic = template.MaxThreatingIFFReactionRange_Sonic;
+            AggroSensitivityMultiplier = template.AggroSensitivityMultiplier;
+            EntityRecognitionSpeedMultiplier = template.EntityRecognitionSpeedMultiplier;
+            CombatTargetIdentificationSpeedMultiplier = template.CombatTargetIdentificationSpeedMultiplier;
             TargetCapacity = template.TargetCapacity;
             TargetTrackingTime = template.TargetTrackingTime;
             NoFreshTargetTime = template.NoFreshTargetTime;
             AssaultPointOverridesSkirmishPointWhenFurtherThan = template.AssaultPointOverridesSkirmishPointWhenFurtherThan;
+            TimeInSkirmishToAlert = template.TimeInSkirmishToAlert;
             RunSpeed = template.RunSpeed;
             WalkSpeed = template.WalkSpeed;
             SneakSpeed = template.SneakSpeed;
@@ -230,6 +223,7 @@ namespace TNHFramework.ObjectTemplates
             TurnSpeed = template.TurnSpeed;
             MaxJointLimit = template.MaxJointLimit;
             MovementRotMagnitude = template.MovementRotMagnitude;
+            AppliesDamageResistToIntegrityLoss = template.AppliesDamageResistToIntegrityLoss;
             TotalMustard = template.TotalMustard;
             BleedDamageMult = template.BleedDamageMult;
             BleedRateMultiplier = template.BleedRateMultiplier;
@@ -245,7 +239,7 @@ namespace TNHFramework.ObjectTemplates
             DamMult_EMP = template.DamMult_EMP;
             LinkDamageMultipliers = template.LinkDamageMultipliers;
             LinkStaggerMultipliers = template.LinkStaggerMultipliers;
-            StartingLinkIntegrity = template.StartingLinkIntegrity.Select(o => new Vector2Serializable(o)).ToList();
+            StartingLinkIntegrity = [.. template.StartingLinkIntegrity.Select(o => new Vector2Serializable(o))];
             StartingChanceBrokenJoint = template.StartingChanceBrokenJoint;
             ShudderThreshold = template.ShudderThreshold;
             ConfusionThreshold = template.ConfusionThreshold;
@@ -254,6 +248,8 @@ namespace TNHFramework.ObjectTemplates
             StunThreshold = template.StunThreshold;
             StunMultiplier = template.StunMultiplier;
             StunTimeMax = template.StunTimeMax;
+            CanBeKnockedOut = template.CanBeKnockedOut;
+            MaxUnconsciousTime = template.MaxUnconsciousTime;
             CanBeGrabbed = template.CanBeGrabbed;
             CanBeSevered = template.CanBeSevered;
             CanBeStabbed = template.CanBeStabbed;
@@ -272,14 +268,6 @@ namespace TNHFramework.ObjectTemplates
             this.template = template;
         }
 
-        public void Validate()
-        {
-            LinkDamageMultipliers ??= [];
-            LinkStaggerMultipliers ??= [];
-            StartingLinkIntegrity ??= [];
-            StartingChanceBrokenJoint ??= [];
-        }
-
         public SosigConfigTemplate GetConfigTemplate()
         {
             if (template == null)
@@ -287,19 +275,31 @@ namespace TNHFramework.ObjectTemplates
                 template = (SosigConfigTemplate)ScriptableObject.CreateInstance(typeof(SosigConfigTemplate));
 
                 template.ViewDistance = ViewDistance;
+                template.StateSightRangeMults = StateSightRangeMults.GetVector3();
                 template.HearingDistance = HearingDistance;
+                template.StateHearingRangeMults = StateHearingRangeMults.GetVector3();
                 template.MaxFOV = MaxFOV;
-                template.SearchExtentsModifier = SearchExtentsModifier;
-                template.DoesAggroOnFriendlyFire = DoesAggroOnFriendlyFire;
+                template.StateFOVMults = StateFOVMults.GetVector3();
                 template.HasABrain = HasABrain;
+                template.HasNightVision = HasNightVision;
+                template.RegistersPassiveThreats = RegistersPassiveThreats;
+                template.DoesAggroOnFriendlyFire = DoesAggroOnFriendlyFire;
+                template.IgnoresNeedForWeapons = IgnoresNeedForWeapons;
+                template.SearchExtentsModifier = SearchExtentsModifier;
                 template.DoesDropWeaponsOnBallistic = DoesDropWeaponsOnBallistic;
                 template.CanPickup_Ranged = CanPickupRanged;
                 template.CanPickup_Melee = CanPickupMelee;
                 template.CanPickup_Other = CanPickupOther;
+                template.MaxThreatingIFFReactionRange_Visual = MaxThreatingIFFReactionRange_Visual;
+                template.MaxThreatingIFFReactionRange_Sonic = MaxThreatingIFFReactionRange_Sonic;
+                template.AggroSensitivityMultiplier = AggroSensitivityMultiplier;
+                template.EntityRecognitionSpeedMultiplier = EntityRecognitionSpeedMultiplier;
+                template.CombatTargetIdentificationSpeedMultiplier = CombatTargetIdentificationSpeedMultiplier;
                 template.TargetCapacity = TargetCapacity;
                 template.TargetTrackingTime = TargetTrackingTime;
                 template.NoFreshTargetTime = NoFreshTargetTime;
                 template.AssaultPointOverridesSkirmishPointWhenFurtherThan = AssaultPointOverridesSkirmishPointWhenFurtherThan;
+                template.TimeInSkirmishToAlert = TimeInSkirmishToAlert;
                 template.RunSpeed = RunSpeed;
                 template.WalkSpeed = WalkSpeed;
                 template.SneakSpeed = SneakSpeed;
@@ -307,6 +307,7 @@ namespace TNHFramework.ObjectTemplates
                 template.TurnSpeed = TurnSpeed;
                 template.MaxJointLimit = MaxJointLimit;
                 template.MovementRotMagnitude = MovementRotMagnitude;
+                template.AppliesDamageResistToIntegrityLoss = AppliesDamageResistToIntegrityLoss;
                 template.TotalMustard =	TotalMustard;
                 template.BleedDamageMult = BleedDamageMult;
                 template.BleedRateMultiplier = BleedRateMultiplier;
@@ -322,13 +323,7 @@ namespace TNHFramework.ObjectTemplates
                 template.DamMult_EMP = DamMult_EMP;
                 template.LinkDamageMultipliers = LinkDamageMultipliers;
                 template.LinkStaggerMultipliers = LinkStaggerMultipliers;
-
-                template.StartingLinkIntegrity = [];
-                foreach (Vector2Serializable v in StartingLinkIntegrity)
-                {
-                    template.StartingLinkIntegrity.Add(v.GetVector2());
-                }
-
+                template.StartingLinkIntegrity = [.. StartingLinkIntegrity.Select(o => o.GetVector2())];
                 template.StartingChanceBrokenJoint = StartingChanceBrokenJoint;
                 template.ShudderThreshold = ShudderThreshold;
                 template.ConfusionThreshold = ConfusionThreshold;
@@ -337,6 +332,8 @@ namespace TNHFramework.ObjectTemplates
                 template.StunThreshold = StunThreshold;
                 template.StunMultiplier = StunMultiplier;
                 template.StunTimeMax = StunTimeMax;
+                template.CanBeKnockedOut = CanBeKnockedOut;
+                template.MaxUnconsciousTime = MaxUnconsciousTime;
                 template.CanBeGrabbed = CanBeGrabbed;
                 template.CanBeSevered = CanBeSevered;
                 template.CanBeStabbed = CanBeStabbed;
@@ -361,82 +358,83 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
-    public class OutfitConfig
+    public class OutfitConfig()
     {
-        public List<string> Headwear;
+        public List<string> Headwear = [];
         public float Chance_Headwear;
         public bool ForceWearAllHead;
         public bool HeadUsesTorsoIndex;
-        public List<string> Eyewear;
+
+        public List<string> Eyewear = [];
         public float Chance_Eyewear;
         public bool ForceWearAllEye;
-        public List<string> Facewear;
+
+        public List<string> Facewear = [];
         public float Chance_Facewear;
         public bool ForceWearAllFace;
-        public List<string> Torsowear;
+
+        public List<string> Torsowear = [];
         public float Chance_Torsowear;
         public bool ForceWearAllTorso;
-        public List<string> Pantswear;
+
+        public List<string> Pantswear = [];
         public float Chance_Pantswear;
         public bool ForceWearAllPants;
         public bool PantsUsesTorsoIndex;
-        public List<string> Pantswear_Lower;
+
+        public List<string> Pantswear_Lower = [];
         public float Chance_Pantswear_Lower;
         public bool ForceWearAllPantsLower;
         public bool PantsLowerUsesPantsIndex;
-        public List<string> Backpacks;
+
+        public List<string> Backpacks = [];
         public float Chance_Backpacks;
         public bool ForceWearAllBackpacks;
-        public List<string> TorosDecoration;
+
+        public List<string> TorosDecoration = [];
         public float Chance_TorosDecoration;
         public bool ForceWearAllTorosDecorations;
-        public List<string> Belt;
+
+        public List<string> Belt = [];
         public float Chance_Belt;
         public bool ForceWearAllBelts;
 
         [JsonIgnore]
         private SosigOutfitConfig template;
 
-        public OutfitConfig() { }
-
-        public OutfitConfig(SosigOutfitConfig template)
+        public OutfitConfig(SosigOutfitConfig template) : this()
         {
-            Headwear = template.Headwear.Select(o => o.ItemID).ToList();
-            Eyewear = template.Eyewear.Select(o => o.ItemID).ToList();
-            Facewear = template.Facewear.Select(o => o.ItemID).ToList();
-            Torsowear = template.Torsowear.Select(o => o.ItemID).ToList();
-            Pantswear = template.Pantswear.Select(o => o.ItemID).ToList();
-            Pantswear_Lower = template.Pantswear_Lower.Select(o => o.ItemID).ToList();
-            Backpacks = template.Backpacks.Select(o => o.ItemID).ToList();
-            TorosDecoration = template.TorosDecoration.Select(o => o.ItemID).ToList();
-            Belt = template.Belt.Select(o => o.ItemID).ToList();
+            Headwear = [.. template.Headwear.Select(o => o.ItemID)];
             Chance_Headwear = template.Chance_Headwear;
-            Chance_Eyewear = template.Chance_Eyewear;
-            Chance_Facewear = template.Chance_Facewear;
-            Chance_Torsowear = template.Chance_Torsowear;
-            Chance_Pantswear = template.Chance_Pantswear;
-            Chance_Pantswear_Lower = template.Chance_Pantswear_Lower;
-            Chance_Backpacks = template.Chance_Backpacks;
-            Chance_TorosDecoration = template.Chance_TorosDecoration;
-            Chance_Belt = template.Chance_Belt;
             HeadUsesTorsoIndex = template.HeadUsesTorsoIndex;
+
+            Eyewear = [.. template.Eyewear.Select(o => o.ItemID)];
+            Chance_Eyewear = template.Chance_Eyewear;
+
+            Facewear = [.. template.Facewear.Select(o => o.ItemID)];
+            Chance_Facewear = template.Chance_Facewear;
+
+            Torsowear = [.. template.Torsowear.Select(o => o.ItemID)];
+            Chance_Torsowear = template.Chance_Torsowear;
+
+            Pantswear = [.. template.Pantswear.Select(o => o.ItemID)];
+            Chance_Pantswear = template.Chance_Pantswear;
             PantsUsesTorsoIndex = template.PantsUsesTorsoIndex;
+
+            Pantswear_Lower = [.. template.Pantswear_Lower.Select(o => o.ItemID)];
+            Chance_Pantswear_Lower = template.Chance_Pantswear_Lower;
             PantsLowerUsesPantsIndex = template.PantsLowerUsesPantsIndex;
 
-            this.template = template;
-        }
+            Backpacks = [.. template.Backpacks.Select(o => o.ItemID)];
+            Chance_Backpacks = template.Chance_Backpacks;
 
-        public void Validate()
-        {
-            Headwear ??= [];
-            Eyewear ??= [];
-            Facewear ??= [];
-            Torsowear ??= [];
-            Pantswear ??= [];
-            Pantswear_Lower ??= [];
-            Backpacks ??= [];
-            TorosDecoration ??= [];
-            Belt ??= [];
+            TorosDecoration = [.. template.TorosDecoration.Select(o => o.ItemID)];
+            Chance_TorosDecoration = template.Chance_TorosDecoration;
+
+            Belt = [.. template.Belt.Select(o => o.ItemID)];
+            Chance_Belt = template.Chance_Belt;
+
+            this.template = template;
         }
 
         public SosigOutfitConfig GetOutfitConfig()
@@ -446,30 +444,33 @@ namespace TNHFramework.ObjectTemplates
                 template = (SosigOutfitConfig)ScriptableObject.CreateInstance(typeof(SosigOutfitConfig));
                 
                 template.Chance_Headwear = Chance_Headwear;
+                template.HeadUsesTorsoIndex = HeadUsesTorsoIndex;
                 template.Chance_Eyewear = Chance_Eyewear;
                 template.Chance_Facewear = Chance_Facewear;
                 template.Chance_Torsowear = Chance_Torsowear;
                 template.Chance_Pantswear = Chance_Pantswear;
+                template.PantsUsesTorsoIndex = PantsUsesTorsoIndex;
                 template.Chance_Pantswear_Lower = Chance_Pantswear_Lower;
+                template.PantsLowerUsesPantsIndex = PantsLowerUsesPantsIndex;
                 template.Chance_Backpacks = Chance_Backpacks;
                 template.Chance_TorosDecoration = Chance_TorosDecoration;
                 template.Chance_Belt = Chance_Belt;
             }
 
-            return template;
+            return this.template;
         }
 
         public void DelayedInit()
         {
-            template.Headwear = Headwear.Select(o => IM.OD[o]).ToList();
-            template.Eyewear = Eyewear.Select(o => IM.OD[o]).ToList();
-            template.Facewear = Facewear.Select(o => IM.OD[o]).ToList();
-            template.Torsowear = Torsowear.Select(o => IM.OD[o]).ToList();
-            template.Pantswear = Pantswear.Select(o => IM.OD[o]).ToList();
-            template.Pantswear_Lower = Pantswear_Lower.Select(o => IM.OD[o]).ToList();
-            template.Backpacks = Backpacks.Select(o => IM.OD[o]).ToList();
-            template.TorosDecoration = TorosDecoration.Select(o => IM.OD[o]).ToList();
-            template.Belt = Belt.Select(o => IM.OD[o]).ToList();
+            template.Headwear = [.. Headwear.Select(o => IM.OD[o])];
+            template.Eyewear = [.. Eyewear.Select(o => IM.OD[o])];
+            template.Facewear = [.. Facewear.Select(o => IM.OD[o])];
+            template.Torsowear = [.. Torsowear.Select(o => IM.OD[o])];
+            template.Pantswear = [.. Pantswear.Select(o => IM.OD[o])];
+            template.Pantswear_Lower = [.. Pantswear_Lower.Select(o => IM.OD[o])];
+            template.Backpacks = [.. Backpacks.Select(o => IM.OD[o])];
+            template.TorosDecoration = [.. TorosDecoration.Select(o => IM.OD[o])];
+            template.Belt = [.. Belt.Select(o => IM.OD[o])];
         }
     }
 }

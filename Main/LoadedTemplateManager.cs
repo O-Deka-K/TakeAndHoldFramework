@@ -38,7 +38,6 @@ namespace TNHFramework
         /// <param name="template">A template for a custom sosig (Loaded at runtime)</param>
         public static void AddSosigTemplate(SosigTemplate template)
         {
-            template.Validate();
             SosigEnemyTemplate realTemplate = template.GetSosigEnemyTemplate();
 
             // Since this template is for a custom sosig, we should give it a brand new SosigEnemyID
@@ -88,7 +87,6 @@ namespace TNHFramework
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
             template.isCustom = true;
-            template.Validate();
             CustomCharacters.Add(template);
             LoadedCharacterDict.Add((TNH_Char)NewCharacterID, new CharacterTemplate(template.GetCharacter(NewCharacterID, thumbnail), template));
             NewCharacterID++;
@@ -130,7 +128,6 @@ namespace TNHFramework
 
         public static void AddVaultFile(SavedGunSerializable template)
         {
-            template.Validate();
             if (!LoadedLegacyVaultFiles.ContainsKey(template.FileName))
             {
                 LoadedLegacyVaultFiles.Add(template.FileName, template);

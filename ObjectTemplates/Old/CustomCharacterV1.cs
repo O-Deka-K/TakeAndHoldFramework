@@ -70,8 +70,8 @@ namespace TNHFramework.ObjectTemplates.V1
             HasSecondaryItem = character.Has_Item_Secondary;
             HasTertiaryItem = character.Has_Item_Tertiary;
             HasShield = character.Has_Item_Shield;
-            ValidAmmoEras = character.ValidAmmoEras.Select(o => (TagEra)o).ToList();
-            ValidAmmoSets = character.ValidAmmoSets.Select(o => (TagSet)o).ToList();
+            ValidAmmoEras = [.. character.ValidAmmoEras.Select(o => (TagEra)o)];
+            ValidAmmoSets = [.. character.ValidAmmoSets.Select(o => (TagSet)o)];
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
             TertiaryWeapon = new LoadoutEntry(character.Weapon_Tertiary);
@@ -82,70 +82,13 @@ namespace TNHFramework.ObjectTemplates.V1
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
 
-            EquipmentPools = character.EquipmentPool.Entries.Select(o => new EquipmentPool(o)).ToList();
-            Levels = character.Progressions[0].Levels.Select(o => new Level(o)).ToList();
-            LevelsEndless = character.Progressions_Endless[0].Levels.Select(o => new Level(o)).ToList();
+            EquipmentPools = [.. character.EquipmentPool.Entries.Select(o => new EquipmentPool(o))];
+            Levels = [.. character.Progressions[0].Levels.Select(o => new Level(o))];
+            LevelsEndless = [.. character.Progressions_Endless[0].Levels.Select(o => new Level(o))];
 
             ForceDisableOutfitFunctionality = false;
 
             this.character = character;
-        }
-
-        public void Validate()
-        {
-            // Fix any null values that came from the JSON file
-            ValidAmmoEras ??= [];
-            ValidAmmoSets ??= [];
-            GlobalObjectBlacklist ??= [];
-            GlobalAmmoBlacklist ??= [];
-
-            MagazineBlacklist ??= [];
-            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
-            {
-                entry.Validate();
-            }
-
-            RequireSightTable ??= new();
-            RequireSightTable.Validate();
-
-            PrimaryWeapon ??= new();
-            PrimaryWeapon.Validate();
-
-            SecondaryWeapon ??= new();
-            SecondaryWeapon.Validate();
-
-            TertiaryWeapon ??= new();
-            TertiaryWeapon.Validate();
-
-            PrimaryItem ??= new();
-            PrimaryItem.Validate();
-
-            SecondaryItem ??= new();
-            SecondaryItem.Validate();
-
-            TertiaryItem ??= new();
-            TertiaryItem.Validate();
-
-            Shield ??= new();
-            Shield.Validate();
-
-            EquipmentPools ??= [];
-            foreach (EquipmentPool pool in EquipmentPools)
-            {
-                pool.Validate();
-            }
-
-            Levels ??= [];
-            foreach (Level level in Levels)
-            {
-                level.Validate();
-            }
-
-            LevelsEndless ??= [];
-            foreach (Level level in LevelsEndless)
-            {
-                level.Validate();
-            }
         }
 
         public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
@@ -171,8 +114,8 @@ namespace TNHFramework.ObjectTemplates.V1
                 character.Has_Item_Secondary = HasSecondaryItem;
                 character.Has_Item_Tertiary = HasTertiaryItem;
                 character.Has_Item_Shield = HasShield;
-                character.ValidAmmoEras = ValidAmmoEras.Select(o => (FVRObject.OTagEra)o).ToList();
-                character.ValidAmmoSets = ValidAmmoSets.Select(o => (FVRObject.OTagSet)o).ToList();
+                character.ValidAmmoEras = [.. ValidAmmoEras.Select(o => (FVRObject.OTagEra)o)];
+                character.ValidAmmoSets = [.. ValidAmmoSets.Select(o => (FVRObject.OTagSet)o)];
                 character.Picture = thumbnail;
                 character.Weapon_Primary = PrimaryWeapon.GetLoadoutEntry();
                 character.Weapon_Secondary = SecondaryWeapon.GetLoadoutEntry();
@@ -183,7 +126,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 character.Item_Shield = Shield.GetLoadoutEntry();
                 character.RequireSightTable = RequireSightTable.GetObjectTableDef();
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
-                character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry()).ToList();
+                character.EquipmentPool.Entries = [.. EquipmentPools.Select(o => o.GetPoolEntry())];
 
                 character.Progressions = [(TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression))];
                 character.Progressions[0].Levels = [];
@@ -416,15 +359,6 @@ namespace TNHFramework.ObjectTemplates.V1
             this.pool = pool;
         }
 
-        public void Validate()
-        {
-            PrimaryGroup ??= new();
-            PrimaryGroup.Validate();
-
-            BackupGroup ??= new();
-            BackupGroup.Validate();
-        }
-
         public EquipmentPoolDef.PoolEntry GetPoolEntry()
         {
             if (pool == null)
@@ -576,55 +510,26 @@ namespace TNHFramework.ObjectTemplates.V1
             IDOverrideBackup = [];
             MinYear = -1;
             MaxYear = -1;
-            Eras = objectTableDef.Eras.Select(o => (TagEra)o).ToList();
-            Sets = objectTableDef.Sets.Select(o => (TagSet)o).ToList();
-            Sizes = objectTableDef.Sizes.Select(o => (TagFirearmSize)o).ToList();
-            Actions = objectTableDef.Actions.Select(o => (TagFirearmAction)o).ToList();
-            Modes = objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o).ToList();
-            ExcludedModes = objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o).ToList();
-            FeedOptions = objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o).ToList();
-            MountsAvailable = objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o).ToList();
-            RoundPowers = objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o).ToList();
-            Features = objectTableDef.Features.Select(o => (TagAttachmentFeature)o).ToList();
-            MeleeHandedness = objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o).ToList();
-            MeleeStyles = objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o).ToList();
-            MountTypes = objectTableDef.MountTypes.Select(o => (TagFirearmMount)o).ToList();
-            PowerupTypes = objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o).ToList();
-            ThrownTypes = objectTableDef.ThrownTypes.Select(o => (TagThrownType)o).ToList();
-            ThrownDamageTypes = objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o).ToList();
+            Eras = [.. objectTableDef.Eras.Select(o => (TagEra)o)];
+            Sets = [.. objectTableDef.Sets.Select(o => (TagSet)o)];
+            Sizes = [.. objectTableDef.Sizes.Select(o => (TagFirearmSize)o)];
+            Actions = [.. objectTableDef.Actions.Select(o => (TagFirearmAction)o)];
+            Modes = [.. objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o)];
+            ExcludedModes = [.. objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o)];
+            FeedOptions = [.. objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o)];
+            MountsAvailable = [.. objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o)];
+            RoundPowers = [.. objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o)];
+            Features = [.. objectTableDef.Features.Select(o => (TagAttachmentFeature)o)];
+            MeleeHandedness = [.. objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o)];
+            MeleeStyles = [.. objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o)];
+            MountTypes = [.. objectTableDef.MountTypes.Select(o => (TagFirearmMount)o)];
+            PowerupTypes = [.. objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o)];
+            ThrownTypes = [.. objectTableDef.ThrownTypes.Select(o => (TagThrownType)o)];
+            ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)];
             Tags = new();
             SubGroups = [];
 
             this.objectTableDef = objectTableDef;
-        }
-
-        public void Validate()
-        {
-            IDOverride ??= [];
-            IDOverrideBackup ??= [];
-            Eras ??= [];
-            Sets ??= [];
-            Sizes ??= [];
-            Actions ??= [];
-            Modes ??= [];
-            ExcludedModes ??= [];
-            FeedOptions ??= [];
-            MountsAvailable ??= [];
-            RoundPowers ??= [];
-            Features ??= [];
-            MeleeStyles ??= [];
-            MeleeHandedness ??= [];
-            MountTypes ??= [];
-            PowerupTypes ??= [];
-            ThrownTypes ??= [];
-            ThrownDamageTypes ??= [];
-            Tags = new();
-
-            SubGroups ??= [];
-            foreach (EquipmentGroup group in SubGroups)
-            {
-                group.Validate();
-            }
         }
 
         public ObjectTableDef GetObjectTableDef()
@@ -657,22 +562,22 @@ namespace TNHFramework.ObjectTemplates.V1
                 objectTableDef.SpawnsInLargeCase = false;
                 objectTableDef.UseIDListOverride = !AutoPopulateGroup;
                 objectTableDef.IDOverride = [];
-                objectTableDef.Eras = Eras.Select(o => (FVRObject.OTagEra)o).ToList();
-                objectTableDef.Sets = Sets.Select(o => (FVRObject.OTagSet)o).ToList();
-                objectTableDef.Sizes = Sizes.Select(o => (FVRObject.OTagFirearmSize)o).ToList();
-                objectTableDef.Actions = Actions.Select(o => (FVRObject.OTagFirearmAction)o).ToList();
-                objectTableDef.Modes = Modes.Select(o => (FVRObject.OTagFirearmFiringMode)o).ToList();
-                objectTableDef.ExcludeModes = ExcludedModes.Select(o => (FVRObject.OTagFirearmFiringMode)o).ToList();
-                objectTableDef.Feedoptions = FeedOptions.Select(o => (FVRObject.OTagFirearmFeedOption)o).ToList();
-                objectTableDef.MountsAvailable = MountsAvailable.Select(o => (FVRObject.OTagFirearmMount)o).ToList();
-                objectTableDef.RoundPowers = RoundPowers.Select(o => (FVRObject.OTagFirearmRoundPower)o).ToList();
-                objectTableDef.Features = Features.Select(o => (FVRObject.OTagAttachmentFeature)o).ToList();
-                objectTableDef.MeleeHandedness = MeleeHandedness.Select(o => (FVRObject.OTagMeleeHandedness)o).ToList();
-                objectTableDef.MeleeStyles = MeleeStyles.Select(o => (FVRObject.OTagMeleeStyle)o).ToList();
-                objectTableDef.MountTypes = MountTypes.Select(o => (FVRObject.OTagFirearmMount)o).ToList();
-                objectTableDef.PowerupTypes = PowerupTypes.Select(o => (FVRObject.OTagPowerupType)o).ToList();
-                objectTableDef.ThrownTypes = ThrownTypes.Select(o => (FVRObject.OTagThrownType)o).ToList();
-                objectTableDef.ThrownDamageTypes = ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o).ToList();
+                objectTableDef.Eras = [.. Eras.Select(o => (FVRObject.OTagEra)o)];
+                objectTableDef.Sets = [.. Sets.Select(o => (FVRObject.OTagSet)o)];
+                objectTableDef.Sizes = [.. Sizes.Select(o => (FVRObject.OTagFirearmSize)o)];
+                objectTableDef.Actions = [.. Actions.Select(o => (FVRObject.OTagFirearmAction)o)];
+                objectTableDef.Modes = [.. Modes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
+                objectTableDef.ExcludeModes = [.. ExcludedModes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
+                objectTableDef.Feedoptions = [.. FeedOptions.Select(o => (FVRObject.OTagFirearmFeedOption)o)];
+                objectTableDef.MountsAvailable = [.. MountsAvailable.Select(o => (FVRObject.OTagFirearmMount)o)];
+                objectTableDef.RoundPowers = [.. RoundPowers.Select(o => (FVRObject.OTagFirearmRoundPower)o)];
+                objectTableDef.Features = [.. Features.Select(o => (FVRObject.OTagAttachmentFeature)o)];
+                objectTableDef.MeleeHandedness = [.. MeleeHandedness.Select(o => (FVRObject.OTagMeleeHandedness)o)];
+                objectTableDef.MeleeStyles = [.. MeleeStyles.Select(o => (FVRObject.OTagMeleeStyle)o)];
+                objectTableDef.MountTypes = [.. MountTypes.Select(o => (FVRObject.OTagFirearmMount)o)];
+                objectTableDef.PowerupTypes = [.. PowerupTypes.Select(o => (FVRObject.OTagPowerupType)o)];
+                objectTableDef.ThrownTypes = [.. ThrownTypes.Select(o => (FVRObject.OTagThrownType)o)];
+                objectTableDef.ThrownDamageTypes = [.. ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o)];
             }
             return objectTableDef;
         }
@@ -802,7 +707,7 @@ namespace TNHFramework.ObjectTemplates.V1
             // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
-                ObjectTable objectTable = new ObjectTable();
+                ObjectTable objectTable = new();
                 objectTable.Initialize(GetObjectTableDef());
                 foreach (FVRObject obj in objectTable.Objs)
                 {
@@ -887,7 +792,7 @@ namespace TNHFramework.ObjectTemplates.V1
                 PrimaryGroup = new EquipmentGroup
                 {
                     Rarity = 1,
-                    IDOverride = loadout.ListOverride.Select(o => o.ItemID).ToList(),
+                    IDOverride = [.. loadout.ListOverride.Select(o => o.ItemID)],
                     ItemsToSpawn = 1,
                     MinAmmoCapacity = -1,
                     MaxAmmoCapacity = 9999,
@@ -949,15 +854,6 @@ namespace TNHFramework.ObjectTemplates.V1
             }
 
             return loadout;
-        }
-
-        public void Validate()
-        {
-            PrimaryGroup ??= new();
-            PrimaryGroup.Validate();
-
-            BackupGroup ??= new();
-            BackupGroup.Validate();
         }
 
         public bool DelayedInit()
@@ -1039,8 +935,8 @@ namespace TNHFramework.ObjectTemplates.V1
             NumOverrideTokensForHold = level.NumOverrideTokensForHold;
             TakeChallenge = new TakeChallenge(level.TakeChallenge);
             SupplyChallenge = new TakeChallenge(level.TakeChallenge);
-            HoldPhases = level.HoldChallenge.Phases.Select(o => new Phase(o)).ToList();
-            Patrols = level.PatrolChallenge.Patrols.Select(o => new Patrol(o)).ToList();
+            HoldPhases = [.. level.HoldChallenge.Phases.Select(o => new Phase(o))];
+            Patrols = [.. level.PatrolChallenge.Patrols.Select(o => new Patrol(o))];
             PossiblePanelTypes =
             [
                 PanelType.AmmoReloader,
@@ -1063,26 +959,6 @@ namespace TNHFramework.ObjectTemplates.V1
             this.level = level;
         }
 
-        public void Validate()
-        {
-            PossiblePanelTypes ??= [];
-            TakeChallenge ??= new();
-
-            HoldPhases ??= [];
-            foreach (Phase holdPhase in HoldPhases)
-            {
-                holdPhase.Validate();
-            }
-
-            SupplyChallenge ??= new();
-
-            Patrols ??= [];
-            foreach (Patrol patrol in Patrols)
-            {
-                patrol.Validate();
-            }
-        }
-
         public TNH_Progression.Level GetLevel()
         {
             if (level == null)
@@ -1095,10 +971,10 @@ namespace TNHFramework.ObjectTemplates.V1
                     HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
                 };
 
-                level.HoldChallenge.Phases = HoldPhases.Select(o => o.GetPhase()).ToList();
+                level.HoldChallenge.Phases = [.. HoldPhases.Select(o => o.GetPhase())];
                 level.SupplyChallenge = SupplyChallenge.GetTakeChallenge();
                 level.PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge));
-                level.PatrolChallenge.Patrols = Patrols.Select(o => o.GetPatrol()).ToList();
+                level.PatrolChallenge.Patrols = [.. Patrols.Select(o => o.GetPatrol())];
                 level.TrapsChallenge = (TNH_TrapsChallenge)ScriptableObject.CreateInstance(typeof(TNH_TrapsChallenge));
             }
 
@@ -1277,12 +1153,6 @@ namespace TNHFramework.ObjectTemplates.V1
             this.phase = phase;
         }
 
-        public void Validate()
-        {
-            Encryptions ??= [];
-            EnemyType ??= [];
-        }
-
         public TNH_HoldChallenge.Phase GetPhase()
         {
             if (phase == null)
@@ -1373,11 +1243,6 @@ namespace TNHFramework.ObjectTemplates.V1
             IsBoss = false;
 
             this.patrol = patrol;
-        }
-
-        public void Validate()
-        {
-            EnemyType ??= [];
         }
 
         public TNH_PatrolChallenge.Patrol GetPatrol()
