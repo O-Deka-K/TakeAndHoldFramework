@@ -335,14 +335,14 @@ namespace TNHFramework.Patches
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     encryptions = [__instance.M.GetEncryptionPrefabSimple(TNH_EncryptionType.Static)];
                 else
-                    encryptions = currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefabSimple(o)).ToList();
+                    encryptions = [.. currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefabSimple(o))];
             }
             else
             {
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     encryptions = [__instance.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
                 else
-                    encryptions = currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefab(o)).ToList();
+                    encryptions = [.. currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefab(o))];
             }
 
             minTargets = Mathf.Min(minTargets, ___m_validSpawnPoints.Count);

@@ -138,7 +138,7 @@ namespace TNHFramework
 
             loading.Reverse();
 
-            return string.Join("\n", loading.ToArray());
+            return string.Join("\n", [.. loading]);
         }
 
         public static float PokeMagPatcher()
@@ -402,7 +402,7 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
                     // Find any characters that use this sosig, and remove them
-                    KeyValuePair<TNH_Char, CharacterTemplate>[] removeList = LoadedTemplateManager.LoadedCharacterDict.Where(o => o.Value.Custom.CharacterUsesSosig(sosig.SosigEnemyID)).ToArray();
+                    KeyValuePair<TNH_Char, CharacterTemplate>[] removeList = [.. LoadedTemplateManager.LoadedCharacterDict.Where(o => o.Value.Custom.CharacterUsesSosig(sosig.SosigEnemyID))];
                     foreach (KeyValuePair<TNH_Char, CharacterTemplate> item in removeList)
                     {
                         TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + item.Value.Custom.DisplayName);
@@ -420,7 +420,7 @@ namespace TNHFramework
             CreateSosigTemplateFiles(LoadedTemplateManager.CustomSosigs, path);
             CreateCharacterFiles(LoadedTemplateManager.DefaultCharacters, path, false);
             CreateCharacterFiles(LoadedTemplateManager.CustomCharacters, path, true);
-            CreateIconIDFile(path, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
+            CreateIconIDFile(path, [.. LoadedTemplateManager.DefaultIconSprites.Keys]);
             CreateObjectIDFile(path);
             CreateSosigIDFile(path);
             CreateJsonVaultFiles(path);
@@ -642,9 +642,9 @@ namespace TNHFramework
                             obj.TagFirearmCountryOfOrigin + "," +
                             obj.TagAttachmentFeature + "," +
                             obj.TagFirearmAction + "," +
-                            string.Join("+", obj.TagFirearmFeedOption.Select(o => o.ToString()).ToArray()) + "," +
-                            string.Join("+", obj.TagFirearmFiringModes.Select(o => o.ToString()).ToArray()) + "," +
-                            string.Join("+", obj.TagFirearmMounts.Select(o => o.ToString()).ToArray()) + "," +
+                            string.Join("+", [.. obj.TagFirearmFeedOption.Select(o => o.ToString())]) + "," +
+                            string.Join("+", [.. obj.TagFirearmFiringModes.Select(o => o.ToString())]) + "," +
+                            string.Join("+", [.. obj.TagFirearmMounts.Select(o => o.ToString())]) + "," +
                             obj.TagAttachmentMount + "," +
                             obj.TagFirearmRoundPower + "," +
                             obj.TagFirearmSize + "," +

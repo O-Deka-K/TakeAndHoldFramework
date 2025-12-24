@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using UnityEngine;
-using EquipmentGroup = TNHFramework.ObjectTemplates.EquipmentGroup;
 
 namespace TNHFramework.Utilities
 {
@@ -637,7 +636,7 @@ namespace TNHFramework.Utilities
             if (gunItem == null)
                 return;
 
-            List<FVRFireArmAttachment> attached = spawnedGun.GetComponentsInChildren<FVRFireArmAttachment>(true).ToList();
+            List<FVRFireArmAttachment> attached = [.. spawnedGun.GetComponentsInChildren<FVRFireArmAttachment>(true)];
 
             if (!attached.Any())
                 return;
@@ -656,7 +655,7 @@ namespace TNHFramework.Utilities
             bool isModulSIG = regexModulSIG.IsMatch(gunItem.ItemID);
 
             // List all mount points
-            List<FVRFireArmAttachmentMount> attachmentMounts = spawnedGun.GetComponentsInChildren<FVRFireArmAttachmentMount>(true).ToList();
+            List<FVRFireArmAttachmentMount> attachmentMounts = [.. spawnedGun.GetComponentsInChildren<FVRFireArmAttachmentMount>(true)];
             TNHFrameworkLogger.Log($"FixPremadeFirearms: Found ({attachmentMounts.Count}) mount point(s)", TNHFrameworkLogger.LogType.TNH);
 
             foreach (FVRFireArmAttachmentMount mount in attachmentMounts)

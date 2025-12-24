@@ -141,7 +141,7 @@ namespace TNHFramework.Utilities
 
         public static List<FVRObject> GetCompatibleRounds(FVRObject firearm, List<TagEra> eras, List<TagSet> sets, List<string> globalBulletBlacklist = null, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
         {
-            return GetCompatibleRounds(firearm, eras.Select(o => (FVRObject.OTagEra)o).ToList(), sets.Select(o => (FVRObject.OTagSet)o).ToList(), globalBulletBlacklist, globalObjectBlacklist, blacklist);
+            return GetCompatibleRounds(firearm, [.. eras.Select(o => (FVRObject.OTagEra)o)], [.. sets.Select(o => (FVRObject.OTagSet)o)], globalBulletBlacklist, globalObjectBlacklist, blacklist);
         }
 
         public static List<FVRObject> GetCompatibleRounds(FVRObject firearm, List<FVRObject.OTagEra> eras, List<FVRObject.OTagSet> sets, List<string> globalBulletBlacklist = null, List<string> globalObjectBlacklist = null, MagazineBlacklistEntry blacklist = null)
