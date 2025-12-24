@@ -59,7 +59,7 @@ namespace TNHFramework.Patches
         [HarmonyPostfix]
         public static void Start_InitTNHPost(TNH_UIManager __instance)
         {
-            TNHFrameworkLogger.Log("Start_InitTNHPost", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log("Initialize TNH UI", TNHFrameworkLogger.LogType.General);
 
             __instance.LBL_CategoryName[0].text = "Loading... Please Wait";
             __instance.LBL_CategoryName[0].gameObject.SetActive(true);
@@ -222,10 +222,13 @@ namespace TNHFramework.Patches
             {
                 int cat = Categories.FindIndex(o => o.CategoryName == character.Value.Custom.CategoryData.Name);
 
+                if (cat == -1)
+                    continue;
+
                 // Add character to category
                 if (!Categories[cat].Characters.Contains(character.Key))
                 {
-                    character.Value.Custom.CharacterGroup = cat;
+                    character.Value.Custom.CategoryData.Priority = cat;
 
                     if (character.Value.Custom.isCustom)
                     {
