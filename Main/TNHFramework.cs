@@ -41,7 +41,6 @@ namespace TNHFramework
         public static ConfigEntry<bool> EnableIris;
         public static ConfigEntry<bool> EnableSentinel;
 
-        public static string InfoPath;
         public static string OutputFilePath;
 
         // Bodged Magazine Patcher replacement stuff
@@ -60,21 +59,25 @@ namespace TNHFramework
         public static Dictionary<EquipmentPoolDef.PoolEntry.PoolEntryType, List<EquipmentPoolDef.PoolEntry>> SpawnedPoolsDictionary = [];
 
         /// <summary>
-        /// First method that gets called
+        /// Initialization method
         /// </summary>
-        private void Awake()
+        private void Start()
         {
-            InfoPath = Path.GetDirectoryName(Info.Location);
-
             if (TNHFrameworkLogger.BepLog == null)
                 TNHFrameworkLogger.Init();
 
-            TNHFrameworkLogger.Log("Hello World (from TNHFramework)", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log("Initializing TNHFramework B119", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log($"H3VR Update {GetBuildNumber()}", TNHFrameworkLogger.LogType.General);
 
             SetupOutputDirectory();
-
             LoadConfigFile();
             LoadPanelSprites();
+
+            if (GM.Version_UpdateNumber == 119 && GM.Version_PatchNumber > 0 || GM.Version_UpdateNumber > 119)
+            {
+                TNHFrameworkLogger.LogError("This should NOT be run on H3VR build 119p5 or experimental. Please switch to Main (Beta: None), Alpha, or Update119. Shutting down...");
+                return;
+            }
 
             Harmony harmony = new("h3vr.tnhframework");
             harmony.PatchAll(typeof(ConstructorPatches));
@@ -92,6 +95,24 @@ namespace TNHFramework
 
             if (FixWurstMod.Value)
                 UnpatchWurstMod(harmony);
+        }
+
+        private string GetBuildNumber()
+        {
+            string build = $"{GM.Version_UpdateNumber}";
+
+            if (GM.Version_buildType != GM.BuildType.Release)
+            {
+                if (GM.Version_buildType == GM.BuildType.ModSafeAlpha)
+                    build += $" Alpha {GM.Version_AlphaNumber}";
+                else if (GM.Version_buildType == GM.BuildType.NotModSafeExperimental)
+                    build += $" Experimental b{GM.Version_BuildIndex}";
+            }
+
+            if (GM.Version_PatchNumber > 0)
+                build += $"p{GM.Version_PatchNumber}";
+
+            return build;
         }
 
         private void UnpatchWurstMod(Harmony harmony)
