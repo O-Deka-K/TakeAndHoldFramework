@@ -13,14 +13,25 @@ namespace TNHFramework.Patches
     {
         private static readonly FieldInfo fiCurClothes = typeof(PlayerSosigBody).GetField("m_curClothes", BindingFlags.Instance | BindingFlags.NonPublic);
 
+#if (false)  // ODK - Not working for now
         [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")]
         [HarmonyPrefix]
-        public static bool SetOutfit_Replacement(ref PlayerSosigBody ___m_sosigPlayerBody, SosigEnemyTemplate tem)
+        public static bool SetOutfit_Replacement(ref PlayerSosigBody ___m_sosigPlayerBody, SosigOutfitConfig outfit)
         {
             if (___m_sosigPlayerBody == null)
                 return false;
 
-            GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
+            if (outfit == null)
+            {
+                ___m_sosigPlayerBody.ClearOutfit();
+                GM.Options.ControlOptions.MBClothingId = string.Empty;
+            }
+            else
+            {
+                ___m_sosigPlayerBody.ApplyOutfit(outfit);
+                GM.Options.ControlOptions.MBClothingId = outfit.UgcId;
+            }
+            GM.Options.SaveToFile();
 
             if (tem.SosigEnemyID != SosigEnemyID.None)
             {
@@ -80,6 +91,7 @@ namespace TNHFramework.Patches
 
             return false;
         }
+#endif
 
         [HarmonyPatch(typeof(Sosig), "ClearSosig")]
         [HarmonyPrefix]

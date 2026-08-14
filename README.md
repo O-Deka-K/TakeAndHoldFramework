@@ -12,11 +12,13 @@ A successor to DevynDaMonster's [TNHTweaker](https://thunderstore.io/c/h3vr/p/de
 
 ## H3VR Build Version
 
-This is for H3VR build 119, which is currently on Main branch and Alpha branch (as of Dec 2025). It will probably continue to work for previous builds. It will NOT work on Experimental branch, as there are many incompatible changes. There will be a separate version of TNHFramework for Experimental branch (and later 1.0).
+This is for H3VR experimental build 120b9, which is currently on Experimental branch (as of Dec 2025). It will NOT work on any other branch (like Main), as there are many incompatible changes. There is a separate version of TNHFramework for build 119.
+
+If you have this beta version, then please DISABLE TNHFramework 0.2.x (non-experimental version) while using this mod. You MUST be on Experimental branch. There's a chance it could stop working past build 120b9. Other mods are not guaranteed to work on Experimental.
 
 ## What is this?
 
-This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 119.
+This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 120b7.
 
 As Devyn is no longer working on H3VR mods, this is will be more up-to-date than TNHTweaker.
 
@@ -30,6 +32,9 @@ Long version:
 
 ## Features
 
+- Made for EXPERIMENTAL branch. It could break at any time!
+- Updated to support Classic, Blitz and Rampart modes.
+- Updated with all of the new features and fixes for TNH.
 - Disables TNHTweaker automatically. Just leave it installed and let it be!
 - Adds support for custom characters using YAML, with legacy support for TNHTweaker/Deli-based custom characters.
 - Optional replacement for Magazine Patcher. No longer will you have crashes due to using too much RAM while loading.

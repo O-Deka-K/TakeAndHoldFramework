@@ -42,7 +42,6 @@ namespace TNHFramework
         private Text priceText_0;
         private Text priceText_1;
         private Text priceText_2;
-        private Text capacityText;
 
         private FVRPhysicalObject selectedObject = null;
         private FVRFireArmMagazine detectedMag = null;
@@ -85,9 +84,8 @@ namespace TNHFramework
 
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
 
-            Transform capacityTransform = Instantiate(titleTransform.gameObject, titleTransform.parent).transform;
+            Transform capacityTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Capacity");
             capacityTransform.localPosition = new Vector3(0, -30, 0);
-            capacityText = capacityTransform.gameObject.GetComponent<Text>();
 
             Transform iconTransform_0 = canvasHolder.Find("Icon_0");
             iconTransform_0.localPosition = new Vector3(-270, -200, 0);
@@ -135,7 +133,7 @@ namespace TNHFramework
             priceText_1.text = "x" + UpgradeCost;
             priceText_2.text = "x" + PurchaseCost;
 
-            capacityText.text = string.Empty;
+            original.CapacityText.text = string.Empty;
         }
 
         private Text AddPriceText(Transform iconTransform, Vector3 localPosition)
@@ -348,6 +346,53 @@ namespace TNHFramework
                     }
                 }
             }
+
+            SetCostBasedOnMag();
+        }
+
+        private void SetCostBasedOnMag()
+        {
+            if (detectedMag == null && detectedSpeedLoader == null)
+            {
+                DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+                DupeCost = 0;
+            }
+            else
+            {
+                DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                DupeCost = 2;
+            }
+
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
+            original.CapacityText.text = string.Empty;
+
+            if (detectedMag != null)
+            {
+                FVRObject nextMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper, character.GlobalObjectBlacklist);
+
+                if (nextMag != null)
+                {
+                    original.CapacityText.text = detectedMag.m_capacity.ToString() + " -> " + nextMag.MagazineCapacity;
+
+                    UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                    //this.m_hasUpgradeableMags = true;
+                    original.GetType().GetField("m_hasUpgradeableMags", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(original, true);
+                }
+                else
+                {
+                    UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+                    //this.m_hasUpgradeableMags = false;
+                    original.GetType().GetField("m_hasUpgradeableMags", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(original, false);
+                }
+            }
+            else
+            {
+                UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+                //this.m_hasUpgradeableMags = false;
+                original.GetType().GetField("m_hasUpgradeableMags", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(original, false);
+            }
+
+            this.UpdateTokenDisplay(original.M.GetNumTokens());
         }
 
         private void UpdateIcons()
@@ -359,8 +404,6 @@ namespace TNHFramework
             PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
             int numTokens = original.M.GetNumTokens();
             numTokensSelected = 0;
-
-            capacityText.text = string.Empty;
 
             if (detectedMag != null || detectedSpeedLoader != null)
             {
@@ -384,8 +427,6 @@ namespace TNHFramework
                     UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
                     if (numTokens >= UpgradeCost)
                         numTokensSelected = UpgradeCost;
-
-                    capacityText.text = $"{detectedMag.m_capacity} -> {upgradeMag.MagazineCapacity}";
                 }
             }
 
@@ -491,6 +532,8 @@ namespace TNHFramework
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
             button_0.onClick.AddListener(() => { PurchaseAmmoButton(); });
+
+            original.CapacityText.text = string.Empty;
         }
 
         public void PurchaseAmmoButton()
@@ -755,6 +798,8 @@ namespace TNHFramework
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
             button_0.onClick.AddListener(() => { AddFullAutoButton(); });
+
+            original.CapacityText.text = string.Empty;
         }
 
         public void AddFullAutoButton()
@@ -1168,6 +1213,8 @@ namespace TNHFramework
             Button button_1 = buttonTransform_1.gameObject.GetComponent<Button>();
             button_1.onClick = new Button.ButtonClickedEvent();
             button_1.onClick.AddListener(() => { IncreaseFireRateButton(); });
+
+            original.CapacityText.text = string.Empty;
         }
 
         public void IncreaseFireRateButton()

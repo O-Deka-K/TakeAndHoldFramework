@@ -117,14 +117,18 @@ namespace TNHFramework
                     return new Empty();
                 }
 
+                TNH_CharacterDef charDef = character.GetCharacter(thumbnail);
+
                 // Now we want to load the icons for each pool
                 foreach (FileInfo iconFile in folder.GetFiles())
                 {
-                    foreach (EquipmentPool pool in character.EquipmentPools)
+                    for (int i = 0; i < character.EquipmentPools.Count; i++)
                     {
+                        EquipmentPool pool = character.EquipmentPools[i];
+
                         if (iconFile.FullName.Split('\\').Last() == pool.IconName)
                         {
-                            pool.GetPoolEntry().TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
+                            pool.GetPoolEntry(charDef.UgcId, i, "EquipmentPool").TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
 
                             TNHFrameworkLogger.Log($"Character partially loaded - loaded misc icon {iconFile.Name}", TNHFrameworkLogger.LogType.File);
                         }
@@ -157,6 +161,7 @@ namespace TNHFramework
 
                     var deserializer = deserializerBuilder.Build();
                     savedGun = deserializer.Deserialize<VaultFile>(File.ReadAllText(file.FullName));
+                    savedGun.Type = VaultFileType.SingleObject;
 
                     TNHFrameworkLogger.Log("Vault file loaded successfully : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
                 }
@@ -168,6 +173,7 @@ namespace TNHFramework
                     };
 
                     savedGun = JsonConvert.DeserializeObject<VaultFile>(File.ReadAllText(file.FullName));
+                    savedGun.Type = VaultFileType.SingleObject;
 
                     TNHFrameworkLogger.Log("Vault file loaded successfully : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
 

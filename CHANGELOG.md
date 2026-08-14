@@ -156,10 +156,22 @@
 - Changed Harmony replacement patches into prefix or postfix patches whereever possible.
 - Removed debug log messages that weren't very useful.
 
-## [0.2.4] - 2025-12-13
+## [0.3.0-beta] - 2025-12-09
 
-- Added "InjectModBackpacks" option. This will add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.
-- Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
-- Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
-- Adjusted number of guards spawned at supply points.
-- Added ODekaK-MagazinePatcher as a dependency.
+- Updated to support Classic, Blitz and Rampart modes.
+- Lots of fixes for underlying code changes between Main branch and Experimental branch.
+
+## [0.3.1-beta] - 2025-12-15
+
+- Updated to match TNHFramework 0.2.4:
+  - Added "InjectModBackpacks" option. This will add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.
+  - Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
+  - Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
+  - Adjusted number of guards spawned at supply points.
+  - Added ODekaK-MagazinePatcher as a dependency.
+- Fixed supply reinforcements in big levels (Northest Dakota).
+
+## [0.3.2-beta] - 2025-12-25
+
+- Updated to work with H3VR build 120b9.
+- Checks H3VR build number and disables itself if it's not the correct version.

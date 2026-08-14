@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using FistVR.Ugc;
 using System.Collections.Generic;
 using System.Linq;
 using TNHFramework.Utilities;
@@ -58,6 +59,11 @@ namespace TNHFramework.ObjectTemplates
 
                 template = (SosigEnemyTemplate)ScriptableObject.CreateInstance(typeof(SosigEnemyTemplate));
 
+                template.UgcModule = UgcManager.H3Module;
+                template.UgcId = "h3vr:TNHF_" + SosigEnemyID;
+                template.UgcFilePath = null;
+                template.UgcIsWritable = false;
+
                 template.DisplayName = DisplayName;
                 template.SosigEnemyCategory = SosigEnemyCategory;
                 template.SecondaryChance = SecondaryChance;
@@ -66,13 +72,13 @@ namespace TNHFramework.ObjectTemplates
                 TNHFrameworkLogger.Log("Getting sosig config", TNHFrameworkLogger.LogType.Character);
 
                 Configs.RemoveAll(o => o == null);
-                template.ConfigTemplates = [.. Configs.Select(o => o.GetConfigTemplate())];
+                template.ConfigTemplates = [.. Configs.Select((o, index) => o.GetConfigTemplate(template.UgcId, index))];
 
                 ConfigsEasy.RemoveAll(o => o == null);
-                template.ConfigTemplates_Easy = [.. ConfigsEasy.Select(o => o.GetConfigTemplate())];
+                template.ConfigTemplates_Easy = [.. ConfigsEasy.Select((o, index) => o.GetConfigTemplate(template.UgcId, index))];
 
                 OutfitConfigs.RemoveAll(o => o == null);
-                template.OutfitConfig = [.. OutfitConfigs.Select(o => o.GetOutfitConfig())];
+                template.OutfitConfig = [.. OutfitConfigs.Select((o, index) => o.GetOutfitConfig(template.UgcId, index))];
             }
 
             return template;
@@ -96,7 +102,7 @@ namespace TNHFramework.ObjectTemplates
                     outfit.DelayedInit();
                 }
 
-                DroppedObjectPool?.DelayedInit();
+                DroppedObjectPool?.DelayedInit(template.UgcId);
                 
 				// Add the new sosig template to the global dictionaries
                 ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(template.SosigEnemyID, template);
@@ -268,11 +274,16 @@ namespace TNHFramework.ObjectTemplates
             this.template = template;
         }
 
-        public SosigConfigTemplate GetConfigTemplate()
+        public SosigConfigTemplate GetConfigTemplate(string id, int index)
         {
             if (template == null)
             {
                 template = (SosigConfigTemplate)ScriptableObject.CreateInstance(typeof(SosigConfigTemplate));
+
+                template.UgcModule = UgcManager.H3Module;
+                template.UgcId = $"{id}_{index}_SosigConfig";
+                template.UgcFilePath = null;
+                template.UgcIsWritable = false;
 
                 template.ViewDistance = ViewDistance;
                 template.StateSightRangeMults = StateSightRangeMults.GetVector3();
@@ -351,7 +362,17 @@ namespace TNHFramework.ObjectTemplates
                 template.UsesLinkSpawns = false;
                 template.LinkSpawns = [];
                 template.LinkSpawnChance = [];
-                template.OverrideSpeech = false;
+            }
+
+            return template;
+        }
+
+        public SosigConfigTemplate GetConfigTemplate()
+        {
+            if (template == null)
+            {
+                TNHFrameworkLogger.LogError("Tried to get SosigConfigTemplate, but it hasn't been initialized yet! Returning null!");
+                return null;
             }
 
             return template;
@@ -437,12 +458,17 @@ namespace TNHFramework.ObjectTemplates
             this.template = template;
         }
 
-        public SosigOutfitConfig GetOutfitConfig()
+        public SosigOutfitConfig GetOutfitConfig(string id, int index)
         {
             if (template == null)
             {
                 template = (SosigOutfitConfig)ScriptableObject.CreateInstance(typeof(SosigOutfitConfig));
-                
+
+                template.UgcModule = UgcManager.H3Module;
+                template.UgcId = $"{id}_{index}_SosigOutfit";
+                template.UgcFilePath = null;
+                template.UgcIsWritable = false;
+
                 template.Chance_Headwear = Chance_Headwear;
                 template.HeadUsesTorsoIndex = HeadUsesTorsoIndex;
                 template.Chance_Eyewear = Chance_Eyewear;

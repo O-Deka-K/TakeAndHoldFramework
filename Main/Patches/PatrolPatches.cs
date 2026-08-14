@@ -160,7 +160,6 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = level.Patrols[patrolIndex];
 
-                            // Fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Supply, TNH_Manager.SentryPatrolPointType.SPSSupply, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, supplyIndex, supplyIndex, ___m_curHoldIndex));
                             List<Vector3> spawnPoints = (List<Vector3>)miGetSpawnPoints.Invoke(__instance, [firstPoint, firstSpawnPointType]);
                             List<Vector3> forwardVectors = (List<Vector3>)miGetForwardVectors.Invoke(__instance, []);
@@ -205,7 +204,6 @@ namespace TNHFramework.Patches
                         {
                             Patrol patrol = level.Patrols[patrolIndex];
 
-                            // Fix - GetSpawnPoints() sometimes uses wrong type
                             //TNH_Manager.SosigPatrolSquad squad = __instance.GenerateSentryPatrol(patrolChallenge.Patrols[index], __instance.GetSpawnPoints(nextPoint, TNH_Manager.SentryPatrolPointType.Hold), __instance.GetForwardVectors(), __instance.GetPatrolPoints(firstPatrolPointType, TNH_Manager.SentryPatrolPointType.Hold, TNH_Manager.SentryPatrolPointType.SPSHold, TNH_Manager.SentryPatrolPointType.SPSHold, nextPoint, holdIndex, holdIndex, ___m_curHoldIndex));
                             List<Vector3> spawnPoints = (List<Vector3>)miGetSpawnPoints.Invoke(__instance, [firstPoint, firstSpawnPointType]);
                             List<Vector3> forwardVectors = (List<Vector3>)miGetForwardVectors.Invoke(__instance, []);
@@ -263,7 +261,7 @@ namespace TNHFramework.Patches
 
                         if (hasReachedPatrolPoint)
                         {
-                            SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[patrolSquad.ID_Leader];
+                            SosigEnemyTemplate template = patrolSquad.Tem_Leader;
                             SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
                             // Last patrol point
@@ -581,12 +579,15 @@ namespace TNHFramework.Patches
                 TNHFramework.SpawnedBossIndexes.Add(patrolIndex);
             }
 
+            SosigEnemyID leaderType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
+            SosigEnemyID enemyType = patrol.EnemyType.Any() ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None;
+
             TNH_Manager.SosigPatrolSquad squad = new()
             {
                 PatrolPoints = [.. PatrolPoints],
                 IsPatrollingUp = true,
-                ID_Leader = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType],
-                ID_Regular = (patrol.EnemyType.Any()) ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None,
+                Tem_Leader = ManagerSingleton<IM>.Instance.odicSosigObjsByID[leaderType],
+                Tem_Regular = ManagerSingleton<IM>.Instance.odicSosigObjsByID[enemyType],
                 HoldPointStart = patrolIndex,  // Commandeering this to hold patrolIndex because it's not used anywhere
                 IFF = patrol.IFFUsed,
                 IndexOfNextSpawn = 0,

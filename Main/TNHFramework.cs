@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.2.4")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.3.2")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -66,18 +66,18 @@ namespace TNHFramework
             if (TNHFrameworkLogger.BepLog == null)
                 TNHFrameworkLogger.Init();
 
-            TNHFrameworkLogger.Log("Initializing TNHFramework B119", TNHFrameworkLogger.LogType.General);
+            TNHFrameworkLogger.Log("Initializing TNHFramework Experimental", TNHFrameworkLogger.LogType.General);
             TNHFrameworkLogger.Log($"H3VR Update {GetBuildNumber()}", TNHFrameworkLogger.LogType.General);
+
+            if (GM.Version_UpdateNumber <= 119)
+            {
+                TNHFrameworkLogger.LogError("This should only be run on H3VR build 120 or higher. Please use TNHFramework B119 instead. Shutting down...");
+                return;
+            }
 
             SetupOutputDirectory();
             LoadConfigFile();
             LoadPanelSprites();
-
-            if (GM.Version_UpdateNumber == 119 && GM.Version_PatchNumber > 0 || GM.Version_UpdateNumber > 119)
-            {
-                TNHFrameworkLogger.LogError("This should NOT be run on H3VR build 119p5 or experimental. Please switch to Main (Beta: None), Alpha, or Update119. Shutting down...");
-                return;
-            }
 
             Harmony harmony = new("h3vr.tnhframework");
             harmony.PatchAll(typeof(ConstructorPatches));
@@ -324,9 +324,7 @@ namespace TNHFramework
         public void Awake()
         {
             if (TNHFrameworkLogger.BepLog == null)
-            {
                 TNHFrameworkLogger.Init();
-            }
 
             Stages.Setup += DeliOnSetup;
         }

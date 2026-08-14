@@ -16,7 +16,7 @@ namespace TNHFramework
     {
         public static CustomCharacter CurrentCharacter;
         public static Level CurrentLevel;
-        public static Dictionary<TNH_Char, CharacterTemplate> LoadedCharacterDict = [];
+        public static Dictionary<string, CharacterTemplate> LoadedCharacterDict = [];
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = [];
         public static Dictionary<string, VaultFile> LoadedVaultFiles = [];
@@ -28,7 +28,6 @@ namespace TNHFramework
         public static Dictionary<string, int> SosigIDDict = [];
 
         public static int NewSosigID = 30000;
-        public static int NewCharacterID = 1000;
 
         public static Dictionary<string, Sprite> DefaultIconSprites = [];
 
@@ -87,35 +86,52 @@ namespace TNHFramework
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
             template.isCustom = true;
-            CustomCharacters.Add(template);
-            LoadedCharacterDict.Add((TNH_Char)NewCharacterID, new CharacterTemplate(template.GetCharacter(NewCharacterID, thumbnail), template));
-            NewCharacterID++;
+            template.TableID = "TNHF_" + template.TableID;
+            
+            TNH_CharacterDef charDef = template.GetCharacter(thumbnail);
 
-            foreach (EquipmentPool pool in template.EquipmentPools)
+            if (LoadedCharacterDict.ContainsKey(charDef.UgcId))
             {
-                EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
+                TNHFrameworkLogger.Log($"Character already exists ({charDef.UgcId} [{template.TableID}]) : " + template.DisplayName, TNHFrameworkLogger.LogType.General);
+                return;
             }
 
-            TNHFrameworkLogger.Log($"Character added successfully ({NewCharacterID - 1}) : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+            CustomCharacters.Add(template);
+            LoadedCharacterDict.Add(charDef.UgcId, new CharacterTemplate(charDef, template));
+
+            for (int i = 0; i < template.EquipmentPools.Count; i++)
+            {
+                EquipmentPoolDictionary.Add(template.EquipmentPools[i].GetPoolEntry(charDef.UgcId, i, "EquipmentPool"), template.EquipmentPools[i]);
+            }
+
+            TNHFrameworkLogger.Log($"Character added successfully ({charDef.UgcId} [{template.TableID}]) : " + template.DisplayName, TNHFrameworkLogger.LogType.General);
         }
 
-        public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
+        public static void AddCharacterTemplate(TNH_CharacterDef charDef)
         {
-            CustomCharacter template = new CustomCharacter(realTemplate);
+            if (LoadedCharacterDict.ContainsKey(charDef.UgcId))
+            {
+                TNHFrameworkLogger.Log($"Character already exists ({charDef.UgcId} [{charDef.TableID}]) : " + charDef.DisplayName, TNHFrameworkLogger.LogType.General);
+                return;
+            }
+
+            CustomCharacter template = new(charDef);
 
             DefaultCharacters.Add(template);
-            LoadedCharacterDict.Add(realTemplate.CharacterID, new CharacterTemplate(realTemplate, template));
+            LoadedCharacterDict.Add(charDef.UgcId, new CharacterTemplate(charDef, template));
 
-            foreach (EquipmentPool pool in template.EquipmentPools)
+            for (int i = 0; i < template.EquipmentPools.Count; i++)
             {
+                EquipmentPoolDef.PoolEntry poolEntry = template.EquipmentPools[i].GetPoolEntry(charDef.UgcId, i, "EquipmentPool");
+
                 // Must check for this, since default characters can have references to the same pools
-                if (!EquipmentPoolDictionary.ContainsKey(pool.GetPoolEntry()))
+                if (!EquipmentPoolDictionary.ContainsKey(poolEntry))
                 {
-                    EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
+                    EquipmentPoolDictionary.Add(poolEntry, template.EquipmentPools[i]);
                 }
             }
 
-            TNHFrameworkLogger.Log($"Character added successfully ({realTemplate.CharacterID}) : " + realTemplate.DisplayName, TNHFrameworkLogger.LogType.Character);
+            TNHFrameworkLogger.Log($"Character added successfully ({charDef.UgcId} [{charDef.TableID}]) : " + charDef.DisplayName, TNHFrameworkLogger.LogType.General);
         }
 
         public static void AddVaultFile(VaultFile template)

@@ -104,6 +104,9 @@ namespace TNHFramework.Patches
         {
             ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
 
+            if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
+                ___m_tickDownToNextGroupSpawn -= Time.deltaTime * (0.4f + (float)___m_phaseIndex * 0.4f);
+
             if (___m_activeSosigs.Count < 1 && ___m_state == TNH_HoldPoint.HoldState.Analyzing)
                 ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
 
@@ -220,31 +223,6 @@ namespace TNHFramework.Patches
             return false;
         }
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTakeEnemyGroup")]
-        [HarmonyPrefix]
-        public static bool SpawnTakeGroupReplacement(TNH_HoldPoint __instance, ref List<Sosig> ___m_activeSosigs)
-        {
-            __instance.SpawnPoints_Sosigs_Defense.Shuffle();
-            //__instance.SpawnPoints_Sosigs_Defense.Shuffle();
-
-            int numGuards = Mathf.Clamp(__instance.T.NumGuards, 0, __instance.SpawnPoints_Sosigs_Defense.Count);
-            TNHFrameworkLogger.Log($"Spawning {numGuards} hold guards via SpawnTakeEnemyGroup()", TNHFrameworkLogger.LogType.TNH);
-
-            for (int i = 0; i < numGuards; i++)
-            {
-                Transform transform = __instance.SpawnPoints_Sosigs_Defense[i];
-                //Debug.Log("Take challenge sosig ID : " + __instance.T.GID);
-                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[__instance.T.GID];
-
-                Sosig enemy = __instance.M.SpawnEnemy(template, transform.position, transform.rotation, __instance.T.IFFUsed, false, transform.position, true);
-
-                ___m_activeSosigs.Add(enemy);
-                __instance.M.RegisterGuard(enemy);
-            }
-
-            return false;
-        }
-
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnWarpInMarkers")]
         [HarmonyPrefix]
         public static bool SpawnWarpInMarkers_Replacement(TNH_HoldPoint __instance, ref List<Transform> ___m_validSpawnPoints, TNH_HoldChallenge.Phase ___m_curPhase,
@@ -269,7 +247,7 @@ namespace TNHFramework.Patches
 
             ___m_numTargsToSpawn = Random.Range(___m_curPhase.MinTargets, ___m_curPhase.MaxTargets + 1);
 
-            if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+            if (__instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
             {
                 //___m_numTargsToSpawn = this.GetMaxTargsInHold();
                 ___m_numTargsToSpawn = (int)miGetMaxTargsInHold.Invoke(__instance, []);
@@ -285,6 +263,9 @@ namespace TNHFramework.Patches
                 else if (___m_numTargsToSpawn < 3)
                     ___m_numTargsToSpawn = 3;
             }
+
+            if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
+                ___m_numTargsToSpawn = ___m_phaseIndex + 1;
 
             ___m_numTargsToSpawn = Mathf.Min(___m_numTargsToSpawn, ___m_validSpawnPoints.Count);  // ODK - Moved this down
             ___m_validSpawnPoints.Shuffle<Transform>();
@@ -317,12 +298,12 @@ namespace TNHFramework.Patches
                 minTargets = currentPhase.MinTargetsLimited;
                 maxTargets = currentPhase.MaxTargetsLimited;
 
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     maxTargets = Mathf.Max(maxTargets, 3);
             }
             else
             {
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                 {
                     minTargets = Mathf.Max(minTargets, 3);
                     maxTargets = Mathf.Max(maxTargets, 5);
@@ -330,7 +311,11 @@ namespace TNHFramework.Patches
             }
 
             List<FVRObject> encryptions;
-            if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
+            if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
+            {
+                encryptions = __instance.M.ResourceLib.EncryptionUnknown;
+            }
+            else if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
             {
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
                     encryptions = [__instance.M.GetEncryptionPrefabSimple(TNH_EncryptionType.Static)];

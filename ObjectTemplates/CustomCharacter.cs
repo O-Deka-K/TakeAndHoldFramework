@@ -1,5 +1,6 @@
 ﻿using ADepIn;
 using FistVR;
+using FistVR.Ugc;
 using System.Collections.Generic;
 using System.Linq;
 using TNHFramework.Utilities;
@@ -13,7 +14,6 @@ namespace TNHFramework.ObjectTemplates
         public string DisplayName;
         public string Description;
         public CategoryInfo CategoryData = new();
-        public int CharacterGroup;
         public string TableID;
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
@@ -51,28 +51,7 @@ namespace TNHFramework.ObjectTemplates
         {
             isCustom = false;
             DisplayName = character.DisplayName;
-            CategoryData = new CategoryInfo();
-            switch (character.Group)
-            {
-                case TNH_CharacterDef.CharacterGroup.DaringDefaults:
-                    CategoryData.Name = "Daring Defaults";
-                    break;
-
-                case TNH_CharacterDef.CharacterGroup.WienersThroughTime:
-                    CategoryData.Name = "Wieners Through Time";
-                    break;
-
-                case TNH_CharacterDef.CharacterGroup.MemetasticMeats:
-                    CategoryData.Name = "Memetastic Meats";
-                    break;
-
-                case TNH_CharacterDef.CharacterGroup.ChallengingMeals:
-                    CategoryData.Name = "Competitive Casings";
-                    break;
-            }
-            CategoryData.Priority = (int)character.Group;
-            CharacterGroup = (int)character.Group;
-
+            CategoryData = new(character.CharacterGroup, 0);
             TableID = character.TableID;
             StartingTokens = character.StartingTokens;
             ForceAllAgentWeapons = character.ForceAllAgentWeapons;
@@ -122,24 +101,6 @@ namespace TNHFramework.ObjectTemplates
 
                 CategoryData.Priority = (character.CharacterGroup < 4) ? character.CharacterGroup : 0;
             }
-            else if (CategoryData.Name == "Daring Defaults")
-            {
-                CategoryData.Priority = 0;
-            }
-            else if (CategoryData.Name == "Wieners Through Time")
-            {
-                CategoryData.Priority = 1;
-            }
-            else if (CategoryData.Name == "Memetastic Meats")
-            {
-                CategoryData.Priority = 2;
-            }
-            else if (CategoryData.Name == "Competitive Casings")
-            {
-                CategoryData.Priority = 3;
-            }
-
-            CharacterGroup = CategoryData.Priority;
 
             TableID = character.TableID;
             StartingTokens = character.StartingTokens;
@@ -182,7 +143,7 @@ namespace TNHFramework.ObjectTemplates
             }
         }
 
-        public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
+        public TNH_CharacterDef GetCharacter(Sprite thumbnail)
         {
             if (character == null)
             {
@@ -190,9 +151,14 @@ namespace TNHFramework.ObjectTemplates
                 ValidAmmoEras ??= [];
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
+
+                character.UgcModule = UgcManager.H3Module;
+                character.UgcId = "h3vr:TNHF_0_" + DisplayName.Replace(" ", string.Empty);
+                character.UgcFilePath = null;
+                character.UgcIsWritable = false;
+
                 character.DisplayName = DisplayName;
-                character.CharacterID = (TNH_Char)ID;
-                character.Group = (TNH_CharacterDef.CharacterGroup)CategoryData.Priority;
+                character.CharacterGroup = CategoryData.Name;
                 character.TableID = TableID;
                 character.StartingTokens = StartingTokens;
                 character.ForceAllAgentWeapons = ForceAllAgentWeapons;
@@ -201,13 +167,13 @@ namespace TNHFramework.ObjectTemplates
                 character.ValidAmmoEras = [.. ValidAmmoEras.Select(o => (FVRObject.OTagEra)o)];
                 character.ValidAmmoSets = [.. ValidAmmoSets.Select(o => (FVRObject.OTagSet)o)];
                 character.Picture = thumbnail;
-                character.Weapon_Primary = PrimaryWeapon.GetLoadoutEntry();
-                character.Weapon_Secondary = SecondaryWeapon.GetLoadoutEntry();
-                character.Weapon_Tertiary = TertiaryWeapon.GetLoadoutEntry();
-                character.Item_Primary = PrimaryItem.GetLoadoutEntry();
-                character.Item_Secondary = SecondaryItem.GetLoadoutEntry();
-                character.Item_Tertiary = TertiaryItem.GetLoadoutEntry();
-                character.Item_Shield = Shield.GetLoadoutEntry();
+                character.Weapon_Primary = PrimaryWeapon.GetLoadoutEntry(character.UgcId, 0, "PrimaryWeapon");
+                character.Weapon_Secondary = SecondaryWeapon.GetLoadoutEntry(character.UgcId, 0, "SecondaryWeapon");
+                character.Weapon_Tertiary = TertiaryWeapon.GetLoadoutEntry(character.UgcId, 0, "TertiaryWeapon");
+                character.Item_Primary = PrimaryItem.GetLoadoutEntry(character.UgcId, 0, "PrimaryItem");
+                character.Item_Secondary = SecondaryItem.GetLoadoutEntry(character.UgcId, 0, "SecondaryItem");
+                character.Item_Tertiary = TertiaryItem.GetLoadoutEntry(character.UgcId, 0, "TertiaryItem");
+                character.Item_Shield = Shield.GetLoadoutEntry(character.UgcId, 0, "Shield");
 
                 character.Has_Weapon_Primary = PrimaryWeapon.PrimaryGroup != null || PrimaryWeapon.BackupGroup != null;
                 character.Has_Weapon_Secondary = SecondaryWeapon.PrimaryGroup != null || SecondaryWeapon.BackupGroup != null;
@@ -217,9 +183,9 @@ namespace TNHFramework.ObjectTemplates
                 character.Has_Item_Tertiary = TertiaryItem.PrimaryGroup != null || TertiaryItem.BackupGroup != null;
                 character.Has_Item_Shield = Shield.PrimaryGroup != null || Shield.BackupGroup != null;
 
-                character.RequireSightTable = RequireSightTable.GetObjectTableDef();
+                character.RequireSightTable = RequireSightTable.GetObjectTableDef(character.UgcId, 0, "RequireSightTable");
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
-                character.EquipmentPool.Entries = [.. EquipmentPools.Select(o => o.GetPoolEntry())];
+                character.EquipmentPool.Entries = [.. EquipmentPools.Select((o, index) => o.GetPoolEntry(character.UgcId, index, "EquipmentPool"))];
 
                 character.Progressions = [(TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression))];
                 character.Progressions[0].Levels = [];
@@ -401,7 +367,7 @@ namespace TNHFramework.ObjectTemplates
             for (int i = EquipmentPools.Count - 1; i >= 0; i--)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if (!pool.DelayedInit(GlobalObjectBlacklist))
+                if (!pool.DelayedInit(character.UgcId, GlobalObjectBlacklist))
                 {
                     TNHFrameworkLogger.LogWarning("Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
@@ -565,7 +531,7 @@ namespace TNHFramework.ObjectTemplates
             this.pool = pool;
         }
 
-        public EquipmentPoolDef.PoolEntry GetPoolEntry()
+        public EquipmentPoolDef.PoolEntry GetPoolEntry(string id, int index, string suffix)
         {
             if (pool == null)
             {
@@ -587,7 +553,7 @@ namespace TNHFramework.ObjectTemplates
                     pool.Rarity = 1;
                 }
 
-                pool.TableDef = PrimaryGroup.GetObjectTableDef();
+                pool.TableDef = PrimaryGroup.GetObjectTableDef(id, index, suffix);
                 pool.TableDef.SpawnsInLargeCase = SpawnsInLargeCase;
                 pool.TableDef.SpawnsInSmallCase = SpawnsInSmallCase;
             }
@@ -595,8 +561,10 @@ namespace TNHFramework.ObjectTemplates
             return pool;
         }
 
-        public bool DelayedInit(List<string> globalObjectBlacklist)
+        public bool DelayedInit(string id, List<string> globalObjectBlacklist)
         {
+            pool ??= GetPoolEntry(id, 0, "EquipmentPool");
+
             if (pool != null)
             {
                 if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
@@ -787,7 +755,7 @@ namespace TNHFramework.ObjectTemplates
             this.objectTableDef = objectTableDef;
         }
 
-        public ObjectTableDef GetObjectTableDef()
+        public ObjectTableDef GetObjectTableDef(string id, int index, string suffix)
         {
             if (objectTableDef == null)
             {
@@ -815,6 +783,12 @@ namespace TNHFramework.ObjectTemplates
                 }
 
                 objectTableDef = (ObjectTableDef)ScriptableObject.CreateInstance(typeof(ObjectTableDef));
+
+                objectTableDef.UgcModule = UgcManager.H3Module;
+                objectTableDef.UgcId = $"{id}_{index}_{Category}_{suffix}";
+                objectTableDef.UgcFilePath = null;
+                objectTableDef.UgcIsWritable = false;
+
                 objectTableDef.Category = (FVRObject.ObjectCategory)Category;
                 objectTableDef.MinAmmoCapacity = MinAmmoCapacity;
                 objectTableDef.MaxAmmoCapacity = MaxAmmoCapacity;
@@ -841,6 +815,17 @@ namespace TNHFramework.ObjectTemplates
                 objectTableDef.ThrownTypes = [.. Tags.ThrownTypes.Select(o => (FVRObject.OTagThrownType)o)];
                 objectTableDef.ThrownDamageTypes = [.. Tags.ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o)];
             }
+            return objectTableDef;
+        }
+
+        public ObjectTableDef GetObjectTableDef()
+        {
+            if (objectTableDef == null)
+            {
+                TNHFrameworkLogger.LogError("Tried to get ObjectTableDef, but it hasn't been initialized yet! Returning null!");
+                return null;
+            }
+
             return objectTableDef;
         }
 
@@ -1269,7 +1254,7 @@ namespace TNHFramework.ObjectTemplates
             this.loadout = loadout;
         }
 
-        public TNH_CharacterDef.LoadoutEntry GetLoadoutEntry()
+        public TNH_CharacterDef.LoadoutEntry GetLoadoutEntry(string id, int index, string suffix)
         {
             if (loadout == null)
             {
@@ -1281,7 +1266,7 @@ namespace TNHFramework.ObjectTemplates
 
                 if (PrimaryGroup != null)
                 {
-                    loadout.TableDefs = [PrimaryGroup.GetObjectTableDef()];
+                    loadout.TableDefs = [PrimaryGroup.GetObjectTableDef(id, index, suffix)];
                 }
             }
 
@@ -1443,7 +1428,6 @@ namespace TNHFramework.ObjectTemplates
                 level.SupplyChallenge = SupplyChallenge.GetTakeChallenge();
                 level.PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge));
                 level.PatrolChallenge.Patrols = [.. Patrols.Select(o => o.GetPatrol())];
-                level.TrapsChallenge = (TNH_TrapsChallenge)ScriptableObject.CreateInstance(typeof(TNH_TrapsChallenge));
             }
 
             return level;

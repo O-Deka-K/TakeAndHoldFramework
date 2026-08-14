@@ -1,11 +1,11 @@
 ﻿using FistVR;
+using FistVR.Ugc;
 using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Patches;
@@ -22,13 +22,8 @@ namespace TNHFramework
     {
         public static bool TNHInitialized = false;
         public static bool MagazineCacheFailed = false;
-        public static List<TNH_CharacterDef> SavedCharacters;
 
-        private static readonly MethodInfo miGetCatFolderName = typeof(VaultSystem).GetMethod("GetCatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly MethodInfo miGetSubcatFolderName = typeof(VaultSystem).GetMethod("GetSubcatFolderName", BindingFlags.Static | BindingFlags.NonPublic);
-        private static readonly MethodInfo miGetSuffix = typeof(VaultSystem).GetMethod("GetSuffix", BindingFlags.Static | BindingFlags.NonPublic);
-
-        public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
+        public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, TNH_LevelLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
             hotdog?.gameObject.SetActive(false);
 
@@ -99,8 +94,7 @@ namespace TNHFramework
                 TNHFrameworkUtils.FixModAttachmentTags();
 
             // Now perform final steps of loading characters
-            LoadTNHTemplates(CharDatabase);
-            SavedCharacters = CharDatabase.Characters;
+            LoadTNHTemplates([.. UgcManager.GetAllItems<TNH_CharacterDef>()]);
 
             if (outputFiles)
             {
@@ -108,7 +102,7 @@ namespace TNHFramework
             }
 
             TNHInitialized = true;
-            UIManagerPatches.RefreshTNHUI(instance, Categories, CharDatabase);
+            UIManagerPatches.RefreshTNHUI(instance, Categories);
 
             itemsText.text = "";
             progressText.text = "";
@@ -295,7 +289,7 @@ namespace TNHFramework
             return roundType != FireArmRoundType.a22_LR || magazineType != FireArmMagazineType.mNone || magazineCapacity != 0 || clipType != FireArmClipType.None;
         }
 
-        public static void LoadTNHTemplates(TNH_CharacterDatabase CharDatabase)
+        public static void LoadTNHTemplates(List<TNH_CharacterDef> characters)
         {
             TNHFrameworkLogger.Log("Performing TNH Initialization", TNHFrameworkLogger.LogType.General);
 
@@ -303,7 +297,7 @@ namespace TNHFramework
             TNHFrameworkLogger.Log("Adding default sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultSosigs();
             TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
-            LoadDefaultCharacters(CharDatabase.Characters);
+            LoadDefaultCharacters(characters);
 
             LoadedTemplateManager.DefaultIconSprites = GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
@@ -378,7 +372,7 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
                     characters.RemoveAt(i);
                     var item = LoadedTemplateManager.LoadedCharacterDict.Single(o => o.Value.Custom == character).Value;
-                    LoadedTemplateManager.LoadedCharacterDict.Remove(item.Def.CharacterID);
+                    LoadedTemplateManager.LoadedCharacterDict.Remove(item.Def.UgcId);
                 }
             }
         }
@@ -402,8 +396,8 @@ namespace TNHFramework
                     TNHFrameworkLogger.LogError("Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
 
                     // Find any characters that use this sosig, and remove them
-                    KeyValuePair<TNH_Char, CharacterTemplate>[] removeList = [.. LoadedTemplateManager.LoadedCharacterDict.Where(o => o.Value.Custom.CharacterUsesSosig(sosig.SosigEnemyID))];
-                    foreach (KeyValuePair<TNH_Char, CharacterTemplate> item in removeList)
+                    KeyValuePair<string, CharacterTemplate>[] removeList = [.. LoadedTemplateManager.LoadedCharacterDict.Where(o => o.Value.Custom.CharacterUsesSosig(sosig.SosigEnemyID))];
+                    foreach (KeyValuePair<string, CharacterTemplate> item in removeList)
                     {
                         TNHFrameworkLogger.LogError("Removing character that used removed sosig: " + item.Value.Custom.DisplayName);
                         LoadedTemplateManager.LoadedCharacterDict.Remove(item.Key);

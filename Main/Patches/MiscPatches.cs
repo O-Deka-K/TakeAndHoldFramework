@@ -3,7 +3,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
+using TNHFramework.Utilities;
 using UnityEngine;
 
 namespace TNHFramework.Patches
@@ -12,97 +12,6 @@ namespace TNHFramework.Patches
     {
         private static readonly MethodInfo miUpdateSafetyGeo = typeof(TubeFedShotgun).GetMethod("UpdateSafetyGeo", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miToggleFireSelector = typeof(OpenBoltReceiver).GetMethod("ToggleFireSelector", BindingFlags.Instance | BindingFlags.NonPublic);
-
-        // Anton pls fix - Wrong sound plays when purchasing a clip at the new ammo reloader panel
-        [HarmonyPatch(typeof(TNH_AmmoReloader2), "Button_SpawnClip")]
-        [HarmonyPrefix]
-        public static bool Button_SpawnClip_AudioFix(TNH_AmmoReloader2 __instance, bool ___hasDisplayedType, bool ___m_isConfirmingPurchase,
-            TNH_AmmoReloader2.AmmoReloaderSelectedObject ___m_selectedObjectType, FVRFireArm ___m_selectedFA, FireArmRoundType ___m_displayedType,
-            List<FireArmRoundClass> ___m_displayedClasses, int ___m_selectedClass)
-        {
-            if (!___hasDisplayedType || ___m_isConfirmingPurchase)
-            {
-                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Fail, __instance.transform.position);
-                return false;
-            }
-
-            bool found = false;
-            if (___m_selectedObjectType == TNH_AmmoReloader2.AmmoReloaderSelectedObject.Gun && ___m_selectedFA != null && ___m_displayedType == ___m_selectedFA.RoundType && IM.OD.ContainsKey(___m_selectedFA.ObjectWrapper.ItemID))
-            {
-                FVRObject firearmObj = IM.OD[___m_selectedFA.ObjectWrapper.ItemID];
-
-                if (firearmObj.CompatibleClips.Count > 0)
-                {
-                    found = true;
-                    FVRObject clipObj = firearmObj.CompatibleClips[0];
-                    GameObject clip = Object.Instantiate(clipObj.GetGameObject(), __instance.Spawnpoint_Round.position, __instance.Spawnpoint_Round.rotation);
-                    __instance.M.AddObjectToTrackedList(clip);
-
-                    FireArmRoundClass roundClip = ___m_displayedClasses[___m_selectedClass];
-                    FVRFireArmClip clipComp = clip.GetComponent<FVRFireArmClip>();
-                    clipComp.ReloadClipWithType(roundClip);
-                }
-                else if (firearmObj.CompatibleMagazines.Count > 0)
-                {
-                    FVRObject magazineObj = firearmObj.CompatibleMagazines[0];
-                    GameObject magazineGO = magazineObj.GetGameObject();
-
-                    FVRFireArmMagazine magazineComp = magazineGO.GetComponent<FVRFireArmMagazine>();
-
-                    if (magazineComp.IsEnBloc)
-                    {
-                        found = true;
-                        GameObject magazine = Object.Instantiate(magazineGO, __instance.Spawnpoint_Round.position, __instance.Spawnpoint_Round.rotation);
-                        __instance.M.AddObjectToTrackedList(magazine);
-
-                        FireArmRoundClass roundMag = ___m_displayedClasses[___m_selectedClass];
-                        magazineComp = magazine.GetComponent<FVRFireArmMagazine>();
-                        magazineComp.ReloadMagWithType(roundMag);
-                    }
-                }
-            }
-
-            SM.PlayCoreSound(FVRPooledAudioType.UIChirp, (found ? __instance.AudEvent_Spawn : __instance.AudEvent_Fail), __instance.transform.position);
-            return false;
-        }
-
-        // Anton pls fix - Don't play line to advance to next node when completing last hold
-        [HarmonyPatch(typeof(TNH_HoldPoint), "CompleteHold")]
-        [HarmonyTranspiler]
-        public static IEnumerable<CodeInstruction> CompleteHold_LineFix(IEnumerable<CodeInstruction> instructions)
-        {
-            List<CodeInstruction> code = [.. instructions];
-
-            for (int i = 0; i < code.Count - 3; i++)
-            {
-                // Search for "EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt)" and remove it
-                if (code[i].opcode == OpCodes.Ldarg_0 &&
-                    code[i + 1].opcode == OpCodes.Ldfld &&
-                    code[i + 2].opcode == OpCodes.Ldc_I4_S && code[i + 2].operand.Equals((sbyte)90) &&
-                    code[i + 3].opcode == OpCodes.Callvirt)
-                {
-                    code[i].opcode = OpCodes.Nop;
-                    code[i + 1].opcode = OpCodes.Nop;
-                    code[i + 2].opcode = OpCodes.Nop;
-                    code[i + 3].opcode = OpCodes.Nop;
-                    break;
-                }
-            }
-
-            return code;
-        }
-
-        // Anton pls fix - Don't play line to advance to next node when completing last hold
-        [HarmonyPatch(typeof(TNH_Manager), "HoldPointCompleted")]
-        [HarmonyPostfix]
-        public static void HoldPointCompleted_LineFix(TNH_Manager __instance, int ___m_level, int ___m_maxLevels)
-        {
-            // Play this only if it's NOT the last level
-            if (___m_level < ___m_maxLevels)
-            {
-                __instance.EnqueueLine(TNH_VoiceLineID.AI_AdvanceToNextSystemNodeAndTakeIt);
-            }
-        }
 
         // Anton pls fix - DicSafeHoldIndiciesForSupplyPoint has missing entry. Also, DicSafeSupplyIndiciesForHoldPoint never has 32.
         [HarmonyPatch(typeof(TNH_Manager), "PrimeSafeDics")]
@@ -116,15 +25,6 @@ namespace TNHFramework.Patches
                 if (!__instance.DicSafeHoldIndiciesForSupplyPoint.ContainsKey(32))
                     __instance.DicSafeHoldIndiciesForSupplyPoint.Add(32, [25, 26, 27, 29]);
             }
-        }
-
-        // Anton pls fix - Wrong list used (DicSafeHoldIndiciesForHoldPoint)
-        [HarmonyPatch(typeof(TNH_Manager), "GetRandomSafeSupplyIndexFromHoldPoint")]
-        [HarmonyPrefix]
-        private static bool GetRandomSafeSupplyIndexFromHoldPoint_BugFix(TNH_Manager __instance, out int __result, int index)
-        {
-            __result = __instance.DicSafeSupplyIndiciesForHoldPoint[index][UnityEngine.Random.Range(0, __instance.DicSafeSupplyIndiciesForHoldPoint[index].Count)];
-            return false;
         }
 
         // Anton pls fix - Pump action shotgun config not working
@@ -184,5 +84,15 @@ namespace TNHFramework.Patches
 
             return false;
         }
+
+#if (false)  // Anton pls fix - Health bonus
+        [HarmonyPatch(typeof(TNH_HoldPoint), "BeginHoldChallenge")]
+        [HarmonyPrefix]
+        public static void BeginHoldChallenge_SkipHold(TNH_HoldPoint __instance)
+        {
+            int healthBonus = Mathf.RoundToInt(Mathf.Clamp(100f - __instance.M.PlayerTakenDamagePercentageThisPhase(), 0f, 100f));
+            __instance.M.IncrementScoringStat(TNH_Manager.ScoringEvent.TakePhaseHealthBonus, healthBonus - 1);
+        }
+#endif
     }
 }

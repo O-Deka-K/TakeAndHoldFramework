@@ -14,8 +14,6 @@ namespace TNHFramework.Patches
     {
         private static readonly MethodInfo miUpdateTokenDisplay = typeof(TNH_AmmoReloader2).GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miSetState = typeof(TNH_ObjectConstructor).GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo miUpdateLockUnlockButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateLockUnlockButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo miUpdateRerollButtonState = typeof(TNH_ObjectConstructor).GetMethod("UpdateRerollButtonState", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly FieldInfo fiAllowEntry = typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiSpawnedCase = typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -114,28 +112,6 @@ namespace TNHFramework.Patches
             //__instance.UpdateTokenDisplay(__instance.M.GetNumTokens());
             miUpdateTokenDisplay.Invoke(__instance, [__instance.M.GetNumTokens()]);
             return false;
-        }
-
-        // Fix backported from build 120b5
-        [HarmonyPatch(typeof(TNH_ObjectConstructor), "UnlockPoolCategory")]
-        [HarmonyPostfix]
-        public static void UnlockPoolCategory_UnlockOnAll()
-        {
-            TNH_ObjectConstructor[] constructors = UnityEngine.Object.FindObjectsOfType<TNH_ObjectConstructor>();
-
-            foreach (TNH_ObjectConstructor constructor in constructors)
-            {
-                if (constructor.UsesUnlock)
-                {
-                    //constructor.UpdateLockUnlockButtonState(false);
-                    miUpdateLockUnlockButtonState.Invoke(constructor, [false]);
-                }
-                else
-                {
-                    //constructor.UpdateRerollButtonState(false);
-                    miUpdateRerollButtonState.Invoke(constructor, [false]);
-                }
-            }
         }
 
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]

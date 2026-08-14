@@ -1,6 +1,7 @@
 ﻿using Deli;
 using Deli.Setup;
 using Deli.VFS;
+using FistVR;
 using System;
 using System.Linq;
 using TNHFramework.ObjectTemplates;
@@ -83,14 +84,18 @@ namespace TNHFramework
                     return;
                 }
 
+                TNH_CharacterDef charDef = character.GetCharacter(thumbnail);
+
                 // Now we want to load the icons for each pool
                 foreach (IFileHandle iconFile in dir.GetFiles())
                 {
-                    foreach (ObjectTemplates.V1.EquipmentPool pool in character.EquipmentPools)
+                    for (int i = 0; i < character.EquipmentPools.Count; i++)
                     {
+                        ObjectTemplates.V1.EquipmentPool pool = character.EquipmentPools[i];
+
                         if (iconFile.Path.Split('/').Last() == pool.IconName)
                         {
-                            pool.GetPoolEntry().TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
+                            pool.GetPoolEntry(charDef.UgcId, i, "EquipmentPool").TableDef.Icon = TNHFrameworkUtils.LoadSprite(iconFile);
                         }
                     }
                 }
