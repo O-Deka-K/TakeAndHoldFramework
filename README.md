@@ -12,13 +12,13 @@ A successor to DevynDaMonster's [TNHTweaker](https://thunderstore.io/c/h3vr/p/de
 
 ## H3VR Build Version
 
-This is for H3VR experimental build 120b9, which is currently on Experimental branch (as of Dec 2025). It will NOT work on any other branch (like Main), as there are many incompatible changes. There is a separate version of TNHFramework for build 119.
+This is for H3VR experimental build 120b9, which was on Experimental branch in Dec 2025. It will probably work on the beta marked as "lastexperimentalbuild" on Steam (see Properties > Game Versions & Betas), but I haven't tried.
 
-If you have this beta version, then please DISABLE TNHFramework 0.2.x (non-experimental version) while using this mod. You MUST be on Experimental branch. There's a chance it could stop working past build 120b9. Other mods are not guaranteed to work on Experimental.
+If you have this version, then please DISABLE TNHFramework_Experimental 0.3.2 while using this mod. That mod has been merged into this one, and now this one is more current. This mod will be updated to work with H3VR 1.0 (main branch).
 
 ## What is this?
 
-This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 120b7.
+This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 120b9.
 
 As Devyn is no longer working on H3VR mods, this is will be more up-to-date than TNHTweaker.
 
@@ -32,19 +32,17 @@ Long version:
 
 ## Features
 
-- Made for EXPERIMENTAL branch. It could break at any time!
 - Updated to support Classic, Blitz and Rampart modes.
 - Updated with all of the new features and fixes for TNH.
 - Disables TNHTweaker automatically. Just leave it installed and let it be!
 - Adds support for custom characters using YAML, with legacy support for TNHTweaker/Deli-based custom characters.
 - Optional replacement for Magazine Patcher. No longer will you have crashes due to using too much RAM while loading.
 - Full Institution support, with options to disable each type of construct separately.
-- Backported features from Experimental build.
 - Global blacklist for any type of item.
 - TNHTweaker bugfixes.
 - Vanilla game bugfixes.
 - Legacy mod fixes.
-- This mod has been tested with EVERY custom character on Thunderstore.
+- This mod has previously been tested with EVERY custom character on Thunderstore.
 
 Please see the CHANGELOG for the full list of changes from TNHTweaker.
 
