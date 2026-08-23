@@ -163,3 +163,11 @@
 - Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
 - Adjusted number of guards spawned at supply points.
 - Added ODekaK-MagazinePatcher as a dependency.
+
+## [0.119.0] - 2026-08-22
+
+- Changed version to 0.119.0 to make it easy to associate with the H3VR build.
+- Changed log message when the wrong version of the game is started.
+- Added main menu message when the wrong version of the game is started.
+- Added fix for internal mag patcher.
+- Updated README.md.
