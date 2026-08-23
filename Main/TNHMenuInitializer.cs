@@ -231,6 +231,14 @@ namespace TNHFramework
                     continue;
                 }
 
+                if ((!IM.CompatMags.ContainsKey(magazineType) || !IM.CompatMags[magazineType].Any()) &&
+                    TNHFramework.MagazineDictionary.ContainsKey(magazineType) &&
+                    magazineType != FireArmMagazineType.mNone)
+                {
+                    TNHFrameworkLogger.Log($"Giving IM.CompatMags new magazines of type {magazineType}", TNHFrameworkLogger.LogType.General);
+                    IM.CompatMags.Add(magazineType, TNHFramework.MagazineDictionary[magazineType]);
+                }
+
                 if ((firearm.CompatibleSingleRounds == null || !firearm.CompatibleSingleRounds.Any()) &&
                     TNHFramework.CartridgeDictionary.ContainsKey(roundType))
                 {
