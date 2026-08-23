@@ -153,6 +153,7 @@
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\MainMenuPatches.cs" />
     <Compile Include="Main\Patches\ConstructorPatches.cs" />
     <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\HighScorePatches.cs" />
