@@ -12,14 +12,53 @@ namespace TNHFramework.Patches
 {
     static class ConstructorPatches
     {
-        private static readonly MethodInfo miUpdateTokenDisplay = typeof(TNH_AmmoReloader2).GetMethod("UpdateTokenDisplay", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miSetState = typeof(TNH_ObjectConstructor).GetMethod("SetState", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSpawnAmmoForObject = typeof(TNH_ObjectConstructor).GetMethod("SpawnAmmoForObject", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly FieldInfo fiAllowEntry = typeof(TNH_ObjectConstructor).GetField("allowEntry", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiSpawnedCase = typeof(TNH_ObjectConstructor).GetField("m_spawnedCase", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static float BespokeAttachmentChance = 0f;
 
+        // This is a patch for using a character's global ammo blacklist in the new ammo reloader
+        [HarmonyPatch(typeof(TNH_Manager), "GetAcceptableRoundClassesForType")]
+        [HarmonyPrefix]
+        public static bool GetAcceptableRoundClassesForType_Replacement(TNH_Manager __instance, ref List<FireArmRoundClass> __result, FireArmRoundType t)
+        {
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
+
+            List<FireArmRoundClass> list = [];
+            if (!AM.SRoundDisplayDataDic.TryGetValue(t, out FVRFireArmRoundDisplayData fvrfireArmRoundDisplayData) || fvrfireArmRoundDisplayData.Classes.Length == 0)
+            {
+                throw new System.InvalidOperationException("What? How does this even happen?");
+            }
+
+            foreach (FVRFireArmRoundDisplayData.DisplayDataClass displayDataClass in fvrfireArmRoundDisplayData.Classes)
+            {
+                FireArmRoundClass roundClass = displayDataClass.Class;
+                if (__instance.C.ValidAmmoEras.Contains(displayDataClass.ObjectID.TagEra) && __instance.C.ValidAmmoSets.Contains(displayDataClass.ObjectID.TagSet))
+                {
+                    if (!__instance.C.RoundClassBlacklist.Contains(roundClass))
+                    {
+                        if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(displayDataClass.ObjectID.ItemID))
+                        {
+                            list.Add(roundClass);
+                        }
+                    }
+                }
+            }
+
+            if (!list.Any())
+            {
+                Debug.LogWarning("No acceptable round classes were found for type: " + t);
+                list.Add(fvrfireArmRoundDisplayData.Classes[0].Class);
+            }
+
+            __result =  list;
+            return false;
+        }
+
+#if (false)
         // This is a patch for using a character's global ammo blacklist in the new ammo reloader
         [HarmonyPatch(typeof(TNH_AmmoReloader2), "RefreshDisplayWithType")]
         [HarmonyPrefix]
@@ -29,7 +68,7 @@ namespace TNHFramework.Patches
         {
             __instance.AmmoTypeField.text = AM.SRoundDisplayDataDic[t].DisplayName;
 
-            if (___m_detectedTypes.Count > 1)
+            if (___m_detectedTypes.Any())
             {
                 __instance.DisplayedTypeNext.enabled = true;
                 __instance.DisplayedTypePrevious.enabled = true;
@@ -45,7 +84,7 @@ namespace TNHFramework.Patches
             ___m_displayedType = t;
             ___m_displayedClasses.Clear();
 
-            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
+            CustomCharacter character = LoadedTemplateManager.CurrentCharacter;  // ADDED
 
             for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
             {
@@ -53,21 +92,21 @@ namespace TNHFramework.Patches
 
                 if (___m_validEras.Contains(objectID.TagEra) && ___m_validSets.Contains(objectID.TagSet))
                 {
-                    if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))
+                    if (character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID))  // ADDED
                     {
                         ___m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
                     }
                 }
             }
 
-            if (!___m_displayedClasses.Any())
+            if (!___m_displayedClasses.Any())  // CHANGED - Optimization
             {
                 ___m_displayedClasses.Add(AM.SRoundDisplayDataDic[t].Classes[0].Class);
             }
 
             if (!__instance.M.UnlockedClassesByType.ContainsKey(t))
             {
-                List<FireArmRoundClass> list = [___m_displayedClasses[0]];
+                List<FireArmRoundClass> list = [___m_displayedClasses[0]];  // CHANGED - Optimization
                 __instance.M.UnlockedClassesByType.Add(t, list);
             }
 
@@ -78,7 +117,7 @@ namespace TNHFramework.Patches
                     __instance.AmmoTokenButtons[j].enabled = true;
                     int costByClass = AM.GetCostByClass(___m_displayedType, ___m_displayedClasses[j]);
 
-                    if (__instance.M.UnlockedClassesByType[___m_displayedType].Contains(___m_displayedClasses[j]) || costByClass < 1)
+                    if (__instance.M.UnlockedClassesByType[___m_displayedType].Contains(___m_displayedClasses[j]) || costByClass <= 0)
                     {
                         if (___m_selectedClass == j)
                         {
@@ -113,10 +152,12 @@ namespace TNHFramework.Patches
             miUpdateTokenDisplay.Invoke(__instance, [__instance.M.GetNumTokens()]);
             return false;
         }
+#endif
 
+        // Attempt to spread pools out evenly. Original method only ensures that next pool is not the same as the previous one.
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]
         [HarmonyPrefix]
-        public static bool GetPoolEntry_Replacement(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
+        public static bool GetPoolEntry_Replacement(TNH_ObjectConstructor __instance, ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
         {
             if (!TNHFramework.SpawnedPoolsDictionary.TryGetValue(t, out List<EquipmentPoolDef.PoolEntry> validPools) || !validPools.Any())
             {
@@ -135,7 +176,7 @@ namespace TNHFramework.Patches
             float summedRarity = validPools.Sum(o => o.Rarity);
 
             // Select a random value within the summed rarity, and select a pool based on that value
-            float selectValue = Random.Range(0, summedRarity);
+            float selectValue = (float)__instance.M.PoolEntryRand.NextDouble() * summedRarity;
             float currentSum = 0;
             foreach (EquipmentPoolDef.PoolEntry entry in validPools)
             {
@@ -242,7 +283,50 @@ namespace TNHFramework.Patches
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
             AnvilCallback<GameObject> gameObjectCallback;
 
-            if (pool.SpawnsInLargeCase || pool.SpawnsInSmallCase)
+            ObjectTable table = constructor.M.GetObjectTable(entry.TableDef);
+
+            if (table.UsesVaultFiles())
+            {
+                VaultFile vf = table.GetRandomVaultFile();
+                List<FVRPhysicalObject> spawnedObjs = null;
+                bool success;
+
+                if (table.FileUsage == ObjectTableDef.VaultFileUsage.WholeFile)
+                {
+                    success = VaultSystem.SpawnVaultFile(vf, constructor.SpawnPoint_VaultScanRoot, true, false, false, out string errorMessage, Vector3.zero, delegate (List<FVRPhysicalObject> vfo)
+                    {
+                        spawnedObjs = vfo;
+                    }, false, -1);
+                }
+                else
+                {
+                    if (table.FileUsage != ObjectTableDef.VaultFileUsage.SingleObject)
+                        throw new System.InvalidOperationException();
+
+                    success = VaultSystem.SpawnVaultFile(vf, constructor.SpawnPoint_VaultScanRoot, true, false, false, out string errorMessage, Vector3.zero, delegate (List<FVRPhysicalObject> vfo)
+                    {
+                        spawnedObjs = vfo;
+                    }, false, 0);
+                }
+
+                if (!success)
+                {
+                    TNHFrameworkLogger.Log("Failed to spawn vault file? What?", TNHFrameworkLogger.LogType.TNH);
+                    yield break;
+                }
+
+                while (spawnedObjs == null)
+                {
+                    yield return null;
+                }
+
+                if (spawnedObjs.Any() && table.FileUsage == ObjectTableDef.VaultFileUsage.SingleObject)
+                {
+                    //yield return constructor.SpawnAmmoForObject(table, spawnedObjs[0].ObjectWrapper);
+                    yield return (IEnumerator)miSpawnAmmoForObject.Invoke(constructor, [table, spawnedObjs[0].ObjectWrapper]);
+                }
+            }
+            else if (table.NumSpawns == 1 && (pool.SpawnsInLargeCase || pool.SpawnsInSmallCase))
             {
                 TNHFrameworkLogger.Log("Item will spawn in a container", TNHFrameworkLogger.LogType.TNH);
 
@@ -250,7 +334,7 @@ namespace TNHFramework.Patches
                 if (pool.SpawnsInSmallCase)
                     caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
-                FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
+                FVRObject item = IM.OD[selectedGroups[0].GetRandomObject()];
                 GameObject itemCase = SpawnWeaponCase(constructor.M, selectedGroups[0].BespokeAttachmentChance, caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 //constructor.m_spawnedCase = itemCase;
@@ -295,7 +379,7 @@ namespace TNHFramework.Patches
                         }
                         else
                         {
-                            string item = group.GetObjects().GetRandom();
+                            string item = group.GetRandomObject();
                             TNHFrameworkLogger.Log("Item selected: " + item, TNHFrameworkLogger.LogType.TNH);
 
                             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(item))
@@ -341,7 +425,7 @@ namespace TNHFramework.Patches
 
                         if (vaultFile != null)
                         {
-                            VaultSystem.ReturnObjectListDelegate del = new((objs) => TrackVaultObjects(constructor.M, objs));
+                            VaultSystem.ReturnObjectListDelegate del = new((objs) => TNHFrameworkUtils.TrackVaultObjects(constructor.M, objs));
                             TNHFrameworkLogger.Log("Spawning vault gun", TNHFrameworkLogger.LogType.TNH);
                             VaultSystem.SpawnVaultFile(vaultFile, primarySpawn, true, false, false, out _, Vector3.zero, del, false);
                         }
@@ -498,13 +582,13 @@ namespace TNHFramework.Patches
                         {
                             TNHFrameworkLogger.Log("Spawning required sights", TNHFrameworkLogger.LogType.TNH);
 
-                            FVRObject sight = IM.OD[character.RequireSightTable.GetSpawnedEquipmentGroups().GetRandom().GetObjects().GetRandom()];
+                            FVRObject sight = IM.OD[character.RequireSightTable.GetSpawnedEquipmentGroups().GetRandom().GetRandomObject()];
                             gameObjectCallback = sight.GetGameObjectAsync();
                             yield return gameObjectCallback;
 
                             if (sight.GetGameObject() != null)
                             {
-                                GameObject spawnedSight = UnityEngine.Object.Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                                GameObject spawnedSight = Object.Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                                 constructor.M.AddObjectToTrackedList(spawnedSight);
                                 objectSpawnCount++;
 
@@ -519,7 +603,7 @@ namespace TNHFramework.Patches
 
                                 if (objectRequired.GetGameObject() != null)
                                 {
-                                    GameObject spawnedRequired = UnityEngine.Object.Instantiate(objectRequired.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
+                                    GameObject spawnedRequired = Object.Instantiate(objectRequired.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
                                     constructor.M.AddObjectToTrackedList(spawnedRequired);
                                     objectSpawnCount++;
 
@@ -554,7 +638,7 @@ namespace TNHFramework.Patches
 
                                 if (bespoke.GetGameObject() != null)
                                 {
-                                    GameObject bespokeObject = UnityEngine.Object.Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                                    GameObject bespokeObject = Object.Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                                     constructor.M.AddObjectToTrackedList(bespokeObject);
                                     objectSpawnCount++;
                                     TNHFrameworkLogger.Log($"Bespoke attachment spawned ({bespoke.ItemID})", TNHFrameworkLogger.LogType.TNH);
@@ -570,7 +654,7 @@ namespace TNHFramework.Patches
             yield break;
         }
 
-        // This is a wrapper
+        // This is a wrapper that allows bespokeAttachmentChance to work
         public static GameObject SpawnWeaponCase(TNH_Manager M, float bespokeAttachmentChance, GameObject caseFab, Vector3 position, Vector3 forward,
             FVRObject weapon, int numMag, int numRound, int minAmmo, int maxAmmo, FVRObject ammoObjOverride = null)
         {
@@ -587,7 +671,7 @@ namespace TNHFramework.Patches
             TNH_WeaponCrate crateComp = caseObj.GetComponent<TNH_WeaponCrate>();
             ___m_weaponCases.Add(caseObj);
 
-            FVRObject ammoObj = ammoObjOverride ?? weapon.GetRandomAmmoObject(weapon, __instance.C.ValidAmmoEras, minAmmo, maxAmmo, __instance.C.ValidAmmoSets);
+            FVRObject ammoObj = ammoObjOverride ?? __instance.GetSeededRandomAmmoObject(weapon, minAmmo, maxAmmo);
             int numClipSpeedLoaderRound = 0;
 
             // Clamp number of ammo objects spawned
@@ -635,19 +719,6 @@ namespace TNHFramework.Patches
 
             __result = caseObj;
             return false;
-        }
-
-        /// <summary>
-        /// Delegate for tracking all GameObjects created by a vault gun spawn
-        /// </summary>
-        /// <param name="objs"></param>
-        private static void TrackVaultObjects(TNH_Manager M, List<FVRPhysicalObject> objs)
-        {
-            foreach (FVRPhysicalObject obj in objs)
-            {
-                if (obj != null)
-                    M.AddObjectToTrackedList(obj.GameObject);
-            }
         }
     }
 }

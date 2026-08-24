@@ -14,7 +14,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
-using YamlDotNet.Serialization;
 
 namespace TNHFramework
 {
@@ -23,7 +22,7 @@ namespace TNHFramework
         public static bool TNHInitialized = false;
         public static bool MagazineCacheFailed = false;
 
-        public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, TNH_LevelLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
+        public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, TNH_LevelLoader hotdog, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
             hotdog?.gameObject.SetActive(false);
 
@@ -55,7 +54,7 @@ namespace TNHFramework
 
                 progressText.text = $"LOADING ITEMS : {itemLoadProgress * 100:0.0}%";
             }
-            while (itemLoadProgress < 1);
+            while (itemLoadProgress <= 0);
 
             try
             {
@@ -81,7 +80,7 @@ namespace TNHFramework
                     itemsText.text = GetMagPatcherCacheLog();
                     progressText.text = $"CACHING ITEMS : {cachingProgress * 100:0.0}%";
                 }
-                while (cachingProgress < 1);
+                while (cachingProgress <= 0);
             }
             else if (TNHFramework.InternalMagPatcher.Value) // Honey, we have Magazine Patcher at home.
             {
@@ -90,7 +89,7 @@ namespace TNHFramework
                 TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Internal Mag Patcher finished!", TNHFrameworkLogger.LogType.General);
             }
 
-            if (TNHFramework.FixModAttachmentTags.Value)  // ODK
+            if (TNHFramework.FixModAttachmentTags.Value)
                 TNHFrameworkUtils.FixModAttachmentTags();
 
             // Now perform final steps of loading characters
@@ -102,7 +101,7 @@ namespace TNHFramework
             }
 
             TNHInitialized = true;
-            UIManagerPatches.RefreshTNHUI(instance, Categories);
+            UIManagerPatches.RefreshTNHUI(instance);
 
             itemsText.text = "";
             progressText.text = "";
@@ -225,6 +224,14 @@ namespace TNHFramework
                     continue;
                 }
 
+                if ((!IM.CompatMags.ContainsKey(magazineType) || !IM.CompatMags[magazineType].Any()) &&
+                    TNHFramework.MagazineDictionary.ContainsKey(magazineType) &&
+                    magazineType != FireArmMagazineType.mNone)
+                {
+                    TNHFrameworkLogger.Log($"Giving IM.CompatMags new magazines of type {magazineType}", TNHFrameworkLogger.LogType.General);
+                    IM.CompatMags.Add(magazineType, TNHFramework.MagazineDictionary[magazineType]);
+                }
+
                 if ((firearm.CompatibleSingleRounds == null || !firearm.CompatibleSingleRounds.Any()) &&
                     TNHFramework.CartridgeDictionary.ContainsKey(roundType))
                 {
@@ -249,7 +256,7 @@ namespace TNHFramework
                 }
 
                 if ((firearm.CompatibleSpeedLoaders == null || !firearm.CompatibleSpeedLoaders.Any()) &&
-                    firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver)
+                    firearm.TagFirearmAction == FVRObject.OTagFirearmAction.Revolver || firearm.ItemID == "GrappleGun")
                 {
                     if (firearmComp == null)
                     {
@@ -267,6 +274,10 @@ namespace TNHFramework
                         Revolver revolverComp = firearmComp.gameObject.GetComponent<Revolver>();
                         if (revolverComp != null)
                             magazineCapacity = revolverComp.Chambers.Length;
+
+                        // Grapple gun magazine is coded as a speedloader, but the gun doesn't have a Revolver component
+                        if (firearm.ItemID == "GrappleGun")
+                            magazineCapacity = 2;
                     }
 
                     if (TNHFramework.SpeedloaderDictionary.ContainsKey(roundType))
@@ -296,6 +307,10 @@ namespace TNHFramework
             // Load all of the default templates into our dictionaries
             TNHFrameworkLogger.Log("Adding default sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultSosigs();
+
+            TNHFrameworkLogger.Log("Adding Steam Workshop sosigs to template dictionary", TNHFrameworkLogger.LogType.General);
+            LoadWorkshopSosigs(characters);
+
             TNHFrameworkLogger.Log("Adding default characters to template dictionary", TNHFrameworkLogger.LogType.General);
             LoadDefaultCharacters(characters);
 
@@ -318,7 +333,54 @@ namespace TNHFramework
         {
             foreach (SosigEnemyTemplate sosig in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
             {
-                LoadedTemplateManager.AddSosigTemplate(sosig);
+                LoadedTemplateManager.AddSosigTemplate(sosig, false);
+            }
+        }
+
+        /// <summary>
+        /// Loads all Steam Workshop sosigs into the template manager
+        /// </summary>
+        private static void LoadWorkshopSosigs(List<TNH_CharacterDef> characters)
+        {
+            foreach (TNH_CharacterDef character in characters)
+            {
+                List<TNH_Progression> allProgressions = [.. character.Progressions, .. character.Progressions_Endless];
+                HashSet<SosigEnemyTemplate> sosigs = [];
+
+                foreach (TNH_Progression progression in allProgressions)
+                {
+                    foreach (TNH_Progression.Level level in progression.Levels)
+                    {
+                        if (level.TakeChallenge.OverrideGID != null)
+                            sosigs.Add(level.TakeChallenge.OverrideGID);
+
+                        if (level.SupplyChallenge.OverrideGID != null)
+                            sosigs.Add(level.SupplyChallenge.OverrideGID);
+
+                        foreach (TNH_HoldChallenge.Phase phase in level.HoldChallenge.Phases)
+                        {
+                            if (phase.OverrideEType != null)
+                                sosigs.Add(phase.OverrideEType);
+
+                            if (phase.OverrideLType != null)
+                                sosigs.Add(phase.OverrideLType);
+                        }
+
+                        foreach (TNH_PatrolChallenge.Patrol patrol in level.PatrolChallenge.Patrols)
+                        {
+                            if (patrol.OverrideEType != null)
+                                sosigs.Add(patrol.OverrideEType);
+
+                            if (patrol.OverrideLType != null)
+                                sosigs.Add(patrol.OverrideLType);
+                        }
+                    }
+                }
+
+                foreach (SosigEnemyTemplate sosig in sosigs)
+                {
+                    LoadedTemplateManager.AddSosigTemplate(sosig, true);
+                }
             }
         }
 
@@ -342,11 +404,20 @@ namespace TNHFramework
             {
                 foreach (EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
                 {
-                    if (!icons.ContainsKey(pool.TableDef.Icon.name))
+                    if (pool.TableDef.Icon != null && !icons.ContainsKey(pool.TableDef.Icon.name))
                     {
                         TNHFrameworkLogger.Log("Icon found (" + pool.TableDef.Icon.name + ")", TNHFrameworkLogger.LogType.Character);
                         icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
                     }
+                }
+            }
+
+            foreach (ObjectTableDefIconSet.IconEnumPair icon in IM.ObjectTableIcons.IconsByEnum)
+            {
+                if (!icons.ContainsKey(icon.IconType.ToString()))
+                {
+                    TNHFrameworkLogger.Log("Icon found (" + icon.IconType.ToString() + ")", TNHFrameworkLogger.LogType.Character);
+                    icons.Add(icon.IconType.ToString(), icon.Icon);
                 }
             }
 
@@ -454,25 +525,6 @@ namespace TNHFramework
                         sw.WriteLine(sosigString);
                         sw.Close();
                     }
-
-                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
-
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializer = new SerializerBuilder()
-                            .WithIndentedSequences()
-                            .Build();
-
-                        SosigTemplate sosig = new(template);
-                        string sosigString = serializer.Serialize(sosig);
-
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
                 }
             }
             catch (Exception ex)
@@ -503,23 +555,6 @@ namespace TNHFramework
                     using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string sosigString = JsonConvert.SerializeObject(template, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(sosigString);
-                        sw.Close();
-                    }
-
-                    string yamlPath = path + "/" + CleanFilename(template.SosigEnemyID + ".yaml");
-
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializer = new SerializerBuilder()
-                            .WithIndentedSequences()
-                            .Build();
-
-                        string sosigString = serializer.Serialize(template);
                         sw.WriteLine(sosigString);
                         sw.Close();
                     }
@@ -555,24 +590,6 @@ namespace TNHFramework
                     using (StreamWriter sw = File.CreateText(jsonPath))
                     {
                         string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
-                        sw.WriteLine(characterString);
-                        sw.Close();
-                    }
-
-                    string yamlPath = path + "/" + CleanFilename(charDef.DisplayName + ".yaml");
-
-                    TNHFrameworkLogger.Log("Creating character template file: " + yamlPath, TNHFrameworkLogger.LogType.File);  // ODK - DEBUG
-                    if (File.Exists(yamlPath))
-                        File.Delete(yamlPath);
-
-                    // Create a new file     
-                    using (StreamWriter sw = File.CreateText(yamlPath))
-                    {
-                        var serializer = new SerializerBuilder()
-                            .WithIndentedSequences()
-                            .Build();
-
-                        string characterString = serializer.Serialize(charDef);
                         sw.WriteLine(characterString);
                         sw.Close();
                     }

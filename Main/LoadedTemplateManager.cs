@@ -61,26 +61,43 @@ namespace TNHFramework
             TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
-        public static void AddSosigTemplate(SosigEnemyTemplate realTemplate)
+        public static void AddSosigTemplate(SosigEnemyTemplate realTemplate, bool workshop)
         {
             SosigTemplate template = new(realTemplate);
 
-            // This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
-            if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
+            if (workshop || realTemplate.SosigEnemyID == SosigEnemyID.None)
             {
-                SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
+                if (!SosigIDDict.ContainsKey(realTemplate.UgcId))
+                {
+                    SosigIDDict.Add(realTemplate.UgcId, NewSosigID);
+                    NewSosigID++;
+                    TNHFrameworkLogger.Log("Sosig added successfully : " + realTemplate.UgcId, TNHFrameworkLogger.LogType.Character);
+                }
+                else
+                {
+                    TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + realTemplate.UgcId);
+                    return;
+                }
             }
             else
             {
-                TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
-                return;
+                if (!SosigIDDict.ContainsKey(template.SosigEnemyID))
+                {
+                    // This template is from a sosig that already has a valid SosigEnemyID, so we can just add that to the dictionary casted as an int
+                    SosigIDDict.Add(template.SosigEnemyID, (int)realTemplate.SosigEnemyID);
+                    TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
+                }
+                else
+                {
+                    TNHFrameworkLogger.LogError("Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                    return;
+                }
             }
 
             // Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHFrameworkLogger.Log("Sosig added successfully : " + template.DisplayName, TNHFrameworkLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)

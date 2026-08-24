@@ -8,7 +8,6 @@ using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
-using YamlDotNet.Serialization;
 
 namespace TNHFramework
 {
@@ -22,16 +21,7 @@ namespace TNHFramework
             {
                 SosigTemplate sosig = null;
 
-                if (file.Name.EndsWith(".yaml"))
-                {
-                    var deserializerBuilder = new DeserializerBuilder();
-
-                    var deserializer = deserializerBuilder.Build();
-                    sosig = deserializer.Deserialize<SosigTemplate>(File.ReadAllText(file.FullName));
-
-                    TNHFrameworkLogger.Log("Sosig loaded successfully : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
-                }
-                else if (file.Name.EndsWith(".json"))
+                if (file.Name.EndsWith(".json"))
                 {
                     JsonSerializerSettings settings = new()
                     {
@@ -41,23 +31,6 @@ namespace TNHFramework
                     sosig = JsonConvert.DeserializeObject<SosigTemplate>(File.ReadAllText(file.FullName));
 
                     TNHFrameworkLogger.Log("Sosig loaded successfully : " + sosig.DisplayName, TNHFrameworkLogger.LogType.File);
-
-                    if (TNHFramework.ConvertFilesToYAML.Value)
-                    {
-                        using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
-                        {
-                            var serializerBuilder = new SerializerBuilder();
-
-                            serializerBuilder.WithIndentedSequences();
-
-                            var serializer = serializerBuilder.Build();
-                            string vaultString = serializer.Serialize(sosig);
-                            sw.WriteLine(vaultString);
-                            sw.Close();
-                        }
-
-                        File.Delete(file.FullName);
-                    }
                 }
 
                 LoadedTemplateManager.AddSosigTemplate(sosig);
@@ -81,20 +54,13 @@ namespace TNHFramework
 
                 foreach (FileInfo file in folder.GetFiles())
                 {
-                    if (file.Name.EndsWith("character.yaml"))
-                    {
-                        var deserializer = new DeserializerBuilder().Build();
-                        character = deserializer.Deserialize<CustomCharacter>(File.ReadAllText(file.FullName));
-
-                        TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);
-                    }
-                    else if (file.Name.EndsWith("character.json"))
+                    if (file.Name.EndsWith("character.json"))
                     {
                         JsonSerializerSettings settings = new()
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         };
-                        character = new(JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(File.ReadAllText(file.FullName), settings));
+                        character = JsonConvert.DeserializeObject<CustomCharacter>(File.ReadAllText(file.FullName), settings);
 
                         TNHFrameworkLogger.Log("Character partially loaded - loaded character file", TNHFrameworkLogger.LogType.File);
                     }
@@ -155,17 +121,7 @@ namespace TNHFramework
             {
                 VaultFile savedGun = null;
 
-                if (file.Name.EndsWith(".yaml"))
-                {
-                    var deserializerBuilder = new DeserializerBuilder();
-
-                    var deserializer = deserializerBuilder.Build();
-                    savedGun = deserializer.Deserialize<VaultFile>(File.ReadAllText(file.FullName));
-                    savedGun.Type = VaultFileType.SingleObject;
-
-                    TNHFrameworkLogger.Log("Vault file loaded successfully : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
-                }
-                else if (file.Name.EndsWith(".json"))
+                if (file.Name.EndsWith(".json"))
                 {
                     JsonSerializerSettings settings = new()
                     {
@@ -176,23 +132,6 @@ namespace TNHFramework
                     savedGun.Type = VaultFileType.SingleObject;
 
                     TNHFrameworkLogger.Log("Vault file loaded successfully : " + savedGun.FileName, TNHFrameworkLogger.LogType.File);
-
-                    if (TNHFramework.ConvertFilesToYAML.Value)
-                    {
-                        using (StreamWriter sw = File.CreateText(file.FullName.Replace(".json", ".yaml")))
-                        {
-                            var serializerBuilder = new SerializerBuilder();
-
-                            serializerBuilder.WithIndentedSequences();
-
-                            var serializer = serializerBuilder.Build();
-                            string vaultString = serializer.Serialize(savedGun);
-                            sw.WriteLine(vaultString);
-                            sw.Close();
-                        }
-
-                        File.Delete(file.FullName);
-                    }
                 }
 
                 if (savedGun != null)

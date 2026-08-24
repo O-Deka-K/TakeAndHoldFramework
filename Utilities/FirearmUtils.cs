@@ -173,12 +173,12 @@ namespace TNHFramework.Utilities
             if (AM.STypeDic.ContainsKey(firearm.RoundType))
             {
                 // Get a list of ammo types that cost more than 0 and sort them in descending order by cost
-                var dogshit = AM.STypeDic[firearm.RoundType].Values
+                var roundsByCost = AM.STypeDic[firearm.RoundType].Values
                     .Where(x => x.Cost > 0)
                     .OrderByDescending(x => x.Cost);
 
                 // Remove ammo types starting from highest cost. Don't remove if it's the last one left.
-                foreach (var round in dogshit)
+                foreach (var round in roundsByCost)
                 {
                     if (compatibleRounds.Count > 1 && compatibleRounds.Contains(round.ObjectID))
                         compatibleRounds.Remove(round.ObjectID);
@@ -333,7 +333,7 @@ namespace TNHFramework.Utilities
                     heldItems.Add(slot.CurObject);
 
                 // If the player has a backpack on, we should search through that as well
-                if (slot.CurObject is PlayerBackPack && ((PlayerBackPack)slot.CurObject).ObjectWrapper is not null)
+                if (slot.CurObject is PlayerBackPack pack && pack.ObjectWrapper is not null)
                 {
                     foreach (FVRQuickBeltSlot backpackSlot in GM.CurrentPlayerBody.QuickbeltSlots)
                     {

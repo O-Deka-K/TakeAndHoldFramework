@@ -325,6 +325,7 @@ namespace TNHFramework.Patches
                     }
                     else
                     {
+                        // Instead of getting Sosig data from patrolSquard, use HoldPointStart as the index into level.Patrols
                         int patrolIndex = patrolSquad.HoldPointStart;
                         Patrol patrol = level.Patrols[patrolIndex];
 
@@ -334,12 +335,25 @@ namespace TNHFramework.Patches
 
                         if (patrolSquad.IndexOfNextSpawn == 0)
                         {
-                            SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
-                            template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
-                            string sosigName = LoadedTemplateManager.LoadedSosigsDict[template].SosigEnemyID;
+                            if (patrol.OverrideLType != null)
+                            {
+                                template = patrol.OverrideLType;
+                            }
+                            else
+                            {
+                                SosigEnemyID sosigID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
+                                template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[sosigID];
+                            }
+
+                            string sosigName = template.DisplayName;
                             allowAllWeapons = true;
 
                             TNHFrameworkLogger.Log($"[{DateTime.Now:HH:mm:ss}] Spawning {patrolSquad.NumLeftToSpawn} sosigs for Patrol {squadIndex + 1} [{sosigName}]", TNHFrameworkLogger.LogType.TNH);
+                        }
+                        else if (patrol.OverrideEType != null)
+                        {
+                            template = patrol.OverrideEType;
+                            allowAllWeapons = false;
                         }
                         else if (patrol.EnemyType.Any())
                         {
@@ -381,7 +395,7 @@ namespace TNHFramework.Patches
             {
                 TNH_Manager.SosigPatrolSquad patrolSquad = ___m_patrolSquads[squadIndex];
 
-                if (patrolSquad.Squad.Count < 1 && patrolSquad.NumLeftToSpawn <= 0)
+                if (!patrolSquad.Squad.Any() && patrolSquad.NumLeftToSpawn <= 0)
                 {
                     ___m_patrolSquads[squadIndex].PatrolPoints.Clear();
                     ___m_patrolSquads.RemoveAt(squadIndex);
@@ -508,7 +522,7 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (validLocations.Count < 1)
+            if (!validLocations.Any())
                 return false;
             
             validLocations.Shuffle();
@@ -570,7 +584,6 @@ namespace TNHFramework.Patches
             return GeneratePatrol(patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
         }
 
-        // TODO: To choose spawn based on IFF, we need to basically generate spawn points on our own in this method!
         public static TNH_Manager.SosigPatrolSquad GeneratePatrol(Patrol patrol, List<Vector3> SpawnPoints, List<Vector3> ForwardVectors, List<Vector3> PatrolPoints, int patrolIndex)
         {
             // If this is a boss, then we can only spawn it once, so add it to the list of spawned bosses
@@ -579,20 +592,35 @@ namespace TNHFramework.Patches
                 TNHFramework.SpawnedBossIndexes.Add(patrolIndex);
             }
 
-            SosigEnemyID leaderType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
-            SosigEnemyID enemyType = patrol.EnemyType.Any() ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None;
-
             TNH_Manager.SosigPatrolSquad squad = new()
             {
                 PatrolPoints = [.. PatrolPoints],
                 IsPatrollingUp = true,
-                Tem_Leader = ManagerSingleton<IM>.Instance.odicSosigObjsByID[leaderType],
-                Tem_Regular = ManagerSingleton<IM>.Instance.odicSosigObjsByID[enemyType],
                 HoldPointStart = patrolIndex,  // Commandeering this to hold patrolIndex because it's not used anywhere
                 IFF = patrol.IFFUsed,
                 IndexOfNextSpawn = 0,
                 NumLeftToSpawn = Mathf.Clamp(patrol.PatrolSize, 1, SpawnPoints.Count)
             };
+
+            if (patrol.OverrideLType != null)
+            {
+                squad.Tem_Leader = patrol.OverrideLType;
+            }
+            else
+            {
+                SosigEnemyID leaderType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType];
+                squad.Tem_Leader = ManagerSingleton<IM>.Instance.odicSosigObjsByID[leaderType];
+            }
+
+            if (patrol.OverrideEType != null)
+            {
+                squad.Tem_Regular = patrol.OverrideEType;
+            }
+            else
+            {
+                SosigEnemyID enemyType = patrol.EnemyType.Any() ? (SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType[0]] : SosigEnemyID.None;
+                squad.Tem_Regular = ManagerSingleton<IM>.Instance.odicSosigObjsByID[enemyType];
+            }
 
             // If squad is set to swarm, the first point they path to should be the player's current position
             if (patrol.SwarmPlayer)

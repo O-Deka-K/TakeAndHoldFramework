@@ -3,8 +3,6 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using TNHFramework.ObjectTemplates;
-using TNHFramework.Utilities;
 using UnityEngine;
 
 namespace TNHFramework.Patches

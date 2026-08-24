@@ -23,7 +23,7 @@ namespace TNHFramework.ObjectTemplates
         public float SecondaryChance;
         public float TertiaryChance;
         public float DroppedLootChance;
-        public V1.EquipmentGroup DroppedObjectPool = new();
+        public EquipmentGroup DroppedObjectPool = new();
 
         [JsonIgnore]
         private SosigEnemyTemplate template;
@@ -101,8 +101,6 @@ namespace TNHFramework.ObjectTemplates
                 {
                     outfit.DelayedInit();
                 }
-
-                DroppedObjectPool?.DelayedInit(template.UgcId);
                 
 				// Add the new sosig template to the global dictionaries
                 ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(template.SosigEnemyID, template);

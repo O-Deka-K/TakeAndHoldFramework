@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace TNHFramework.Utilities
@@ -7,7 +8,7 @@ namespace TNHFramework.Utilities
     {
         public static T GetRandom<T>(this List<T> list)
         {
-            if (list.Count < 1)
+            if (!list.Any())
             {
                 TNHFrameworkLogger.LogWarning($"GetRandom() was called on an empty list of type [{typeof(T)}]!");
                 return default;

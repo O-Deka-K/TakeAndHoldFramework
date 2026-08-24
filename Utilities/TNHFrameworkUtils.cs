@@ -59,21 +59,6 @@ namespace TNHFramework.Utilities
             }
         }
 
-        public static void RemoveUnloadedObjectIDs(ObjectTemplates.V1.EquipmentGroup group)
-        {
-            if (group.IDOverride != null)
-                RemoveMissingObjectIDs(group.IDOverride);
-
-            // If IDOverride is now empty, use IDOverrideBackup
-            if ((group.IDOverride == null || !group.IDOverride.Any()) && group.IDOverrideBackup != null)
-            {
-                RemoveMissingObjectIDs(group.IDOverrideBackup);
-
-                if (group.IDOverrideBackup.Any())
-                    group.IDOverride = group.IDOverrideBackup;
-            }
-        }
-
         public static void RemoveMissingObjectIDs(List<string> IDOverride)
         {
             for (int i = IDOverride.Count - 1; i >= 0; i--)
@@ -240,10 +225,10 @@ namespace TNHFramework.Utilities
                     id = SosigEnemyID.MG_Special_Duelist;
                 else if (enemyType.StartsWith("MG_", StringComparison.OrdinalIgnoreCase))
                     id = SosigEnemyID.MG_Soldier_LInfantry_Rifle;
-                else if (enemyType.StartsWith("Kolbasa_PMC", StringComparison.OrdinalIgnoreCase))
-                    id = SosigEnemyID.Kolbasa_PMC_Pistols;
-                else if (enemyType.StartsWith("Kolbasa_Swe", StringComparison.OrdinalIgnoreCase))
-                    id = SosigEnemyID.Kolbasa_SweatyPMC_Rifle;
+                else if (enemyType.StartsWith("Kolbasa_Merc", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_MercLight_Pistols;
+                else if (enemyType.StartsWith("Kolbasa_ScavRot", StringComparison.OrdinalIgnoreCase))
+                    id = SosigEnemyID.Kolbasa_ScavRot_Decayed;
                 else if (enemyType.StartsWith("Kolbasa_Bos", StringComparison.OrdinalIgnoreCase))
                     id = SosigEnemyID.Kolbasa_Boss_Kotleta;
                 else if (enemyType.StartsWith("Kolbas", StringComparison.OrdinalIgnoreCase))
@@ -1321,9 +1306,17 @@ namespace TNHFramework.Utilities
 
             foreach (EquipmentGroup group in selectedGroup.GetSpawnedEquipmentGroups())
             {
+                FVRObject selectedFVR = null;
+
                 for (int i = 0; i < group.ItemsToSpawn; i++)
                 {
-                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out FVRObject selectedFVR))
+                    if (i == 0 || !group.SpawnsAreTheSame)
+                    {
+                        IM.OD.TryGetValue(group.GetRandomObject(), out FVRObject fvrobject);
+                        selectedFVR = fvrobject;
+                    }
+
+                    if (selectedFVR != null)
                     {
                         // First, async get the game object to spawn
                         AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
@@ -1335,13 +1328,26 @@ namespace TNHFramework.Utilities
                         currentHeight += heightNeeded;
 
                         // Finally spawn the item and call the callback if it's not null
-                        GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+                        GameObject spawnedObject = UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
 
                         // This is added to the tracked object list after we return
                         callback?.Invoke(spawnedObject);
                         yield return null;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Delegate for tracking all GameObjects created by a vault gun spawn
+        /// </summary>
+        /// <param name="objs"></param>
+        public static void TrackVaultObjects(TNH_Manager M, List<FVRPhysicalObject> objs)
+        {
+            foreach (FVRPhysicalObject obj in objs)
+            {
+                if (obj != null)
+                    M.AddObjectToTrackedList(obj.GameObject);
             }
         }
     }

@@ -22,14 +22,13 @@ namespace TNHFramework.Patches
         {
             foreach (Construct_Volume construct in __instance.M.ConstructSpawners)
             {
-                if (!TNHFramework.EnableBlister.Value && construct is Construct_Blister_Volume)
+                if ((!TNHFramework.EnableBlister && construct is Construct_Blister_Volume)
+                    || (!TNHFramework.EnableFloater && construct is Construct_Floater_Volume)
+                    || (!TNHFramework.EnableIris && construct is Construct_Iris_Volume)
+                    || (!TNHFramework.EnableSentinel && construct is Construct_Sentinel_Path))
+                {
                     __instance.ExcludeConstructVolumes.Add(construct);
-                else if (!TNHFramework.EnableFloater.Value && construct is Construct_Floater_Volume)
-                    __instance.ExcludeConstructVolumes.Add(construct);
-                else if (!TNHFramework.EnableIris.Value && construct is Construct_Iris_Volume)
-                    __instance.ExcludeConstructVolumes.Add(construct);
-                else if (!TNHFramework.EnableSentinel.Value && construct is Construct_Sentinel_Path)
-                    __instance.ExcludeConstructVolumes.Add(construct);
+                }
             }
         }
 
@@ -38,7 +37,7 @@ namespace TNHFramework.Patches
         [HarmonyPostfix]
         public static void BeginPhase_TNHSeed(ref float ___m_tickDownToNextGroupSpawn, TNH_HoldChallenge.Phase ___m_curPhase, int ___m_phaseIndex)
         {
-            TNHFrameworkLogger.Log($"Beginning HOLD PHASE -- Wave {___m_phaseIndex}", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log($"Beginning HOLD PHASE -- Wave {___m_phaseIndex + 1}", TNHFrameworkLogger.LogType.TNH);
 
             ___m_tickDownToNextGroupSpawn = ___m_curPhase.WarmUp * 0.8f;
 
@@ -77,7 +76,7 @@ namespace TNHFramework.Patches
             Phase currentPhase = LoadedTemplateManager.CurrentCharacter.GetCurrentPhase(___m_curPhase);
 
             // If we shouldn't spawn any targets, we exit out early
-            if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) || currentPhase.MaxTargetsLimited < 1)
+            if ((currentPhase.MaxTargets <= 0 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) || (currentPhase.MaxTargets <= 0 && currentPhase.MaxTargetsLimited <= 0))
             {
                 //__instance.CompletePhase();
                 miCompletePhase.Invoke(__instance, []);
@@ -107,23 +106,27 @@ namespace TNHFramework.Patches
             if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
                 ___m_tickDownToNextGroupSpawn -= Time.deltaTime * (0.4f + (float)___m_phaseIndex * 0.4f);
 
-            if (___m_activeSosigs.Count < 1 && ___m_state == TNH_HoldPoint.HoldState.Analyzing)
+            if (!___m_activeSosigs.Any() && ___m_state == TNH_HoldPoint.HoldState.Analyzing)
                 ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
 
-            if (!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave && LoadedTemplateManager.CurrentCharacter.isCustom)
+            if (!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f)
             {
-                // Check if grenade vectors exist before throwing grenades
-                if (__instance.AttackVectors[0].GrenadeVector != null)
-                    SpawnGrenades(__instance.AttackVectors, __instance.M, ___m_phaseIndex);
+                // Throw grenades at start of each Hold wave (custom characters only). This was in the vanilla game, but later removed.
+                // I don't think GrenadeVector exists anywhere anymore, so this might never happen.
+                if (!___m_isFirstWave && LoadedTemplateManager.CurrentCharacter.isCustom)
+                {
+                    // Check if grenade vectors exist before throwing grenades
+                    if (__instance.AttackVectors[0].GrenadeVector != null)
+                        SpawnGrenades(__instance.AttackVectors, __instance.M, ___m_phaseIndex);
+                }
 
                 ___m_hasThrownNadesInWave = true;
+                __instance.AttackVectors.Shuffle();
             }
 
             // Handle spawning of a wave if it is time
-            if (___m_curPhase != null && ___m_tickDownToNextGroupSpawn <= 0 && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive)
+            if (___m_curPhase != null && ___m_tickDownToNextGroupSpawn <= 0 /* && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive */)
             {
-                __instance.AttackVectors.Shuffle();
-
                 //SpawnHoldEnemyGroup(___m_curPhase, ___m_phaseIndex, __instance.AttackVectors, __instance.SpawnPoints_Turrets, ___m_activeSosigs, __instance.M, ref ___m_isFirstWave);
                 miSpawnHoldEnemyGroup.Invoke(__instance, []);
                 ___m_hasThrownNadesInWave = false;
@@ -155,7 +158,7 @@ namespace TNHFramework.Patches
                 // Instantiate the grenade object
                 if (IM.OD.ContainsKey(grenadeType))
                 {
-                    GameObject grenadeObject = UnityEngine.Object.Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
+                    GameObject grenadeObject = Object.Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
 
                     // Give the grenade an initial velocity based on the grenade vector
                     grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
@@ -167,56 +170,81 @@ namespace TNHFramework.Patches
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnHoldEnemyGroup")]
         [HarmonyPrefix]
         public static bool SpawnHoldEnemyGroup_Replacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, int ___m_phaseIndex,
-            ref List<Sosig> ___m_activeSosigs, ref bool ___m_isFirstWave)
+            ref Sosig ___m_holdGroupLeader, ref bool ___m_isCurrentWaveBoss, ref List<Sosig> ___m_activeSosigs, ref bool ___m_isFirstWave)
         {
-            TNHFrameworkLogger.Log("Spawning enemy wave", TNHFrameworkLogger.LogType.TNH);
-
-            // TODO: Add custom property form MinDirections
-            int numAttackVectors = Random.Range(1, ___m_curPhase.MaxDirections + 1);
-            numAttackVectors = Mathf.Clamp(numAttackVectors, 1, __instance.AttackVectors.Count);
-
             // Get the custom character data
             Phase currPhase = LoadedTemplateManager.CurrentLevel.HoldPhases[___m_phaseIndex];
 
+            int maxNumSpawnable = ___m_curPhase.MaxEnemiesAlive - ___m_activeSosigs.Count;
+            if (maxNumSpawnable <= 0)
+                return false;
+
+            TNHFrameworkLogger.Log("Spawning enemy wave", TNHFrameworkLogger.LogType.TNH);
+
+            int numToSpawn = Random.Range(___m_curPhase.MinEnemies, ___m_curPhase.MaxEnemies + 1);
+            numToSpawn = Mathf.Clamp(numToSpawn, 0, maxNumSpawnable);
+
+            if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking && numToSpawn > 2)
+                numToSpawn--;
+
+            int maxDirectionsToSpawnFrom = Mathf.Clamp(___m_curPhase.MaxDirections, 0, __instance.AttackVectors.Count);
+
+            // Find the maximum number that can be spawned based on the number of directions to spawn from
+            maxNumSpawnable = 0;
+            for (int direction = 0; direction < maxDirectionsToSpawnFrom; direction++)
+                maxNumSpawnable += __instance.AttackVectors[direction].SpawnPoints_Sosigs_Attack.Count;
+
+            numToSpawn = Mathf.Clamp(numToSpawn, 0, maxNumSpawnable);
+
             // Set first enemy to be spawned as leader
-            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
-            int enemiesToSpawn = Random.Range(___m_curPhase.MinEnemies, ___m_curPhase.MaxEnemies + 1);
+            SosigEnemyTemplate sosigTemplate = currPhase.OverrideLType ?? ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
+            SosigEnemyTemplate sosigEType = currPhase.OverrideEType ?? ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom()]];
 
-            TNHFrameworkLogger.Log($"Spawning {enemiesToSpawn} hold guards (Phase {___m_phaseIndex})", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log($"Spawning {numToSpawn} hold guards (Phase {___m_phaseIndex + 1})", TNHFrameworkLogger.LogType.TNH);
 
-            int sosigsSpawned = 0;
-            int vectorSpawnPoint = 0;
-            Vector3 targetVector;
-            int vectorIndex = 0;
+            int numSpawned = 0;
+            int spawnIndex = 0;
+            Vector3 targetPosition;
 
-            while (sosigsSpawned < enemiesToSpawn)
+            while (numSpawned < numToSpawn)
             {
-                TNHFrameworkLogger.Log("Spawning at attack vector: " + vectorIndex, TNHFrameworkLogger.LogType.TNH);
-
-                if (__instance.AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint)
-                    break;
-
-                // Set the sosig's target position
-                if (currPhase.SwarmPlayer)
-                    targetVector = GM.CurrentPlayerBody.TorsoTransform.position;
-                else
-                    targetVector = __instance.SpawnPoints_Turrets[Random.Range(0, __instance.SpawnPoints_Turrets.Count)].position;
-
-                Transform spawnPoint = __instance.AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint];
-                Sosig enemy = __instance.M.SpawnEnemy(enemyTemplate, spawnPoint.position, spawnPoint.rotation, ___m_curPhase.IFFUsed, true, targetVector, true);
-
-                ___m_activeSosigs.Add(enemy);
-
-                // At this point, the leader has been spawned, so always set enemy to be regulars
-                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
-                sosigsSpawned++;
-
-                vectorIndex++;
-                if (vectorIndex >= numAttackVectors)
+                for (int direction = 0; direction < maxDirectionsToSpawnFrom; direction++)
                 {
-                    vectorIndex = 0;
-                    vectorSpawnPoint++;
+                    if (spawnIndex >= __instance.AttackVectors[direction].SpawnPoints_Sosigs_Attack.Count)
+                        continue;
+
+                    Transform spawnPoint = __instance.AttackVectors[direction].SpawnPoints_Sosigs_Attack[spawnIndex];
+
+                    bool isLeader = true;
+                    if (numSpawned > 0 || ___m_holdGroupLeader != null)
+                    {
+                        sosigTemplate = sosigEType;
+                        isLeader = false;
+                    }
+
+                    // Set the sosig's target vector
+                    if (currPhase.SwarmPlayer)
+                        targetPosition = GM.CurrentPlayerBody.TorsoTransform.position;
+                    else
+                        targetPosition = __instance.SpawnPoints_Turrets[Random.Range(0, __instance.SpawnPoints_Turrets.Count)].position;
+
+                    // Only the first sosig spawning from each direction is allowed all weapons
+                    // In vanilla, only the sosigs spawning from the first direction are allowed all weapons. Not sure if this is the intended behavior.
+                    Sosig sosig = __instance.M.SpawnEnemy(sosigTemplate, spawnPoint.position, spawnPoint.rotation, ___m_curPhase.IFFUsed, true, targetPosition, spawnIndex == 0);
+                    ___m_activeSosigs.Add(sosig);
+                    numSpawned++;
+
+                    if (isLeader)
+                    {
+                        ___m_holdGroupLeader = sosig;
+
+                        if (___m_curPhase.IsLeaderBoss)
+                            ___m_isCurrentWaveBoss = true;
+                    }
+
                 }
+
+                spawnIndex++;
             }
 
             ___m_isFirstWave = false;
@@ -245,30 +273,49 @@ namespace TNHFramework.Patches
             if (!___m_validSpawnPoints.Any())
                 ___m_validSpawnPoints.Add(__instance.SpawnPoints_Targets[0]);
 
-            ___m_numTargsToSpawn = Random.Range(___m_curPhase.MinTargets, ___m_curPhase.MaxTargets + 1);
-
-            if (__instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-            {
-                //___m_numTargsToSpawn = this.GetMaxTargsInHold();
-                ___m_numTargsToSpawn = (int)miGetMaxTargsInHold.Invoke(__instance, []);
-
-                if (___m_phaseIndex == 0)
-                    ___m_numTargsToSpawn -= 2;
-
-                if (___m_phaseIndex == 1)
-                    ___m_numTargsToSpawn--;
-
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && ___m_numTargsToSpawn < 5)  // ODK - Need a few more
-                    ___m_numTargsToSpawn = 5;
-                else if (___m_numTargsToSpawn < 3)
-                    ___m_numTargsToSpawn = 3;
-            }
+            ___m_validSpawnPoints.Shuffle<Transform>();
 
             if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
+            {
                 ___m_numTargsToSpawn = ___m_phaseIndex + 1;
+            }
+            else
+            {
+                int min = ___m_curPhase.MinTargets;
+                int max = ___m_curPhase.MaxTargets;
 
-            ___m_numTargsToSpawn = Mathf.Min(___m_numTargsToSpawn, ___m_validSpawnPoints.Count);  // ODK - Moved this down
-            ___m_validSpawnPoints.Shuffle<Transform>();
+                if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
+                {
+                    if (___m_curPhase.MinTargets_Limited > 0)
+                        min = ___m_curPhase.MinTargets_Limited;
+
+                    if (___m_curPhase.MaxTargets_Limited > 0)
+                        max = ___m_curPhase.MaxTargets_Limited;
+                }
+
+                min = Mathf.Clamp(min, 0, ___m_validSpawnPoints.Count);
+                max = Mathf.Clamp(max, 0, ___m_validSpawnPoints.Count);
+                ___m_numTargsToSpawn = Random.Range(min, max + 1);
+
+                if (__instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                {
+                    //___m_numTargsToSpawn = this.GetMaxTargsInHold();
+                    ___m_numTargsToSpawn = (int)miGetMaxTargsInHold.Invoke(__instance, []);
+
+                    if (___m_phaseIndex == 0)
+                        ___m_numTargsToSpawn -= 2;
+
+                    if (___m_phaseIndex == 1)
+                        ___m_numTargsToSpawn--;
+
+                    if (max >= 3)
+                        ___m_numTargsToSpawn = Mathf.Max(___m_numTargsToSpawn, ___m_numTargsToSpawn, 3);
+                    else
+                        ___m_numTargsToSpawn = Mathf.Max(___m_numTargsToSpawn, ___m_numTargsToSpawn, max);
+                }
+
+                ___m_numTargsToSpawn = Mathf.Clamp(___m_numTargsToSpawn, 0, ___m_validSpawnPoints.Count);  // ODK - Moved this down
+            }
 
             for (int j = 0; j < ___m_numTargsToSpawn; j++)
             {
@@ -282,31 +329,23 @@ namespace TNHFramework.Patches
         // Replaced because TNHFramework.Phase has extra features
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTargetGroup")]
         [HarmonyPrefix]
-        public static bool SpawnTargetGroup_Replacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, List<Transform> ___m_validSpawnPoints)
+        public static bool SpawnTargetGroup_Replacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase, int ___m_numTargsToSpawn, List<Transform> ___m_validSpawnPoints)
         {
             Phase currentPhase = LoadedTemplateManager.CurrentCharacter.GetCurrentPhase(___m_curPhase);
 
             //__instance.DeleteAllActiveWarpIns();
             miDeleteAllActiveWarpIns.Invoke(__instance, []);
 
-            int numTargets;
-            int minTargets = currentPhase.MinTargets;
-            int maxTargets = currentPhase.MaxTargets;
+            int numTargets = ___m_numTargsToSpawn;
 
-            if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
+            if (!LoadedTemplateManager.CurrentCharacter.isCustom)
             {
-                minTargets = currentPhase.MinTargetsLimited;
-                maxTargets = currentPhase.MaxTargetsLimited;
-
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-                    maxTargets = Mathf.Max(maxTargets, 3);
-            }
-            else
-            {
-                if (LoadedTemplateManager.CurrentCharacter.isCustom && __instance.M.GameMode == TNHSetting_GameMode.Classic && __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking && currentPhase.Encryptions.Any())
                 {
-                    minTargets = Mathf.Max(minTargets, 3);
-                    maxTargets = Mathf.Max(maxTargets, 5);
+                    if (currentPhase.Encryptions[0] == TNH_EncryptionType.Static || __instance.M.TargetMode == TNHSetting_TargetMode.Simple)
+                        numTargets = Mathf.Clamp(numTargets, 1, 3);
+                    else
+                        numTargets = 1;
                 }
             }
 
@@ -315,24 +354,39 @@ namespace TNHFramework.Patches
             {
                 encryptions = __instance.M.ResourceLib.EncryptionUnknown;
             }
-            else if (__instance.M.EquipmentMode != TNHSetting_EquipmentMode.Spawnlocking)
+            else if (__instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-                    encryptions = [__instance.M.GetEncryptionPrefabSimple(TNH_EncryptionType.Static)];
+                {
+                    encryptions = [__instance.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
+                }
                 else
-                    encryptions = [.. currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefabSimple(o))];
+                {
+                    encryptions = [];
+
+                    foreach (TNH_EncryptionType encryption in currentPhase.Encryptions)
+                    {
+                        if ((encryption == TNH_EncryptionType.Regenerative && TNHFramework.SimpleRegenerative)
+                            || (encryption == TNH_EncryptionType.Cascading && TNHFramework.SimpleCascading)
+                            || (encryption == TNH_EncryptionType.Orthagonal && TNHFramework.SimpleOrthogonal))
+                        {
+                            TNHFrameworkLogger.Log($"Spawning simple {encryption} encryption", TNHFrameworkLogger.LogType.TNH);
+                            encryptions.Add(__instance.M.GetEncryptionPrefabSimple(encryption));
+                        }
+                        else
+                        {
+                            encryptions.Add(__instance.M.GetEncryptionPrefab(encryption));
+                        }
+                    }
+                }
             }
             else
             {
                 if (__instance.M.TargetMode == TNHSetting_TargetMode.Simple)
-                    encryptions = [__instance.M.GetEncryptionPrefab(TNH_EncryptionType.Static)];
+                    encryptions = [__instance.M.GetEncryptionPrefabSimple(TNH_EncryptionType.Static)];
                 else
-                    encryptions = [.. currentPhase.Encryptions.Select(o => __instance.M.GetEncryptionPrefab(o))];
+                    encryptions = [.. currentPhase.Encryptions.Select(__instance.M.GetEncryptionPrefabSimple)];
             }
-
-            minTargets = Mathf.Min(minTargets, ___m_validSpawnPoints.Count);
-            maxTargets = Mathf.Min(maxTargets, ___m_validSpawnPoints.Count);
-            numTargets = Random.Range(minTargets, maxTargets + 1);
 
             for (int i = 0; i < numTargets && i < ___m_validSpawnPoints.Count; i++)
             {

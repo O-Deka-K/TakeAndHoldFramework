@@ -156,22 +156,40 @@
 - Changed Harmony replacement patches into prefix or postfix patches whereever possible.
 - Removed debug log messages that weren't very useful.
 
-## [0.3.0-beta] - 2025-12-09
+## [0.2.4] - 2025-12-13
 
-- Updated to support Classic, Blitz and Rampart modes.
-- Lots of fixes for underlying code changes between Main branch and Experimental branch.
+- Added "InjectModBackpacks" option. This will add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.
+- Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
+- Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
+- Adjusted number of guards spawned at supply points.
+- Added ODekaK-MagazinePatcher as a dependency.
 
-## [0.3.1-beta] - 2025-12-15
+## [0.119.0] - 2026-08-23
 
-- Updated to match TNHFramework 0.2.4:
-  - Added "InjectModBackpacks" option. This will add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.
-  - Accept new and old styles of tags in JSON files. This fixes the powerup spawns in IndyBender-IbericoJones-1.0.1.
-  - Accept new and old styles of CategoryData/CharacterGroup in JSON files. This changes the category of ShermanJumbo-Pixel_Gun_Preston-1.2.0 to Memetastic Meats as intended. 
-  - Adjusted number of guards spawned at supply points.
-  - Added ODekaK-MagazinePatcher as a dependency.
+- Changed version to 0.119.0 to make it easy to associate with the H3VR build.
+- Changed log message when the wrong version of the game is started.
+- Added main menu message when the wrong version of the game is started.
+- Added fix for internal mag patcher.
+
+## [0.120.0] - 2026-08-23
+
+- Changed version to 0.120.0 to make it easy to associate with the H3VR build.
+- Lots of fixes for underlying code changes between Update 119 and Update 120 (H3VR 1.0).
+  - Supports Classic, Blitz and Rampart modes.
+  - Supports Steam Workshop characters.
+  - Supports loot boxes from sosigs and supply crates.
+  - Supports new icon IDs for constructor panels.
+  - Supports new firearm tags, including country of origin.
+  - Supports new TNH character UI features like scrolling.
+- Added config options to make Regenerative, Cascading and Orthogonal encryptions easier in Spawnlocking mode.
+- Changed Hold enemy spawning and encryption spawning to more closely follow vanilla behavior.
+- Changed behavior of secondary panel spawning in Supply points for custom characters. Mostly affects Institution.
+- Changed TNH character UI to show original character icon for non-Workshop characters (Workshop characters show the "holo" character instead).
+- Changed TNH character UI to scroll up/down by a whole page instead of by one entry at a time.
+- Only loads "Encryptions" and "Institution Constructs" config values at the start of a TNH match, so that changing them during gameplay doesn't do anything.
 - Fixed supply reinforcements in big levels (Northest Dakota).
-
-## [0.3.2-beta] - 2025-12-25
-
-- Updated to work with H3VR build 120b9.
-- Checks H3VR build number and disables itself if it's not the correct version.
+- Fixed grapple gun not spawning correctly from loot boxes.
+- Fixed boss loot spawning during Hold phase.
+- Fixed "Encryptions neutralized" announcement playing twice in some cases.
+- Fixed typo "Encyption" in description for Blitz mode.
+- Removed support for YAML. No characters on Thunderstore currently use it.

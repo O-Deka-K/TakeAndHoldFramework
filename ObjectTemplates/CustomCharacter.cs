@@ -13,17 +13,51 @@ namespace TNHFramework.ObjectTemplates
     {
         public string DisplayName;
         public string Description;
+
         public CategoryInfo CategoryData = new();
         public string TableID;
+
+        [JsonIgnore]
+        public int CharacterGroup;
+
+        [JsonProperty(PropertyName = "CharacterGroup")]
+        private int CharacterGroupAlt
+        {
+            set { CharacterGroup = value; }
+        }
+
+        [JsonConverter(typeof(UgcReferenceConverter))]
+        public VaultFileWrapper DisplayCharacter;
+
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
         public bool ForceDisableOutfitFunctionality;
         public bool UsesPurchasePriceIncrement;
         public bool DisableCleanupSosigDrops;
+        public bool HasPrimaryWeapon = true;
+        public bool HasSecondaryWeapon = true;
+        public bool HasTertiaryWeapon = true;
+        public bool HasPrimaryItem = true;
+        public bool HasSecondaryItem = true;
+        public bool HasTertiaryItem = true;
+        public bool HasShield = true;
+        public bool SecondaryWeaponCopiesPrimary;
+
+        public bool UsesObjectConstructor = true;
+        public bool UsesAmmoReloader = true;
+        public bool UsesMagDuplicator = true;
+        public bool UsesGunRecycler = true;
+        public bool AllowConstructorUnlockFirearm = true;
+        public bool AllowConstructorUnlockEquipment = true;
+        public bool AllowConstructorUnlockConsumable = true;
+        public bool AllowConstructorUnlockStorage = true;
+        public bool AllowConstructorUnlockLocomotion = true;
+
+        public List<FireArmRoundClass> RoundClassBlacklist = [];
         public List<TagEra> ValidAmmoEras = [];
         public List<TagSet> ValidAmmoSets = [];
-        public List<string> GlobalObjectBlacklist = [];
         public List<string> GlobalAmmoBlacklist = [];
+        public List<string> GlobalObjectBlacklist = [];
         public List<MagazineBlacklistEntry> MagazineBlacklist = [];
 
         public EquipmentGroup RequireSightTable = new();
@@ -51,24 +85,41 @@ namespace TNHFramework.ObjectTemplates
         {
             isCustom = false;
             DisplayName = character.DisplayName;
-            CategoryData = new(character.CharacterGroup, 0);
+            CategoryData.Name = character.CharacterGroup;
+            CharacterGroup = 0;
             TableID = character.TableID;
             StartingTokens = character.StartingTokens;
             ForceAllAgentWeapons = character.ForceAllAgentWeapons;
             Description = character.Description;
             UsesPurchasePriceIncrement = character.UsesPurchasePriceIncrement;
+            RoundClassBlacklist = [.. character.RoundClassBlacklist];
+            HasPrimaryWeapon = character.Has_Weapon_Primary;
+            HasSecondaryWeapon = character.Has_Weapon_Secondary;
+            HasTertiaryWeapon = character.Has_Weapon_Tertiary;
+            HasPrimaryItem = character.Has_Item_Primary;
+            HasSecondaryItem = character.Has_Item_Secondary;
+            HasTertiaryItem = character.Has_Item_Tertiary;
+            HasShield = character.Has_Item_Shield;
             ValidAmmoEras = [.. character.ValidAmmoEras.Select(o => (TagEra)o)];
             ValidAmmoSets = [.. character.ValidAmmoSets.Select(o => (TagSet)o)];
-            GlobalObjectBlacklist = [];
-            GlobalAmmoBlacklist = [];
-            MagazineBlacklist = [];
-            PrimaryWeapon = character.Has_Weapon_Primary ? new LoadoutEntry(character.Weapon_Primary) : new();
-            SecondaryWeapon = character.Has_Weapon_Secondary ? new LoadoutEntry(character.Weapon_Secondary) : new();
-            TertiaryWeapon = character.Has_Weapon_Tertiary ? new LoadoutEntry(character.Weapon_Tertiary) : new();
-            PrimaryItem = character.Has_Item_Primary ? new LoadoutEntry(character.Item_Primary) : new();
-            SecondaryItem = character.Has_Item_Secondary ? new LoadoutEntry(character.Item_Secondary) : new();
-            TertiaryItem = character.Has_Item_Tertiary ? new LoadoutEntry(character.Item_Tertiary) : new();
-            Shield = character.Has_Item_Shield ? new LoadoutEntry(character.Item_Shield) : new();
+            PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
+            SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
+            TertiaryWeapon = new LoadoutEntry(character.Weapon_Tertiary);
+            PrimaryItem = new LoadoutEntry(character.Item_Primary);
+            SecondaryItem = new LoadoutEntry(character.Item_Secondary);
+            TertiaryItem = new LoadoutEntry(character.Item_Tertiary);
+            Shield = new LoadoutEntry(character.Item_Shield);
+            SecondaryWeaponCopiesPrimary = character.SecondaryWeaponCopiesPrimary;
+
+            UsesObjectConstructor = character.UsesObjectConstructor;
+            UsesAmmoReloader = character.UsesAmmoReloader;
+            UsesMagDuplicator = character.UsesMagDuplicator;
+            UsesGunRecycler = character.UsesGunRecycler;
+            AllowConstructorUnlockFirearm = character.AllowConstructorUnlockFirearm;
+            AllowConstructorUnlockEquipment = character.AllowConstructorUnlockEquipment;
+            AllowConstructorUnlockConsumable = character.AllowConstructorUnlockConsumable;
+            AllowConstructorUnlockStorage = character.AllowConstructorUnlockStorage;
+            AllowConstructorUnlockLocomotion = character.AllowConstructorUnlockLocomotion;
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
 
@@ -79,68 +130,6 @@ namespace TNHFramework.ObjectTemplates
             ForceDisableOutfitFunctionality = false;
 
             this.character = character;
-        }
-
-        public CustomCharacter(V1.CustomCharacter character) : this()
-        {
-            isCustom = character.isCustom;
-            DisplayName = character.DisplayName;
-            Description = character.Description;
-            CategoryData = new CategoryInfo(character.CategoryData.Name, character.CategoryData.Priority);
-
-            if (CategoryData.Name == "")
-            {
-                CategoryData.Name = character.CharacterGroup switch
-                {
-                    0 => "Daring Defaults",
-                    1 => "Wieners Through Time",
-                    2 => "Memetastic Meats",
-                    3 => "Competitive Casings",
-                    _ => "Daring Defaults",
-                };
-
-                CategoryData.Priority = (character.CharacterGroup < 4) ? character.CharacterGroup : 0;
-            }
-
-            TableID = character.TableID;
-            StartingTokens = character.StartingTokens;
-            ForceAllAgentWeapons = character.ForceAllAgentWeapons;
-            ForceDisableOutfitFunctionality = character.ForceDisableOutfitFunctionality;
-            UsesPurchasePriceIncrement = character.UsesPurchasePriceIncrement;
-            DisableCleanupSosigDrops = character.DisableCleanupSosigDrops;
-            ValidAmmoEras = character.ValidAmmoEras ?? [];
-            ValidAmmoSets = character.ValidAmmoSets ?? [];
-            GlobalObjectBlacklist = character.GlobalObjectBlacklist ?? [];
-            GlobalAmmoBlacklist = character.GlobalAmmoBlacklist ?? [];
-            MagazineBlacklist = character.MagazineBlacklist ?? [];
-
-            RequireSightTable = new EquipmentGroup(character.RequireSightTable);
-            PrimaryWeapon = character.HasPrimaryWeapon? new LoadoutEntry(character.PrimaryWeapon) : new();
-            SecondaryWeapon = character.HasSecondaryWeapon ? new LoadoutEntry(character.SecondaryWeapon) : new();
-            TertiaryWeapon = character.HasTertiaryWeapon ? new LoadoutEntry(character.TertiaryWeapon) : new();
-            PrimaryItem = character.HasPrimaryItem ? new LoadoutEntry(character.PrimaryItem) : new();
-            SecondaryItem = character.HasSecondaryItem ? new LoadoutEntry(character.SecondaryItem) : new();
-            TertiaryItem = character.HasTertiaryItem ? new LoadoutEntry(character.TertiaryItem) : new();
-            Shield = character.HasShield ? new LoadoutEntry(character.Shield) : new();
-
-            EquipmentPools = [];
-            foreach (V1.EquipmentPool oldPool in character.EquipmentPools)
-            {
-                EquipmentPools.Add(new EquipmentPool(oldPool));
-            }
-
-            Levels = [];
-            LevelsEndless = [];
-
-            foreach (V1.Level oldLevel in character.Levels)
-            {
-                Levels.Add(new Level(oldLevel));
-            }
-
-            foreach (V1.Level oldLevel in character.LevelsEndless)
-            {
-                LevelsEndless.Add(new Level(oldLevel));
-            }
         }
 
         public TNH_CharacterDef GetCharacter(Sprite thumbnail)
@@ -158,12 +147,33 @@ namespace TNHFramework.ObjectTemplates
                 character.UgcIsWritable = false;
 
                 character.DisplayName = DisplayName;
+
+                if (CategoryData.Name == "")
+                {
+                    CategoryData.Name = CharacterGroup switch
+                    {
+                        0 => "Daring Defaults",
+                        1 => "Wieners Through Time",
+                        2 => "Memetastic Meats",
+                        3 => "Competitive Casings",
+                        _ => "Daring Defaults",
+                    };
+                }
+
                 character.CharacterGroup = CategoryData.Name;
                 character.TableID = TableID;
                 character.StartingTokens = StartingTokens;
                 character.ForceAllAgentWeapons = ForceAllAgentWeapons;
                 character.Description = Description;
                 character.UsesPurchasePriceIncrement = UsesPurchasePriceIncrement;
+                character.Has_Weapon_Primary = HasPrimaryWeapon;
+                character.Has_Weapon_Secondary = HasSecondaryWeapon;
+                character.Has_Weapon_Tertiary = HasTertiaryWeapon;
+                character.Has_Item_Primary = HasPrimaryItem;
+                character.Has_Item_Secondary = HasSecondaryItem;
+                character.Has_Item_Tertiary = HasTertiaryItem;
+                character.Has_Item_Shield = HasShield;
+                character.RoundClassBlacklist = [.. RoundClassBlacklist];
                 character.ValidAmmoEras = [.. ValidAmmoEras.Select(o => (FVRObject.OTagEra)o)];
                 character.ValidAmmoSets = [.. ValidAmmoSets.Select(o => (FVRObject.OTagSet)o)];
                 character.Picture = thumbnail;
@@ -174,14 +184,17 @@ namespace TNHFramework.ObjectTemplates
                 character.Item_Secondary = SecondaryItem.GetLoadoutEntry(character.UgcId, 0, "SecondaryItem");
                 character.Item_Tertiary = TertiaryItem.GetLoadoutEntry(character.UgcId, 0, "TertiaryItem");
                 character.Item_Shield = Shield.GetLoadoutEntry(character.UgcId, 0, "Shield");
+                character.SecondaryWeaponCopiesPrimary = SecondaryWeaponCopiesPrimary;
 
-                character.Has_Weapon_Primary = PrimaryWeapon.PrimaryGroup != null || PrimaryWeapon.BackupGroup != null;
-                character.Has_Weapon_Secondary = SecondaryWeapon.PrimaryGroup != null || SecondaryWeapon.BackupGroup != null;
-                character.Has_Weapon_Tertiary = TertiaryWeapon.PrimaryGroup != null || TertiaryWeapon.BackupGroup != null;
-                character.Has_Item_Primary = PrimaryItem.PrimaryGroup != null || PrimaryItem.BackupGroup != null;
-                character.Has_Item_Secondary = SecondaryItem.PrimaryGroup != null || SecondaryItem.BackupGroup != null;
-                character.Has_Item_Tertiary = TertiaryItem.PrimaryGroup != null || TertiaryItem.BackupGroup != null;
-                character.Has_Item_Shield = Shield.PrimaryGroup != null || Shield.BackupGroup != null;
+                character.UsesObjectConstructor = UsesObjectConstructor;
+                character.UsesAmmoReloader = UsesAmmoReloader;
+                character.UsesMagDuplicator = UsesMagDuplicator;
+                character.UsesGunRecycler = UsesGunRecycler;
+                character.AllowConstructorUnlockFirearm = AllowConstructorUnlockFirearm;
+                character.AllowConstructorUnlockEquipment = AllowConstructorUnlockEquipment;
+                character.AllowConstructorUnlockConsumable = AllowConstructorUnlockConsumable;
+                character.AllowConstructorUnlockStorage = AllowConstructorUnlockStorage;
+                character.AllowConstructorUnlockLocomotion = AllowConstructorUnlockLocomotion;
 
                 character.RequireSightTable = RequireSightTable.GetObjectTableDef(character.UgcId, 0, "RequireSightTable");
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
@@ -291,63 +304,63 @@ namespace TNHFramework.ObjectTemplates
             TNHFrameworkLogger.Log("Delayed init of character: " + DisplayName, TNHFrameworkLogger.LogType.Character);
 
             TNHFrameworkLogger.Log("Init of Primary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (PrimaryWeapon != null && !PrimaryWeapon.DelayedInit(GlobalObjectBlacklist))
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasPrimaryWeapon = false;
                 character.Has_Weapon_Primary = false;
-                PrimaryWeapon = null;
             }
 
             TNHFrameworkLogger.Log("Init of Secondary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (SecondaryWeapon != null && !SecondaryWeapon.DelayedInit(GlobalObjectBlacklist))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasSecondaryWeapon = false;
                 character.Has_Weapon_Secondary = false;
-                SecondaryWeapon = null;
             }
 
             TNHFrameworkLogger.Log("Init of Tertiary Weapon", TNHFrameworkLogger.LogType.Character);
-            if (TertiaryWeapon != null && !TertiaryWeapon.DelayedInit(GlobalObjectBlacklist))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasTertiaryWeapon = false;
                 character.Has_Weapon_Tertiary = false;
-                TertiaryWeapon = null;
             }
 
             TNHFrameworkLogger.Log("Init of Primary Item", TNHFrameworkLogger.LogType.Character);
-            if (PrimaryItem != null && !PrimaryItem.DelayedInit(GlobalObjectBlacklist))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Primary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasPrimaryItem = false;
                 character.Has_Item_Primary = false;
-                PrimaryItem = null;
             }
 
             TNHFrameworkLogger.Log("Init of Secondary Item", TNHFrameworkLogger.LogType.Character);
-            if (SecondaryItem != null && !SecondaryItem.DelayedInit(GlobalObjectBlacklist))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Secondary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasSecondaryItem = false;
                 character.Has_Item_Secondary = false;
-                SecondaryItem = null;
             }
 
             TNHFrameworkLogger.Log("Init of Tertiary Item", TNHFrameworkLogger.LogType.Character);
-            if (TertiaryItem != null && !TertiaryItem.DelayedInit(GlobalObjectBlacklist))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasTertiaryItem = false;
                 character.Has_Item_Tertiary = false;
-                TertiaryItem = null;
             }
 
             TNHFrameworkLogger.Log("Init of Shield", TNHFrameworkLogger.LogType.Character);
-            if (Shield != null && !Shield.DelayedInit(GlobalObjectBlacklist))
+            if (HasShield && !Shield.DelayedInit(character.UgcId, GlobalObjectBlacklist))
             {
                 TNHFrameworkLogger.LogWarning("Shield starting item had no pools to spawn from, and will not spawn equipment!");
+                HasShield = false;
                 character.Has_Item_Shield = false;
-                Shield = null;
             }
 
             TNHFrameworkLogger.Log("Init of required sights table", TNHFrameworkLogger.LogType.Character);
-            if (RequireSightTable != null && !RequireSightTable.DelayedInit(GlobalObjectBlacklist, false))
+            if (RequireSightTable != null && !RequireSightTable.DelayedInit(character.UgcId, GlobalObjectBlacklist, false))
             {
                 TNHFrameworkLogger.LogWarning("Required sight table was empty, guns will not spawn with required sights");
                 RequireSightTable = null;
@@ -393,6 +406,8 @@ namespace TNHFramework.ObjectTemplates
     public class CategoryInfo(string name = "", int priority = 0)
     {
         public string Name = name;
+
+        [JsonIgnore]
         public int Priority = priority;
     }
 
@@ -480,7 +495,7 @@ namespace TNHFramework.ObjectTemplates
     /// </summary>
     public class EquipmentPool()
     {
-        public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
+        public EquipmentPoolDef.PoolEntry.PoolEntryType Type = EquipmentPoolDef.PoolEntry.PoolEntryType.Firearm;
         public string IconName;
         public int TokenCost;
         public int TokenCostLimited;
@@ -494,28 +509,10 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private EquipmentPoolDef.PoolEntry pool;
 
-        public EquipmentPool(V1.EquipmentPool oldPool) : this()
-        {
-            if (oldPool == null)
-                return;
-
-            Type = oldPool.Type;
-            IconName = oldPool.IconName;
-            TokenCost = oldPool.TokenCost;
-            TokenCostLimited = oldPool.TokenCostLimited;
-            MinLevelAppears = oldPool.MinLevelAppears;
-            MaxLevelAppears = oldPool.MaxLevelAppears;
-            SpawnsInSmallCase = oldPool.SpawnsInSmallCase;
-            SpawnsInLargeCase = oldPool.SpawnsInLargeCase;
-            PrimaryGroup = new EquipmentGroup(oldPool.PrimaryGroup);
-            BackupGroup = new EquipmentGroup(oldPool.BackupGroup);
-            pool = oldPool.GetPoolEntry();
-        }
-
         public EquipmentPool(EquipmentPoolDef.PoolEntry pool) : this()
         {
             Type = pool.Type;
-            IconName = pool.TableDef.Icon.name;
+            IconName = (pool.TableDef.Icon != null) ? pool.TableDef.Icon.name : pool.TableDef.IconEnum.ToString();
             TokenCost = pool.TokenCost;
             TokenCostLimited = pool.TokenCost_Limited;
             MinLevelAppears = pool.MinLevelAppears;
@@ -545,17 +542,24 @@ namespace TNHFramework.ObjectTemplates
                 };
 
                 if (PrimaryGroup != null)
-                {
                     pool.Rarity = PrimaryGroup.Rarity;
-                }
                 else
-                {
                     pool.Rarity = 1;
-                }
 
                 pool.TableDef = PrimaryGroup.GetObjectTableDef(id, index, suffix);
                 pool.TableDef.SpawnsInLargeCase = SpawnsInLargeCase;
                 pool.TableDef.SpawnsInSmallCase = SpawnsInSmallCase;
+            }
+
+            return pool;
+        }
+
+        public EquipmentPoolDef.PoolEntry GetPoolEntry()
+        {
+            if (pool == null)
+            {
+                TNHFrameworkLogger.Log("Tried to get PoolEntry, but it hasn't been initialized yet! Returning null!", TNHFrameworkLogger.LogType.Character);
+                return null;
             }
 
             return pool;
@@ -570,9 +574,8 @@ namespace TNHFramework.ObjectTemplates
                 if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
                 {
                     if (pool.TableDef == null)
-                    {
                         pool.TableDef = (PrimaryGroup as EquipmentGroup).GetObjectTableDef();
-                    }
+
                     pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[IconName];
                     pool.TableDef.SpawnsInLargeCase = SpawnsInLargeCase;
                     pool.TableDef.SpawnsInSmallCase = SpawnsInSmallCase;
@@ -580,7 +583,7 @@ namespace TNHFramework.ObjectTemplates
 
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit(globalObjectBlacklist, true))
+                    if (!PrimaryGroup.DelayedInit(id, globalObjectBlacklist, true))
                     {
                         TNHFrameworkLogger.Log("Primary group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
@@ -589,7 +592,7 @@ namespace TNHFramework.ObjectTemplates
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit(globalObjectBlacklist, true))
+                    if (!BackupGroup.DelayedInit(id, globalObjectBlacklist, true))
                     {
                         if (PrimaryGroup == null)
                             TNHFrameworkLogger.Log("Backup group for equipment pool entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
@@ -607,20 +610,16 @@ namespace TNHFramework.ObjectTemplates
         public List<EquipmentGroup> GetSpawnedEquipmentGroups()
         {
             if (PrimaryGroup != null)
-            {
                 return PrimaryGroup.GetSpawnedEquipmentGroups();
-            }
             else if (BackupGroup != null)
-            {
                 return BackupGroup.GetSpawnedEquipmentGroups();
-            }
 
             TNHFrameworkLogger.LogWarning("EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
             return [];
         }
 
         public override string ToString()
-    {
+        {
             string output = "Equipment Pool : IconName=" + IconName + " : CostLimited=" + TokenCostLimited + " : CostSpawnlock=" + TokenCost;
 
             if (PrimaryGroup != null)
@@ -641,11 +640,12 @@ namespace TNHFramework.ObjectTemplates
 
     public class EquipmentGroup()
     {
-        public ObjectCategory Category;
+        public ObjectCategory Category = ObjectCategory.Firearm;
         public float Rarity;
         public int ItemsToSpawn;
         public int MinAmmoCapacity;
         public int MaxAmmoCapacity;
+        public bool SpawnsAreTheSame;
         public int NumMagsSpawned;
         public int NumClipsSpawned;
         public int NumRoundsSpawned;
@@ -654,10 +654,46 @@ namespace TNHFramework.ObjectTemplates
         public bool IsCompatibleMagazine;
         public bool AutoPopulateGroup;
         public bool ForceSpawnAllSubPools;
+        public List<FVRObject> ObjBlacklist = [];
         public List<string> IDOverride = [];
         public List<string> IDOverrideBackup = [];
+        public int MinYear = -1;
+        public int MaxYear = -1;
+        public List<TagEra> Eras = [];
+        public List<TagSet> Sets = [];
+        public List<TagFirearmSize> Sizes = [];
+        public List<TagFirearmAction> Actions = [];
+        public List<TagFirearmFiringMode> Modes = [];
+        public List<TagFirearmFiringMode> ExcludedModes = [];
+        public List<TagFirearmFeedOption> FeedOptions = [];
+        public List<TagFirearmMount> MountsAvailable = [];
+        public List<TagFirearmRoundPower> RoundPowers = [];
+        public List<FireArmRoundType> RoundTypes = [];
+        public List<TagAttachmentFeature> Features = [];
+        public List<TagMeleeStyle> MeleeStyles = [];
+        public List<TagMeleeHandedness> MeleeHandedness = [];
+        public List<TagFirearmMount> MountTypes = [];
+        public List<TagPowerupType> PowerupTypes = [];
+        public List<TagThrownType> ThrownTypes = [];
+        public List<TagThrownDamageType> ThrownDamageTypes = [];
+        public List<TagFirearmCountryOfOrigin> Countries = [];
         public FVRTags Tags = new();
         public List<EquipmentGroup> SubGroups = [];
+
+        [JsonIgnore]
+        public string RequiredQuest;
+
+        [JsonIgnore]
+        public bool UsesVaultFileListOverride;
+
+        [JsonIgnore]
+        public bool UseFullPlayerVaultRandom;
+
+        [JsonIgnore]
+        public List<VaultFileWrapper> OverrideVaultFileWrappers = [];
+
+        [JsonIgnore]
+        public ObjectTableDef.VaultFileUsage OverrideFileUsage = ObjectTableDef.VaultFileUsage.SingleObject;
 
         [JsonIgnore]
         private ObjectTableDef objectTableDef;
@@ -665,58 +701,11 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private List<string> objects = [];
 
-        public EquipmentGroup(V1.EquipmentGroup thing) : this()
-        {
-            if (thing == null)
-                return;
+        [JsonIgnore]
+        private List<VaultFile> vaultFiles = [];
 
-            Category = thing.Category;
-            Rarity = thing.Rarity;
-            ItemsToSpawn = thing.ItemsToSpawn;
-            MinAmmoCapacity = thing.MinAmmoCapacity;
-            MaxAmmoCapacity = thing.MaxAmmoCapacity;
-            NumMagsSpawned = thing.NumMagsSpawned;
-            NumClipsSpawned = thing.NumClipsSpawned;
-            NumRoundsSpawned = thing.NumRoundsSpawned;
-            SpawnMagAndClip = thing.SpawnMagAndClip;
-            BespokeAttachmentChance = thing.BespokeAttachmentChance;
-            IsCompatibleMagazine = thing.IsCompatibleMagazine;
-            AutoPopulateGroup = thing.AutoPopulateGroup;
-            ForceSpawnAllSubPools = thing.ForceSpawnAllSubPools;
-            IDOverride = thing.IDOverride ?? [];
-            IDOverrideBackup = thing.IDOverrideBackup ?? [];
-
-            thing.CopyTags();
-
-            Tags = new()
-            {
-                MinYear = thing.MinYear,
-                MaxYear = thing.MaxYear,
-                Eras = thing.Eras ?? [],
-                Sets = thing.Sets ?? [],
-                Sizes = thing.Sizes ?? [],
-                Actions = thing.Actions ?? [],
-                Modes = thing.Modes ?? [],
-                ExcludedModes = thing.ExcludedModes ?? [],
-                FeedOptions = thing.FeedOptions ?? [],
-                MountsAvailable = thing.MountsAvailable ?? [],
-                RoundPowers = thing.RoundPowers ?? [],
-                Features = thing.Features ?? [],
-                MeleeStyles = thing.MeleeStyles ?? [],
-                MeleeHandedness = thing.MeleeHandedness ?? [],
-                MountTypes = thing.MountTypes ?? [],
-                PowerupTypes = thing.PowerupTypes ?? [],
-                ThrownTypes = thing.ThrownTypes ?? [],
-                ThrownDamageTypes = thing.ThrownDamageTypes ?? []
-            };
-
-            SubGroups = [];
-
-            foreach (V1.EquipmentGroup subGroup in thing.SubGroups)
-            {
-                SubGroups.Add(new EquipmentGroup(subGroup));
-            }
-        }
+        [JsonIgnore]
+        private Dictionary<string, List<FVRObject>> familyDic = [];
 
         public EquipmentGroup(ObjectTableDef objectTableDef) : this()
         {
@@ -724,16 +713,42 @@ namespace TNHFramework.ObjectTemplates
             ItemsToSpawn = 1;
             MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
             MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
+            SpawnsAreTheSame = objectTableDef.SpawnsAreTheSame;
             NumMagsSpawned = 3;
             NumClipsSpawned = 3;
             NumRoundsSpawned = 8;
             BespokeAttachmentChance = 0.5f;
             IsCompatibleMagazine = false;
             AutoPopulateGroup = !objectTableDef.UseIDListOverride;
-            IDOverride = [.. objectTableDef.IDOverride];
+            ObjBlacklist = (objectTableDef.ObjBlacklist == null) ? null : [.. objectTableDef.ObjBlacklist];
+            IDOverride = (objectTableDef.IDOverride == null) ? null : [.. objectTableDef.IDOverride];
+            IDOverrideBackup = [];
+
+            MinYear = -1;
+            MaxYear = -1;
+            Eras = [.. objectTableDef.Eras.Select(o => (TagEra)o)];
+            Sets = [.. objectTableDef.Sets.Select(o => (TagSet)o)];
+            Sizes = [.. objectTableDef.Sizes.Select(o => (TagFirearmSize)o)];
+            Actions = [.. objectTableDef.Actions.Select(o => (TagFirearmAction)o)];
+            Modes = [.. objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o)];
+            ExcludedModes = [.. objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o)];
+            FeedOptions = [.. objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o)];
+            MountsAvailable = [.. objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o)];
+            RoundPowers = [.. objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o)];
+            RoundTypes = [.. objectTableDef.RoundTypes];
+            Features = [.. objectTableDef.Features.Select(o => (TagAttachmentFeature)o)];
+            MeleeHandedness = [.. objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o)];
+            MeleeStyles = [.. objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o)];
+            MountTypes = [.. objectTableDef.MountTypes.Select(o => (TagFirearmMount)o)];
+            PowerupTypes = [.. objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o)];
+            ThrownTypes = [.. objectTableDef.ThrownTypes.Select(o => (TagThrownType)o)];
+            ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)];
+            Countries = [.. objectTableDef.Countries.Select(o => (TagFirearmCountryOfOrigin)o)];
 
             Tags = new()
             {
+                MinYear = -1,
+                MaxYear = -1,
                 Eras = [.. objectTableDef.Eras.Select(o => (TagEra)o)],
                 Sets = [.. objectTableDef.Sets.Select(o => (TagSet)o)],
                 Sizes = [.. objectTableDef.Sizes.Select(o => (TagFirearmSize)o)],
@@ -743,14 +758,23 @@ namespace TNHFramework.ObjectTemplates
                 FeedOptions = [.. objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o)],
                 MountsAvailable = [.. objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o)],
                 RoundPowers = [.. objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o)],
+                RoundTypes = [.. objectTableDef.RoundTypes],
                 Features = [.. objectTableDef.Features.Select(o => (TagAttachmentFeature)o)],
                 MeleeHandedness = [.. objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o)],
                 MeleeStyles = [.. objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o)],
                 MountTypes = [.. objectTableDef.MountTypes.Select(o => (TagFirearmMount)o)],
                 PowerupTypes = [.. objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o)],
                 ThrownTypes = [.. objectTableDef.ThrownTypes.Select(o => (TagThrownType)o)],
-                ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)]
+                ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)],
+                Countries = [.. objectTableDef.Countries.Select(o => (TagFirearmCountryOfOrigin)o)]
             };
+
+            SubGroups = [];
+
+            UsesVaultFileListOverride = objectTableDef.UsesVaultFileListOverride;
+            UseFullPlayerVaultRandom = objectTableDef.UseFullPlayerVaultRandom;
+            OverrideVaultFileWrappers = [.. objectTableDef.OverrideVaultFileWrappers];
+            OverrideFileUsage = objectTableDef.OverrideFileUsage;
 
             this.objectTableDef = objectTableDef;
         }
@@ -759,28 +783,40 @@ namespace TNHFramework.ObjectTemplates
         {
             if (objectTableDef == null)
             {
-                if (Tags == null) 
-                { 
-                    Tags = new(); 
-                }
-                else
-                {
-                    Tags.Eras ??= [];
-                    Tags.Sets ??= [];
-                    Tags.Sizes ??= [];
-                    Tags.Actions ??= [];
-                    Tags.Modes ??= [];
-                    Tags.ExcludedModes ??= [];
-                    Tags.FeedOptions ??= [];
-                    Tags.MountsAvailable ??= [];
-                    Tags.RoundPowers ??= [];
-                    Tags.Features ??= [];
-                    Tags.MeleeHandedness ??= [];
-                    Tags.MeleeStyles ??= [];
-                    Tags.PowerupTypes ??= [];
-                    Tags.ThrownTypes ??= [];
-                    Tags.ThrownDamageTypes ??= [];
-                }
+                Eras ??= [];
+                Sets ??= [];
+                Sizes ??= [];
+                Actions ??= [];
+                Modes ??= [];
+                ExcludedModes ??= [];
+                FeedOptions ??= [];
+                MountsAvailable ??= [];
+                RoundPowers ??= [];
+                RoundTypes ??= [];
+                Features ??= [];
+                MeleeHandedness ??= [];
+                MeleeStyles ??= [];
+                PowerupTypes ??= [];
+                ThrownTypes ??= [];
+                ThrownDamageTypes ??= []; 
+
+                Tags.Eras ??= [];
+                Tags.Sets ??= [];
+                Tags.Sizes ??= [];
+                Tags.Actions ??= [];
+                Tags.Modes ??= [];
+                Tags.ExcludedModes ??= [];
+                Tags.FeedOptions ??= [];
+                Tags.MountsAvailable ??= [];
+                Tags.RoundPowers ??= [];
+                Tags.RoundTypes ??= [];
+                Tags.Features ??= [];
+                Tags.MeleeHandedness ??= [];
+                Tags.MeleeStyles ??= [];
+                Tags.PowerupTypes ??= [];
+                Tags.ThrownTypes ??= [];
+                Tags.ThrownDamageTypes ??= [];
+                Tags.Countries ??= [];
 
                 objectTableDef = (ObjectTableDef)ScriptableObject.CreateInstance(typeof(ObjectTableDef));
 
@@ -789,32 +825,49 @@ namespace TNHFramework.ObjectTemplates
                 objectTableDef.UgcFilePath = null;
                 objectTableDef.UgcIsWritable = false;
 
+                objectTableDef.name = Category.ToString();
                 objectTableDef.Category = (FVRObject.ObjectCategory)Category;
                 objectTableDef.MinAmmoCapacity = MinAmmoCapacity;
                 objectTableDef.MaxAmmoCapacity = MaxAmmoCapacity;
+                objectTableDef.SpawnsAreTheSame = SpawnsAreTheSame;
                 objectTableDef.RequiredExactCapacity = -1;
                 objectTableDef.IsBlanked = false;
                 objectTableDef.SpawnsInSmallCase = false;
                 objectTableDef.SpawnsInLargeCase = false;
                 objectTableDef.UseIDListOverride = !AutoPopulateGroup;
-                objectTableDef.IDOverride = [];
-                objectTableDef.Eras = [.. Tags.Eras.Select(o => (FVRObject.OTagEra)o)];
-                objectTableDef.Sets = [.. Tags.Sets.Select(o => (FVRObject.OTagSet)o)];
-                objectTableDef.Sizes = [.. Tags.Sizes.Select(o => (FVRObject.OTagFirearmSize)o)];
-                objectTableDef.Actions = [.. Tags.Actions.Select(o => (FVRObject.OTagFirearmAction)o)];
-                objectTableDef.Modes = [.. Tags.Modes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
-                objectTableDef.ExcludeModes = [.. Tags.ExcludedModes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
-                objectTableDef.Feedoptions = [.. Tags.FeedOptions.Select(o => (FVRObject.OTagFirearmFeedOption)o)];
-                objectTableDef.MountsAvailable = [.. Tags.MountsAvailable.Select(o => (FVRObject.OTagFirearmMount)o)];
-                objectTableDef.RoundPowers = [.. Tags.RoundPowers.Select(o => (FVRObject.OTagFirearmRoundPower)o)];
-                objectTableDef.Features = [.. Tags.Features.Select(o => (FVRObject.OTagAttachmentFeature)o)];
-                objectTableDef.MeleeHandedness = [.. Tags.MeleeHandedness.Select(o => (FVRObject.OTagMeleeHandedness)o)];
-                objectTableDef.MeleeStyles = [.. Tags.MeleeStyles.Select(o => (FVRObject.OTagMeleeStyle)o)];
-                objectTableDef.MountTypes = [.. Tags.MountTypes.Select(o => (FVRObject.OTagFirearmMount)o)];
-                objectTableDef.PowerupTypes = [.. Tags.PowerupTypes.Select(o => (FVRObject.OTagPowerupType)o)];
-                objectTableDef.ThrownTypes = [.. Tags.ThrownTypes.Select(o => (FVRObject.OTagThrownType)o)];
-                objectTableDef.ThrownDamageTypes = [.. Tags.ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o)];
+                objectTableDef.ObjBlacklist = [.. ObjBlacklist];
+                objectTableDef.IDOverride = ["M1911"];
+
+                if (HasNewTags())
+                    CopyNewTags();
+                else
+                    CopyOldTags();
+
+                objectTableDef.Eras = [.. Eras.Select(o => (FVRObject.OTagEra)o)];
+                objectTableDef.Sets = [.. Sets.Select(o => (FVRObject.OTagSet)o)];
+                objectTableDef.Sizes = [.. Sizes.Select(o => (FVRObject.OTagFirearmSize)o)];
+                objectTableDef.Actions = [.. Actions.Select(o => (FVRObject.OTagFirearmAction)o)];
+                objectTableDef.Modes = [.. Modes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
+                objectTableDef.ExcludeModes = [.. ExcludedModes.Select(o => (FVRObject.OTagFirearmFiringMode)o)];
+                objectTableDef.Feedoptions = [.. FeedOptions.Select(o => (FVRObject.OTagFirearmFeedOption)o)];
+                objectTableDef.MountsAvailable = [.. MountsAvailable.Select(o => (FVRObject.OTagFirearmMount)o)];
+                objectTableDef.RoundPowers = [.. RoundPowers.Select(o => (FVRObject.OTagFirearmRoundPower)o)];
+                objectTableDef.RoundTypes = [.. RoundTypes];
+                objectTableDef.Features = [.. Features.Select(o => (FVRObject.OTagAttachmentFeature)o)];
+                objectTableDef.MeleeHandedness = [.. MeleeHandedness.Select(o => (FVRObject.OTagMeleeHandedness)o)];
+                objectTableDef.MeleeStyles = [.. MeleeStyles.Select(o => (FVRObject.OTagMeleeStyle)o)];
+                objectTableDef.MountTypes = [.. MountTypes.Select(o => (FVRObject.OTagFirearmMount)o)];
+                objectTableDef.PowerupTypes = [.. PowerupTypes.Select(o => (FVRObject.OTagPowerupType)o)];
+                objectTableDef.ThrownTypes = [.. ThrownTypes.Select(o => (FVRObject.OTagThrownType)o)];
+                objectTableDef.ThrownDamageTypes = [.. ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o)];
+                objectTableDef.Countries = [.. Countries.Select(o => (FVRObject.OTagFirearmCountryOfOrigin)o)];
+
+                objectTableDef.UsesVaultFileListOverride = UsesVaultFileListOverride;
+                objectTableDef.UseFullPlayerVaultRandom = UseFullPlayerVaultRandom;
+                objectTableDef.OverrideVaultFileWrappers = [.. OverrideVaultFileWrappers];
+                objectTableDef.OverrideFileUsage = OverrideFileUsage;
             }
+
             return objectTableDef;
         }
 
@@ -832,6 +885,127 @@ namespace TNHFramework.ObjectTemplates
         public List<string> GetObjects()
         {
             return objects;
+        }
+
+        public string GetRandomObject()
+        {
+            if (!objects.Any())
+            {
+                TNHFrameworkLogger.LogWarning($"GetRandomObject() was called on an empty objects list!");
+                return string.Empty;
+            }
+
+            string itemID = objects[Random.Range(0, objects.Count)];
+
+            // If this object is part of a family, choose an object from the family
+            if (IM.OD.ContainsKey(itemID))
+            {
+                FVRObject obj = IM.OD[itemID];
+
+                if (!string.IsNullOrEmpty(obj.Family) && familyDic.ContainsKey(obj.Family))
+                {
+                    List<FVRObject> list = familyDic[obj.Family];
+                    itemID = list[Random.Range(0, list.Count)].ItemID;
+                }
+            }
+
+            return itemID;
+        }
+
+        public bool UsesVaultFiles()
+        {
+            return vaultFiles != null && vaultFiles.Any();
+        }
+
+        public VaultFile GetRandomVaultFile()
+        {
+            if (!UsesVaultFiles())
+            {
+                TNHFrameworkLogger.LogWarning($"GetRandomVaultFile() was called on an empty vaultFiles list!");
+                return null;
+            }
+
+            return vaultFiles[Random.Range(0, vaultFiles.Count)];
+        }
+
+        private bool HasNewTags()
+        {
+            return (Tags.Eras.Any()
+                || Tags.Sets.Any()
+                || Tags.Sizes.Any()
+                || Tags.Actions.Any()
+                || Tags.Modes.Any()
+                || Tags.ExcludedModes.Any()
+                || Tags.FeedOptions.Any()
+                || Tags.MountsAvailable.Any()
+                || Tags.RoundPowers.Any()
+                || Tags.RoundTypes.Any()
+                || Tags.Features.Any()
+                || Tags.MeleeStyles.Any()
+                || Tags.MeleeHandedness.Any()
+                || Tags.MountTypes.Any()
+                || Tags.PowerupTypes.Any()
+                || Tags.ThrownTypes.Any()
+                || Tags.ThrownDamageTypes.Any()
+                || Tags.Countries.Any());
+        }
+
+        public bool CopyOldTags()
+        {
+            if (!HasNewTags())
+            {
+                Tags.MinYear = MinYear;
+                Tags.MaxYear = MaxYear;
+                Tags.Eras = [.. Eras];
+                Tags.Sets = [.. Sets];
+                Tags.Sizes = [.. Sizes];
+                Tags.Actions = [.. Actions];
+                Tags.Modes = [.. Modes];
+                Tags.ExcludedModes = [.. ExcludedModes];
+                Tags.FeedOptions = [.. FeedOptions];
+                Tags.MountsAvailable = [.. MountsAvailable];
+                Tags.RoundPowers = [.. RoundPowers];
+                Tags.RoundTypes = [.. RoundTypes];
+                Tags.Features = [.. Features];
+                Tags.MeleeStyles = [.. MeleeStyles];
+                Tags.MeleeHandedness = [.. MeleeHandedness];
+                Tags.MountTypes = [.. MountTypes];
+                Tags.PowerupTypes = [.. PowerupTypes];
+                Tags.ThrownTypes = [.. ThrownTypes];
+                Tags.ThrownDamageTypes = [.. ThrownDamageTypes];
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool CopyNewTags()
+        {
+            if (HasNewTags())
+            {
+                MinYear = Tags.MinYear;
+                MaxYear = Tags.MaxYear;
+                Eras = [.. Tags.Eras];
+                Sets = [.. Tags.Sets];
+                Sizes = [.. Tags.Sizes];
+                Actions = [.. Tags.Actions];
+                Modes = [.. Tags.Modes];
+                ExcludedModes = [.. Tags.ExcludedModes];
+                FeedOptions = [.. Tags.FeedOptions];
+                MountsAvailable = [.. Tags.MountsAvailable];
+                RoundPowers = [.. Tags.RoundPowers];
+                RoundTypes = [.. Tags.RoundTypes];
+                Features = [.. Tags.Features];
+                MeleeStyles = [.. Tags.MeleeStyles];
+                MeleeHandedness = [.. Tags.MeleeHandedness];
+                MountTypes = [.. Tags.MountTypes];
+                PowerupTypes = [.. Tags.PowerupTypes];
+                ThrownTypes = [.. Tags.ThrownTypes];
+                ThrownDamageTypes = [.. Tags.ThrownDamageTypes];
+                return true;
+            }
+
+            return false;
         }
 
         public List<EquipmentGroup> GetSpawnedEquipmentGroups()
@@ -863,7 +1037,7 @@ namespace TNHFramework.ObjectTemplates
                     combinedRarity += group.Rarity;
                 }
 
-                float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
+                float randomSelection = Random.Range(0, combinedRarity);
 
                 if (randomSelection < thisRarity)
                 {
@@ -877,9 +1051,7 @@ namespace TNHFramework.ObjectTemplates
                     {
                         progress += SubGroups[i].Rarity;
                         if (randomSelection < progress)
-                        {
                             return SubGroups[i].GetSpawnedEquipmentGroups();
-                        }
                     }
                 }
             }
@@ -891,13 +1063,25 @@ namespace TNHFramework.ObjectTemplates
         /// Fills out the object table and removes any unloaded items
         /// </summary>
         /// <returns> Returns true if valid, and false if empty </returns>
-        public bool DelayedInit(List<string> globalObjectBlacklist, bool allowInjection)
+        public bool DelayedInit(string id, List<string> globalObjectBlacklist, bool allowInjection)
         {
             // Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHFrameworkUtils.RemoveUnloadedObjectIDs(this);
+            objects.Clear();
+            vaultFiles.Clear();
 
+            if (IsCompatibleMagazine)
+            {
+                // Don't need to do anything yet
+            }
+            else if (UsesVaultFileListOverride)
+            {
+                ObjectTable objectTable = new();
+                objectTable.Initialize(GetObjectTableDef(id, 0, "DroppedObjectPool"));
+                vaultFiles = [.. objectTable.VaultFiles];
+            }
             // Every item in IDOverride gets added to the list of spawnable objects
-            if (IDOverride != null)
+            else if (IDOverride != null && IDOverride.Any())
             {
                 foreach (var objectID in IDOverride)
                 {
@@ -928,19 +1112,18 @@ namespace TNHFramework.ObjectTemplates
                     }
                 }
             }
-
             // If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
-            if (!IsCompatibleMagazine && AutoPopulateGroup)
+            else if (AutoPopulateGroup)
             {
-                Initialise(globalObjectBlacklist);
+                Initialize(globalObjectBlacklist);
             }
 
             // Perform delayed init on all subgroups. If they are empty, we remove them
-            if (SubGroups != null)
+            if (SubGroups != null && SubGroups.Any())
             {
                 for (int i = SubGroups.Count - 1; i >= 0; i--)
                 {
-                    if (!SubGroups[i].DelayedInit(globalObjectBlacklist, allowInjection))
+                    if (!SubGroups[i].DelayedInit(id, globalObjectBlacklist, allowInjection))
                     {
                         //TNHFrameworkLogger.Log("Subgroup was empty, removing it!", TNHFrameworkLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
@@ -955,12 +1138,14 @@ namespace TNHFramework.ObjectTemplates
             }
 
             // The table is valid if it has items in it, or is a compatible magazine
-            return objects.Any() || IsCompatibleMagazine || (SubGroups != null && SubGroups.Any());
+            return vaultFiles.Any() || objects.Any() || IsCompatibleMagazine || (SubGroups != null && SubGroups.Any());
         }
 
-        public void Initialise(List<string> globalObjectBlacklist)
+        public void Initialize(List<string> globalObjectBlacklist)
         {
+            TNHFrameworkLogger.Log($"Autopopulating {Category} equipment group", TNHFrameworkLogger.LogType.Character);
             List<FVRObject> Objs = [.. ManagerSingleton<IM>.Instance.odicTagCategory[(FVRObject.ObjectCategory)Category]];
+
             for (int j = Objs.Count - 1; j >= 0; j--)
             {
                 FVRObject fvrobject = Objs[j];
@@ -976,12 +1161,16 @@ namespace TNHFramework.ObjectTemplates
                 else if (MinAmmoCapacity > -1 && fvrobject.MaxCapacityRelated < MinAmmoCapacity)
                 {
                     if (Category != ObjectCategory.MeleeWeapon)
+                    {
                         continue;
+                    }
                 }
                 else if (MaxAmmoCapacity > -1 && fvrobject.MinCapacityRelated > MaxAmmoCapacity)
                 {
                     if (Category != ObjectCategory.MeleeWeapon)  // Fix for Meat Fortress melee weapons
+                    {
                         continue;
+                    }
                 }
                 // ????
                 // anton, why?
@@ -1019,6 +1208,10 @@ namespace TNHFramework.ObjectTemplates
                 {
                     continue;
                 }
+                else if (Tags.RoundTypes != null && Tags.RoundTypes.Any() && !Tags.RoundTypes.Contains(fvrobject.RoundType))
+                {
+                    continue;
+                }
                 else
                 {
                     if (Tags.Modes != null && Tags.Modes.Any())
@@ -1034,12 +1227,10 @@ namespace TNHFramework.ObjectTemplates
                         }
 
                         if (flag)
-                        {
                             continue;
-                        }
                     }
 
-                    if (Tags.ExcludedModes != null)
+                    if (Tags.ExcludedModes != null && Tags.ExcludedModes.Any())
                     {
                         bool flag2 = false;
                         for (int l = 0; l < Tags.ExcludedModes.Count; l++)
@@ -1050,10 +1241,9 @@ namespace TNHFramework.ObjectTemplates
                                 break;
                             }
                         }
+
                         if (flag2)
-                        {
                             continue;
-                        }
                     }
 
                     if (Tags.FeedOptions != null && Tags.FeedOptions.Any())
@@ -1067,13 +1257,12 @@ namespace TNHFramework.ObjectTemplates
                                 break;
                             }
                         }
+
                         if (flag3)
-                        {
                             continue;
-                        }
                     }
 
-                    if (Tags.MountsAvailable != null)
+                    if (Tags.MountsAvailable != null && Tags.MountsAvailable.Any())
                     {
                         bool flag4 = false;
                         for (int n = 0; n < Tags.MountsAvailable.Count; n++)
@@ -1084,10 +1273,9 @@ namespace TNHFramework.ObjectTemplates
                                 break;
                             }
                         }
+
                         if (flag4)
-                        {
                             continue;
-                        }
                     }
                     
                     if (Tags.PowerupTypes != null && Tags.PowerupTypes.Any() && !Tags.PowerupTypes.Contains((TagPowerupType)fvrobject.TagPowerupType))
@@ -1118,7 +1306,41 @@ namespace TNHFramework.ObjectTemplates
                     {
                         continue;
                     }
+                    else if (Tags.Countries != null && Tags.Countries.Any() && !Tags.Countries.Contains((TagFirearmCountryOfOrigin)fvrobject.TagFirearmCountryOfOrigin))
+                    {
+                        continue;
+                    }
+                    else if (ObjBlacklist != null && ObjBlacklist.Contains(fvrobject))
+                    {
+                        continue;
+                    }
+                    else if (!string.IsNullOrEmpty(fvrobject.Family))
+                    {
+                        if (familyDic.ContainsKey(fvrobject.Family))
+                        {
+                            familyDic[fvrobject.Family].Add(fvrobject);
+                            continue;
+                        }
+                        else
+                        {
+                            familyDic.Add(fvrobject.Family, []);
+                            familyDic[fvrobject.Family].Add(fvrobject);
+                        }
+                    }
+
                     objects.Add(fvrobject.ItemID);
+                }
+            }
+
+            // Adjust probability for families
+            foreach (KeyValuePair<string, List<FVRObject>> item in familyDic)
+            {
+                List<FVRObject> value = item.Value;
+                int numToAdd = Mathf.RoundToInt(Mathf.Sqrt(value.Count)) - 1;
+
+                for (int num = 0; num < numToAdd; num++)
+                {
+                    objects.Add(value[0].ItemID);
                 }
             }
         }
@@ -1167,6 +1389,7 @@ namespace TNHFramework.ObjectTemplates
         public List<TagFirearmFeedOption> FeedOptions = [];
         public List<TagFirearmMount> MountsAvailable = [];
         public List<TagFirearmRoundPower> RoundPowers = [];
+        public List<FireArmRoundType> RoundTypes = [];
         public List<TagAttachmentFeature> Features = [];
         public List<TagMeleeStyle> MeleeStyles = [];
         public List<TagMeleeHandedness> MeleeHandedness = [];
@@ -1174,24 +1397,17 @@ namespace TNHFramework.ObjectTemplates
         public List<TagPowerupType> PowerupTypes = [];
         public List<TagThrownType> ThrownTypes = [];
         public List<TagThrownDamageType> ThrownDamageTypes = [];
+        public List<TagFirearmCountryOfOrigin> Countries = [];
     }
 
     public class LoadoutEntry()
     {
         public EquipmentGroup PrimaryGroup = new();
         public EquipmentGroup BackupGroup = new();
+        public FVRObject AmmoObjectOverride = null;
 
         [JsonIgnore]
         private TNH_CharacterDef.LoadoutEntry loadout;
-
-        public LoadoutEntry(V1.LoadoutEntry oldEntry) : this()
-        {
-            if (oldEntry == null)
-                return;
-
-            PrimaryGroup = new EquipmentGroup(oldEntry.PrimaryGroup);
-            BackupGroup = new EquipmentGroup(oldEntry.BackupGroup);
-        }
 
         public LoadoutEntry(TNH_CharacterDef.LoadoutEntry loadout) : this()
         {
@@ -1200,7 +1416,10 @@ namespace TNHFramework.ObjectTemplates
                 loadout = new TNH_CharacterDef.LoadoutEntry
                 {
                     TableDefs = [],
-                    ListOverride = []
+                    ListOverride = [],
+                    Num_Mags_SL_Clips = 3,
+                    Num_Rounds = 9,
+                    AmmoObjectOverride = AmmoObjectOverride
                 };
             }
             else if (loadout.ListOverride != null && loadout.ListOverride.Any())
@@ -1216,6 +1435,8 @@ namespace TNHFramework.ObjectTemplates
                     NumClipsSpawned = loadout.Num_Mags_SL_Clips,
                     NumRoundsSpawned = loadout.Num_Rounds
                 };
+
+                AmmoObjectOverride = loadout.AmmoObjectOverride;
             }
             else if (loadout.TableDefs != null && loadout.TableDefs.Any())
             {
@@ -1234,9 +1455,10 @@ namespace TNHFramework.ObjectTemplates
                 {
                     PrimaryGroup = new EquipmentGroup
                     {
-                        Rarity = 1,
+                        Rarity = 0,
                         SubGroups = []
                     };
+
                     foreach (ObjectTableDef table in loadout.TableDefs)
                     {
                         EquipmentGroup group = new(table)
@@ -1246,9 +1468,12 @@ namespace TNHFramework.ObjectTemplates
                             NumClipsSpawned = loadout.Num_Mags_SL_Clips,
                             NumRoundsSpawned = loadout.Num_Rounds
                         };
+
                         PrimaryGroup.SubGroups.Add(group);
                     }
                 }
+
+                AmmoObjectOverride = loadout.AmmoObjectOverride;
             }
 
             this.loadout = loadout;
@@ -1260,8 +1485,11 @@ namespace TNHFramework.ObjectTemplates
             {
                 loadout = new TNH_CharacterDef.LoadoutEntry
                 {
+                    TableDefs = [],
+                    ListOverride = [],
                     Num_Mags_SL_Clips = 3,
-                    Num_Rounds = 9
+                    Num_Rounds = 9,
+                    AmmoObjectOverride = AmmoObjectOverride
                 };
 
                 if (PrimaryGroup != null)
@@ -1273,13 +1501,13 @@ namespace TNHFramework.ObjectTemplates
             return loadout;
         }
 
-        public bool DelayedInit(List<string> globalObjectBlacklist)
+        public bool DelayedInit(string id, List<string> globalObjectBlacklist)
         {
             if (loadout != null)
             {
                 if (PrimaryGroup != null)
                 {
-                    if (!PrimaryGroup.DelayedInit(globalObjectBlacklist, false))
+                    if (!PrimaryGroup.DelayedInit(id, globalObjectBlacklist, false))
                     {
                         TNHFrameworkLogger.Log("Primary group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
                         PrimaryGroup = null;
@@ -1288,7 +1516,7 @@ namespace TNHFramework.ObjectTemplates
 
                 if (BackupGroup != null)
                 {
-                    if (!BackupGroup.DelayedInit(globalObjectBlacklist, false))
+                    if (!BackupGroup.DelayedInit(id, globalObjectBlacklist, false))
                     {
                         if (PrimaryGroup == null)
                             TNHFrameworkLogger.Log("Backup group for loadout entry was empty, setting to null!", TNHFrameworkLogger.LogType.Character);
@@ -1323,6 +1551,50 @@ namespace TNHFramework.ObjectTemplates
         }
     }
 
+#if (false)  // ODK - Not going to implement this for now
+    public class SosigLoot()
+    {
+        public SosigLootGroup LootGroup_Default;
+        public SosigLootGroup LootGroup_Boxes;
+        public List<SosigLootGroup> SosigLootGroups = [];
+
+        [JsonIgnore]
+        TNH_SosigLootTable sosigLootTable;
+    }
+
+    public class SosigLootGroup()
+    {
+        public bool SpawnsForSupply;
+        public bool SpawnsForPatrol;
+        public bool SpawnsForTake;
+        public bool SpawnsForHold;
+        public float SpawnChance = 1f;
+        public bool DoesLootDropInBoxes = true;
+        public float ChanceofSpawnSmartAmmo;
+        public float MinForMultiObject = 1f;
+        public float MaxForMultiObject = 1f;
+        public float MinCapacity = -1f;
+        public float MaxCapacity = -1f;
+
+        public List<string> SosigEnemyIDs = [];
+        public List<SosigPool> EquipPool;
+
+        [JsonIgnore]
+        private TNH_SosigLootTable.SosigLootGroup sosigLootGroup;
+    }
+
+    public class SosigPool()
+    {
+        public int MinLevelAppears = 1;
+        public int MaxLevelAppears = 2;
+        public float Rarity = 1f;
+        public EquipmentGroup Equipment;
+
+        [JsonIgnore]
+        TNH_LootPoolDef.PoolEntry poolEntry;
+    }
+#endif
+
     public class Level()
     {
         public int NumOverrideTokensForHold;
@@ -1347,55 +1619,14 @@ namespace TNHFramework.ObjectTemplates
         [JsonIgnore]
         private TNH_Progression.Level level;
 
-        public Level(V1.Level oldLevel) : this()
-        {
-            if (oldLevel == null)
-                return;
-
-            NumOverrideTokensForHold = oldLevel.NumOverrideTokensForHold;
-            MinSupplyPoints = oldLevel.MinSupplyPoints;
-            MaxSupplyPoints = oldLevel.MaxSupplyPoints;
-            MinConstructors = oldLevel.MinConstructors;
-            MaxConstructors = oldLevel.MaxConstructors;
-            MinPanels = oldLevel.MinPanels;
-            MaxPanels = oldLevel.MaxPanels;
-            MinBoxesSpawned = oldLevel.MinBoxesSpawned;
-            MaxBoxesSpawned = oldLevel.MaxBoxesSpawned;
-            MinTokensPerSupply = oldLevel.MinTokensPerSupply;
-            MaxTokensPerSupply = oldLevel.MaxTokensPerSupply;
-            BoxTokenChance = oldLevel.BoxTokenChance;
-            BoxHealthChance = oldLevel.BoxHealthChance;
-            PossiblePanelTypes = oldLevel.PossiblePanelTypes ?? [];
-            TakeChallenge = new(oldLevel.TakeChallenge);
-            HoldPhases = [];
-
-            foreach (V1.Phase oldPhase in oldLevel.HoldPhases)
-            {
-                HoldPhases.Add(new(oldPhase));
-            }
-
-            SupplyChallenge = new(oldLevel.SupplyChallenge);
-            Patrols = [];
-
-            foreach (V1.Patrol oldPatrol in oldLevel.Patrols)
-            {
-                Patrols.Add(new(oldPatrol));
-            }
-        }
-
         public Level(TNH_Progression.Level level) : this()
         {
-            NumOverrideTokensForHold = level.NumOverrideTokensForHold;
             TakeChallenge = new TakeChallenge(level.TakeChallenge);
-            SupplyChallenge = new TakeChallenge(level.TakeChallenge);
             HoldPhases = [.. level.HoldChallenge.Phases.Select(o => new Phase(o))];
+            SupplyChallenge = new TakeChallenge(level.TakeChallenge);
             Patrols = [.. level.PatrolChallenge.Patrols.Select(o => new Patrol(o))];
-            PossiblePanelTypes =
-            [
-                PanelType.AmmoReloader,
-                PanelType.MagDuplicator,
-                PanelType.Recycler,
-            ];
+            NumOverrideTokensForHold = level.NumOverrideTokensForHold;
+
             MinConstructors = 1;
             MaxConstructors = 1;
             MinPanels = 1;
@@ -1408,6 +1639,12 @@ namespace TNHFramework.ObjectTemplates
             MaxTokensPerSupply = 1;
             BoxTokenChance = 0;
             BoxHealthChance = 0.5f;
+            PossiblePanelTypes =
+            [
+                PanelType.AmmoReloader,
+                PanelType.MagDuplicator,
+                PanelType.Recycler,
+            ];
 
             this.level = level;
         }
@@ -1418,15 +1655,14 @@ namespace TNHFramework.ObjectTemplates
             {
                 level = new()
                 {
-                    NumOverrideTokensForHold = NumOverrideTokensForHold,
                     TakeChallenge = TakeChallenge.GetTakeChallenge(),
-
-                    HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge))
+                    HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge)),
+                    SupplyChallenge = SupplyChallenge.GetTakeChallenge(),
+                    PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge)),
+                    NumOverrideTokensForHold = NumOverrideTokensForHold
                 };
 
                 level.HoldChallenge.Phases = [.. HoldPhases.Select(o => o.GetPhase())];
-                level.SupplyChallenge = SupplyChallenge.GetTakeChallenge();
-                level.PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge));
                 level.PatrolChallenge.Patrols = [.. Patrols.Select(o => o.GetPatrol())];
             }
 
@@ -1472,43 +1708,32 @@ namespace TNHFramework.ObjectTemplates
         public bool LevelUsesSosig(string id)
         {
             if (TakeChallenge.EnemyType == id)
-            {
                 return true;
-            }
-            else if (SupplyChallenge.EnemyType == id)
-            {
+
+            if (SupplyChallenge.EnemyType == id)
                 return true;
-            }
 
             foreach (Patrol patrol in Patrols)
             {
                 if (patrol.LeaderType == id)
-                {
                     return true;
-                }
 
                 foreach (string sosigID in patrol.EnemyType)
                 {
                     if (sosigID == id)
-                    {
                         return true;
-                    }
                 }
             }
 
             foreach (Phase phase in HoldPhases)
             {
                 if (phase.LeaderType == id)
-                {
                     return true;
-                }
 
                 foreach (string sosigID in phase.EnemyType)
                 {
                     if (sosigID == id)
-                    {
                         return true;
-                    }
                 }
             }
 
@@ -1520,32 +1745,25 @@ namespace TNHFramework.ObjectTemplates
     public class TakeChallenge()
     {
         public TNH_TurretType TurretType;
-        public string EnemyType;
-
         public int NumTurrets;
+        public string EnemyType;
         public int NumGuards;
         public int IFFUsed;
 
         [JsonIgnore]
+        public SosigEnemyTemplate OverrideGID;
+
+        [JsonIgnore]
         private TNH_TakeChallenge takeChallenge;
-
-        public TakeChallenge(V1.TakeChallenge oldTake) : this()
-        {
-            TurretType = oldTake.TurretType;
-            EnemyType = oldTake.EnemyType;
-
-            NumTurrets = oldTake.NumTurrets;
-            NumGuards = oldTake.NumGuards;
-            IFFUsed = oldTake.IFFUsed;
-        }
 
         public TakeChallenge(TNH_TakeChallenge takeChallenge) : this()
         {
             TurretType = takeChallenge.TurretType;
+            NumTurrets = takeChallenge.NumTurrets;
             EnemyType = takeChallenge.GID.ToString();
             NumGuards = takeChallenge.NumGuards;
-            NumTurrets = takeChallenge.NumTurrets;
             IFFUsed = takeChallenge.IFFUsed;
+            OverrideGID = takeChallenge.OverrideGID;
 
             this.takeChallenge = takeChallenge;
         }
@@ -1555,17 +1773,18 @@ namespace TNHFramework.ObjectTemplates
             if (takeChallenge == null)
             {
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
+                takeChallenge.OverrideGID = OverrideGID;
                 takeChallenge.TurretType = TurretType;
+                takeChallenge.NumTurrets = NumTurrets;
+                takeChallenge.GID = SosigEnemyID.None;
+                takeChallenge.NumGuards = NumGuards;
+                takeChallenge.IFFUsed = IFFUsed;
 
                 // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
                     takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
                 else
                     takeChallenge.GID = TNHFrameworkUtils.ParseEnemyType(EnemyType);
-
-                takeChallenge.NumTurrets = NumTurrets;
-                takeChallenge.NumGuards = NumGuards;
-                takeChallenge.IFFUsed = IFFUsed;
             }
 
             return takeChallenge;
@@ -1589,68 +1808,50 @@ namespace TNHFramework.ObjectTemplates
         public string LeaderType;
         public int MinEnemies;
         public int MaxEnemies;
+        public float SpawnCadence;
         public int MaxEnemiesAlive;
         public int MaxDirections;
-        public float SpawnCadence;
         public float ScanTime;
         public float WarmupTime;
+        public bool IsLeaderBoss;
         public int IFFUsed;
         public float GrenadeChance;
         public string GrenadeType;
         public bool SwarmPlayer;
-        public bool DespawnBetweenWaves = true;
-        public bool UsesVFX = true;
+
+        [JsonIgnore]
+        public SosigEnemyTemplate OverrideEType;
+
+        [JsonIgnore]
+        public SosigEnemyTemplate OverrideLType;
 
         [JsonIgnore]
         private TNH_HoldChallenge.Phase phase;
-
-        public Phase(V1.Phase oldPhase) : this()
-        {
-            Encryptions = oldPhase.Encryptions ?? [];
-            MinTargets = oldPhase.MinTargets;
-            MaxTargets = oldPhase.MaxTargets;
-            MinTargetsLimited = oldPhase.MinTargetsLimited;
-            MaxTargetsLimited = oldPhase.MaxTargetsLimited;
-            EnemyType = oldPhase.EnemyType ?? [];
-            LeaderType = oldPhase.LeaderType;
-            MinEnemies = oldPhase.MinEnemies;
-            MaxEnemies = oldPhase.MaxEnemies;
-            MaxEnemiesAlive = oldPhase.MaxEnemiesAlive;
-            MaxDirections = oldPhase.MaxDirections;
-            SpawnCadence = oldPhase.SpawnCadence;
-            ScanTime = oldPhase.ScanTime;
-            WarmupTime = oldPhase.WarmupTime;
-            IFFUsed = oldPhase.IFFUsed;
-            GrenadeChance = oldPhase.GrenadeChance;
-            GrenadeType = oldPhase.GrenadeType;
-            SwarmPlayer =  oldPhase.SwarmPlayer;
-            DespawnBetweenWaves = true;
-            UsesVFX = true;
-        }
 
         public Phase(TNH_HoldChallenge.Phase phase) : this()
         {
             Encryptions = [phase.Encryption];
             MinTargets = phase.MinTargets;
             MaxTargets = phase.MaxTargets;
-            MinTargetsLimited = 1;
-            MaxTargetsLimited = 1;
+            MinTargetsLimited = phase.MinTargets_Limited;
+            MaxTargetsLimited = phase.MaxTargets_Limited;
             EnemyType = [phase.EType.ToString()];
             LeaderType = phase.LType.ToString();
             MinEnemies = phase.MinEnemies;
             MaxEnemies = phase.MaxEnemies;
+            SpawnCadence = phase.SpawnCadence;
             MaxEnemiesAlive = phase.MaxEnemiesAlive;
             MaxDirections = phase.MaxDirections;
-            SpawnCadence = phase.SpawnCadence;
             ScanTime = phase.ScanTime;
             WarmupTime = phase.WarmUp;
+            IsLeaderBoss = phase.IsLeaderBoss;
             IFFUsed = phase.IFFUsed;
             GrenadeChance = 0;
             GrenadeType = "Sosiggrenade_Flash";
             SwarmPlayer = false;
-            DespawnBetweenWaves = true;
-            UsesVFX = true;
 
+            OverrideEType = phase.OverrideEType;
+            OverrideLType = phase.OverrideLType;
             this.phase = phase;
         }
 
@@ -1660,20 +1861,26 @@ namespace TNHFramework.ObjectTemplates
             {
                 phase = new TNH_HoldChallenge.Phase
                 {
+                    OverrideEType = OverrideEType,
+                    OverrideLType = OverrideLType,
                     Encryption = Encryptions[0],
                     MinTargets = MinTargets,
                     MaxTargets = MaxTargets,
+                    MinTargets_Limited = MinTargetsLimited,
+                    MaxTargets_Limited = MaxTargetsLimited,
+                    EType = SosigEnemyID.None,
+                    LType = SosigEnemyID.None,
                     MinEnemies = MinEnemies,
                     MaxEnemies = MaxEnemies,
+                    SpawnCadence = SpawnCadence,
                     MaxEnemiesAlive = MaxEnemiesAlive,
                     MaxDirections = MaxDirections,
-                    SpawnCadence = SpawnCadence,
                     ScanTime = ScanTime,
                     WarmUp = Mathf.Max(0f, WarmupTime),
+                    IsLeaderBoss = IsLeaderBoss,
                     IFFUsed = IFFUsed
                 };
 
-                // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
                     phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
                 else
@@ -1725,27 +1932,18 @@ namespace TNHFramework.ObjectTemplates
         public bool DropsHealth;
 
         [JsonIgnore]
-        private TNH_PatrolChallenge.Patrol patrol;
+        public SosigEnemyTemplate OverrideEType;
 
-        public Patrol(V1.Patrol oldPatrol) : this()
-        {
-            EnemyType = oldPatrol.EnemyType ?? [];
-            LeaderType = oldPatrol.LeaderType;
-            PatrolSize = oldPatrol.PatrolSize;
-            MaxPatrols = oldPatrol.MaxPatrols;
-            MaxPatrolsLimited = oldPatrol.MaxPatrolsLimited;
-            PatrolCadence = oldPatrol.PatrolCadence;
-            PatrolCadenceLimited = oldPatrol.PatrolCadenceLimited;
-            IFFUsed = oldPatrol.IFFUsed;
-            SwarmPlayer = oldPatrol.SwarmPlayer;
-            AssualtSpeed = oldPatrol.AssualtSpeed;
-            IsBoss = oldPatrol.IsBoss;
-            DropChance = oldPatrol.DropChance;
-            DropsHealth = oldPatrol.DropsHealth;
-        }
+        [JsonIgnore]
+        public SosigEnemyTemplate OverrideLType;
+
+        [JsonIgnore]
+        private TNH_PatrolChallenge.Patrol patrol;
 
         public Patrol(TNH_PatrolChallenge.Patrol patrol) : this()
         {
+            OverrideEType = patrol.OverrideEType;
+            OverrideLType = patrol.OverrideLType;
             EnemyType = [patrol.EType.ToString()];
             LeaderType = patrol.LType.ToString();
             PatrolSize = patrol.PatrolSize;
@@ -1767,7 +1965,19 @@ namespace TNHFramework.ObjectTemplates
         {
             if (patrol == null)
             {
-                patrol = new TNH_PatrolChallenge.Patrol();
+                patrol = new TNH_PatrolChallenge.Patrol
+                {
+                    OverrideEType = OverrideEType,
+                    OverrideLType = OverrideLType,
+                    EType = SosigEnemyID.None,
+                    LType = SosigEnemyID.None,
+                    PatrolSize = PatrolSize,
+                    MaxPatrols = MaxPatrols,
+                    MaxPatrols_LimitedAmmo = MaxPatrolsLimited,
+                    TimeTilRegen = PatrolCadence,
+                    TimeTilRegen_LimitedAmmo = PatrolCadenceLimited,
+                    IFFUsed = IFFUsed
+                };
 
                 // Try to get the necessary SosigEnemyIDs
                 if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
@@ -1779,13 +1989,6 @@ namespace TNHFramework.ObjectTemplates
                     patrol.LType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[LeaderType];
                 else
                     patrol.LType = TNHFrameworkUtils.ParseEnemyType(LeaderType);
-
-                patrol.PatrolSize = PatrolSize;
-                patrol.MaxPatrols = MaxPatrols;
-                patrol.MaxPatrols_LimitedAmmo = MaxPatrolsLimited;
-                patrol.TimeTilRegen = PatrolCadence;
-                patrol.TimeTilRegen_LimitedAmmo = PatrolCadenceLimited;
-                patrol.IFFUsed = IFFUsed;
             }
 
             return patrol;

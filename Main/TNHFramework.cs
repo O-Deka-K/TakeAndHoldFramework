@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.3.2")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.120.0")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -23,6 +23,7 @@ namespace TNHFramework
         private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
+
         public static ConfigEntry<bool> InternalMagPatcher;
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> ConvertFilesToYAML;
@@ -36,10 +37,15 @@ namespace TNHFramework
         public static ConfigEntry<bool> UnlimitedTokens;
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
-        public static ConfigEntry<bool> EnableBlister;
-        public static ConfigEntry<bool> EnableFloater;
-        public static ConfigEntry<bool> EnableIris;
-        public static ConfigEntry<bool> EnableSentinel;
+
+        private static ConfigEntry<bool> simpleRegenerative;
+        private static ConfigEntry<bool> simpleCascading;
+        private static ConfigEntry<bool> simpleOrthogonal;
+
+        private static ConfigEntry<bool> enableBlister;
+        private static ConfigEntry<bool> enableFloater;
+        private static ConfigEntry<bool> enableIris;
+        private static ConfigEntry<bool> enableSentinel;
 
         public static string OutputFilePath;
 
@@ -58,28 +64,42 @@ namespace TNHFramework
         public static List<GameObject> SpawnedPanels = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry.PoolEntryType, List<EquipmentPoolDef.PoolEntry>> SpawnedPoolsDictionary = [];
 
+        public static bool SimpleRegenerative;
+        public static bool SimpleCascading;
+        public static bool SimpleOrthogonal;
+        public static bool EnableBlister;
+        public static bool EnableFloater;
+        public static bool EnableIris;
+        public static bool EnableSentinel;
+
+        public void Awake()
+        {
+            if (TNHFrameworkLogger.BepLog == null)
+                TNHFrameworkLogger.Init();
+
+            TNHFrameworkLogger.Log("Initializing TNHFramework", TNHFrameworkLogger.LogType.General);
+            LoadConfigFile();
+        }
+
         /// <summary>
         /// Initialization method
         /// </summary>
         private void Start()
         {
-            if (TNHFrameworkLogger.BepLog == null)
-                TNHFrameworkLogger.Init();
-
-            TNHFrameworkLogger.Log("Initializing TNHFramework Experimental", TNHFrameworkLogger.LogType.General);
             TNHFrameworkLogger.Log($"H3VR Update {GetBuildNumber()}", TNHFrameworkLogger.LogType.General);
 
-            if (GM.Version_UpdateNumber <= 119)
+            Harmony harmony = new("h3vr.tnhframework");
+
+            if (GM.Version_UpdateNumber < 120)
             {
-                TNHFrameworkLogger.LogError("This should only be run on H3VR build 120 or higher. Please use TNHFramework B119 instead. Shutting down...");
+                harmony.PatchAll(typeof(MainMenuPatches));
+                TNHFrameworkLogger.LogError("This should only be run on H3VR build 120 or higher. Please use TNHFramework 0.119.0, or switch to H3VR main branch. Shutting down...");
                 return;
             }
 
             SetupOutputDirectory();
-            LoadConfigFile();
             LoadPanelSprites();
 
-            Harmony harmony = new("h3vr.tnhframework");
             harmony.PatchAll(typeof(ConstructorPatches));
             harmony.PatchAll(typeof(HighScorePatches));
             harmony.PatchAll(typeof(HoldPatches));
@@ -184,124 +204,104 @@ namespace TNHFramework
 
         /// <summary>
         /// Loads the BepInEx config file, and applies those settings
+        /// This method must be called as early as possible, so put in in Awake()
         /// </summary>
         private void LoadConfigFile()
         {
             TNHFrameworkLogger.Log("Getting config file", TNHFrameworkLogger.LogType.File);
 
-            InternalMagPatcher = Config.Bind("General",
-                                    "InternalMagPatcher",
-                                    true,
-                                    "If true and MagazinePatcher plugin is NOT used, run internal version. There may be a short delay in the TNH lobby");
+            InternalMagPatcher = Config.Bind("General", "InternalMagPatcher", true,
+                "If true and MagazinePatcher plugin is NOT used, run internal version. There may be a short delay in the TNH lobby");
 
-            BuildCharacterFiles = Config.Bind("General",
-                                    "BuildCharacterFiles",
-                                    false,
-                                    "If true, files useful for character creation will be generated in TNHTweaker folder");
+            BuildCharacterFiles = Config.Bind("General", "BuildCharacterFiles", false,
+                "If true, files useful for character creation will be generated in TNHTweaker folder");
 
-            AlwaysMagUpgrader = Config.Bind("General",
-                                    "AlwaysMagUpgrade",
-                                    true,
-                                    "If true, all Mag Duplicators become Mag Upgraders. This is default legacy TNHTweaker behavior.\n" +
-                                    "If false, Mag Duplicators and Mag Upgraders are different. Mag Upgraders allow you to buy a new mag for your current gun, while Mag Duplicators don't.");
+            AlwaysMagUpgrader = Config.Bind("General", "AlwaysMagUpgrade", true,
+                "If true, all Mag Duplicators become Mag Upgraders. This is default legacy TNHTweaker behavior.\n" +
+                "If false, Mag Duplicators and Mag Upgraders are different. Mag Upgraders allow you to buy a new mag for your current gun, while Mag Duplicators don't.");
 
-            SosigItemDropVibrate = Config.Bind("General",
-                                    "SosigItemDropVibrate",
-                                    true,
-                                    "If true, vibrate the controllers when a Sosig spawns an item on death. This doesn't apply to health drops.");
+            SosigItemDropVibrate = Config.Bind("General", "SosigItemDropVibrate", true,
+                "If true, vibrate the controllers when a Sosig spawns an item on death. This doesn't apply to health drops.");
 
-            MagUpgradeThreshold = Config.Bind("General",
-                                    "MagUpgradeThreshold",
-                                    10,
-                                    "When upgrading a magazine, it will upgrade to the next mag that has greater than or equal to this number more than the current mag if possible.");
+            MagUpgradeThreshold = Config.Bind("General", "MagUpgradeThreshold", 10,
+                "When upgrading a magazine, it will upgrade to the next mag that has greater than or equal to this number more than the current mag if possible.");
 
-            InjectModBackpacks = Config.Bind("General",
-                                    "InjectModBackpacks",
-                                    true,
-                                    "If true, add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.");
+            InjectModBackpacks = Config.Bind("General", "InjectModBackpacks", true,
+                "If true, add mod backpacks to any equipment pools that contain only the vanilla backpack. Does not add backpacks to starting equipment.");
 
-            FixModAttachmentTags = Config.Bind("Fixes",
-                                    "FixModAttachmentTags",
-                                    true,
-                                    "If true, fix mod attachment tags for known mods so that they can spawn in TNH.\n" +
-                                    "Handles older mods by Meat_banano and FSCE.");
+            FixModAttachmentTags = Config.Bind("Fixes", "FixModAttachmentTags", true,
+                "If true, fix mod attachment tags for known mods so that they can spawn in TNH.\n" +
+                "Handles older mods by Meat_banano and FSCE.");
 
-            FixLegacyModulGuns = Config.Bind("Fixes",
-                                    "FixLegacyModulGuns",
-                                    false,
-                                    "If true, try to fix Modul guns that have preset attachments (premades). The attachments fall through the floor if you remove them.\n" +
-                                    "Handles older non-ModulWorkshop mods by Meat_banano.");
+            FixLegacyModulGuns = Config.Bind("Fixes", "FixLegacyModulGuns", false,
+                "If true, try to fix Modul guns that have preset attachments (premades). The attachments fall through the floor if you remove them.\n" +
+                "Handles older non-ModulWorkshop mods by Meat_banano.");
 
-            FixWurstMod = Config.Bind("Fixes",
-                                    "FixWurstMod",
-                                    true,
-                                    "If true, Unpatch broken patches from WurstMod 2.2.5.\n" +
-                                    "These patches were broken by changes to H3VR and never fixed. They cause annoying errors in the log.");
+            FixWurstMod = Config.Bind("Fixes", "FixWurstMod", true,
+                "If true, Unpatch broken patches from WurstMod 2.2.5.\n" +
+                "These patches were broken by changes to H3VR and never fixed. They cause annoying errors in the log.");
 
-            ConvertFilesToYAML = Config.Bind("General",
-                                    "ConvertFilesToYAML",
-                                    false,
-                                    "If true, any Stratum-based custom characters will have their JSON files converted to YAML");
+            ConvertFilesToYAML = Config.Bind("General", "ConvertFilesToYAML", false,
+                "Obsolete. Does nothing.");
 
-            EnableScoring = Config.Bind("General",
-                                    "EnableScoring",
-                                    true,
-                                    "Custom scoreboard is permanently offline, so this does nothing");
+            EnableScoring = Config.Bind("General", "EnableScoring", true,
+                "Custom scoreboard is permanently offline, so this does nothing");
 
-            allowLog = Config.Bind("Debug",
-                                    "EnableLogging",
-                                    true,
-                                    "Set to true to enable logging");
+            allowLog = Config.Bind("Debug", "EnableLogging", true,
+                "Set to true to enable logging");
 
-            printCharacters = Config.Bind("Debug",
-                                    "LogCharacterInfo",
-                                    false,
-                                    "Decide if should print all character info");
+            printCharacters = Config.Bind("Debug", "LogCharacterInfo", false,
+                "Decide if should print all character info");
 
-            logTNH = Config.Bind("Debug",
-                                    "LogTNH",
-                                    false,
-                                    "If true, general TNH information will be logged");
+            logTNH = Config.Bind("Debug", "LogTNH", false,
+                "If true, general TNH information will be logged");
 
-            logFileReads = Config.Bind("Debug",
-                                    "LogFileReads",
-                                    false,
-                                    "If true, reading from a file will log the reading process");
+            logFileReads = Config.Bind("Debug", "LogFileReads", false,
+                "If true, reading from a file will log the reading process");
 
-            UnlimitedTokens = Config.Bind("Debug",
-                                    "EnableUnlimitedTokens",
-                                    false,
-                                    "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)");
+            UnlimitedTokens = Config.Bind("Debug", "EnableUnlimitedTokens", false,
+                "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)");
 
-            EnableDebugText = Config.Bind("Debug",
-                                    "EnableDebugText",
-                                    false,
-                                    "If true, some text will appear in TNH maps showing additional info");
+            EnableDebugText = Config.Bind("Debug", "EnableDebugText", false,
+                "If true, some text will appear in TNH maps showing additional info");
 
-            EnableBlister = Config.Bind("Institution Constructs",
-                                    "EnableBlister",
-                                    true,
-                                    "If true, enable blister constructs. Lasers that scan in an arc and trigger an alert when tripped.");
+            simpleRegenerative = Config.Bind("Encryptions", "SimpleRegenerative", false,
+                "If true, Regenerative encryption is easier when in Spawnlocking mode (3x3 instead of 5x5).");
 
-            EnableFloater = Config.Bind("Institution Constructs",
-                                    "EnableFloater",
-                                    true,
-                                    "If true, enable floater constructs. Floating proximity mines that follow you.");
+            simpleCascading = Config.Bind("Encryptions", "SimpleCascading", false,
+                "If true, Cascading encryption is easier when in Spawnlocking mode (splits into 3 blocks instead of 6)");
 
-            EnableIris = Config.Bind("Institution Constructs",
-                                    "EnableIris",
-                                    true,
-                                    "If true, enable iris constructs. Floating constructs that fire a destructive laser.");
+            simpleOrthogonal = Config.Bind("Encryptions", "SimpleOrthogonal", false,
+                "If true, Orthogonal encryption is easier when in Spawnlocking mode (1 target per face instead of 3)");
 
-            EnableSentinel = Config.Bind("Institution Constructs",
-                                    "EnableSentinel",
-                                    true,
-                                    "If true, enable sentinel constructs. Large floating monoliths than scan using lasers and trigger an alert.");
+            enableBlister = Config.Bind("Institution Constructs", "EnableBlister", true,
+                "If true, enable Blister constructs. Lasers that scan in an arc and trigger an alert when tripped.");
+
+            enableFloater = Config.Bind("Institution Constructs", "EnableFloater", true,
+                "If true, enable Floater constructs. Floating proximity mines that follow you.");
+
+            enableIris = Config.Bind("Institution Constructs", "EnableIris", true,
+                "If true, enable Iris constructs. Floating constructs that fire a destructive laser.");
+
+            enableSentinel = Config.Bind("Institution Constructs", "EnableSentinel", true,
+                "If true, enable Sentinel constructs. Large floating monoliths than scan using lasers and trigger an alert.");
 
             TNHFrameworkLogger.AllowLogging = allowLog.Value;
             TNHFrameworkLogger.LogCharacter = printCharacters.Value;
             TNHFrameworkLogger.LogTNH = logTNH.Value;
             TNHFrameworkLogger.LogFile = logFileReads.Value;
+        }
+
+        public static void LoadConfigValues()
+        {
+            SimpleRegenerative = simpleRegenerative.Value;
+            SimpleCascading = simpleCascading.Value;
+            SimpleOrthogonal = simpleOrthogonal.Value;
+
+            EnableBlister = enableBlister.Value;
+            EnableFloater = enableFloater.Value;
+            EnableIris = enableIris.Value;
+            EnableSentinel = enableSentinel.Value;
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using HarmonyLib;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
@@ -18,6 +19,7 @@ namespace TNHFramework.Patches
 
         private static readonly FieldInfo fiNumSpawnBonus = typeof(TNH_SupplyPoint).GetField("numSpawnBonus", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo fiActiveSosigs = typeof(TNH_SupplyPoint).GetField("m_activeSosigs", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo fiTrackedObjects = typeof(TNH_SupplyPoint).GetField("m_trackedObjects", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static int NumConstructors;
         public static int PanelIndex = 0;
@@ -34,7 +36,7 @@ namespace TNHFramework.Patches
 
             ___m_timeSinceReinforceCall = 0f;
 
-            if (___m_activeSosigs.Count <= 0)
+            if (!___m_activeSosigs.Any())
                 AnvilManager.Run(SpawnTakeEnemyGroup(__instance, LoadedTemplateManager.CurrentLevel));
 
             return false;
@@ -43,13 +45,14 @@ namespace TNHFramework.Patches
         [HarmonyPatch(typeof(TNH_SupplyPoint), "Configure")]
         [HarmonyPrefix]
         public static bool Configure_Replacement(TNH_SupplyPoint __instance, ref GameObject ___m_gameBounds, ref System.Random ___m_assortedRand, ref bool ___m_isconfigured,
-            ref bool ___m_hasBeenVisited, TNH_TakeChallenge t, bool spawnSosigs, bool spawnDefenses, bool spawnConstructor, int minBoxPiles, int maxBoxPiles, bool SpawnToken)
+            ref int ___numPanelsSpawned, ref bool ___m_hasBeenVisited, TNH_TakeChallenge t, bool spawnSosigs, bool spawnDefenses, bool spawnConstructor,
+            TNH_SupplyPoint.SupplyPanelType panelType, int minBoxPiles, int maxBoxPiles, bool SpawnToken)
         {
             Level level = LoadedTemplateManager.CurrentLevel;
 
             if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
             {
-                ___m_gameBounds = UnityEngine.Object.Instantiate<GameObject>(__instance.M.ResourceLib.Prefab_WarpBounds, __instance.Bounds.transform.position, __instance.Bounds.transform.rotation);
+                ___m_gameBounds = Object.Instantiate<GameObject>(__instance.M.ResourceLib.Prefab_WarpBounds, __instance.Bounds.transform.position, __instance.Bounds.transform.rotation);
                 ___m_gameBounds.transform.position = __instance.Bounds.transform.position;
                 ___m_gameBounds.transform.rotation = __instance.Bounds.transform.rotation;
                 ___m_gameBounds.transform.localScale = __instance.Bounds.transform.localScale + Vector3.one * 0.1f;
@@ -59,10 +62,12 @@ namespace TNHFramework.Patches
             __instance.InitLights();
             __instance.T = t;
             ___m_isconfigured = true;
+            ___numPanelsSpawned = 0;
 
             if (spawnSosigs)
             {
-                AnvilManager.Run(SpawnTakeEnemyGroup(__instance, level));
+                //AnvilManager.Run(SpawnTakeEnemyGroup(__instance, level));
+                __instance.StartCoroutine(SpawnTakeEnemyGroup(__instance, level));
             }
 
             if (spawnDefenses)
@@ -75,10 +80,10 @@ namespace TNHFramework.Patches
 
             if (spawnConstructor)
             {
-                //SpawnSupplyConstructor(__instance, numConstructors);
-                //SpawnSecondarySupplyPanel(__instance, level, numConstructors);
+                //SpawnConstructor();
+                //SpawnSecondaryPanel(panelType);
                 miSpawnConstructor.Invoke(__instance, []);
-                miSpawnSecondaryPanel.Invoke(__instance, [TNH_SupplyPoint.SupplyPanelType.All]);
+                miSpawnSecondaryPanel.Invoke(__instance, [panelType]);
             }
 
             if (maxBoxPiles > 0)
@@ -101,8 +106,11 @@ namespace TNHFramework.Patches
         // Allow spawning of multiple Object Constructors
         [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnConstructor")]
         [HarmonyPrefix]
-        public static bool SpawnConstructor_Replacement(TNH_SupplyPoint __instance, ref GameObject ___m_constructor)
+        public static bool SpawnConstructor_Replacement(TNH_SupplyPoint __instance, ref int ___numPanelsSpawned)
         {
+            if (!__instance.M.C.UsesObjectConstructor)
+                return false;
+
             Level level = LoadedTemplateManager.CurrentLevel;
 
             TNHFrameworkLogger.Log("Spawning constructor panel", TNHFrameworkLogger.LogType.TNH);
@@ -117,6 +125,7 @@ namespace TNHFramework.Patches
             {
                 GameObject constructor = __instance.M.SpawnObjectConstructor(__instance.SpawnPoints_Panels[i]);
                 TNHFramework.SpawnedConstructors.Add(constructor);
+                ___numPanelsSpawned++;
             }
 
             return false;
@@ -125,31 +134,59 @@ namespace TNHFramework.Patches
         // Spawn all the new types of panels
         [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnSecondaryPanel")]
         [HarmonyPrefix]
-        public static bool SpawnSecondaryPanel_Replacement(TNH_SupplyPoint __instance)
+        public static bool SpawnSecondaryPanel_Replacement(TNH_SupplyPoint __instance, TNH_SupplyPoint.SupplyPanelType t)
         {
             Level level = LoadedTemplateManager.CurrentLevel;
 
             TNHFrameworkLogger.Log("Spawning secondary panels", TNHFrameworkLogger.LogType.TNH);
 
-            List<PanelType> panelTypes;
-            int numPanels;
+            int minPanels = level.MinPanels;
+            int maxPanels = level.MaxPanels;
 
-            if (__instance.M.GameMode == TNHSetting_GameMode.Rampart ||
-                (__instance.M.LevelName == "Institution" && !LoadedTemplateManager.CurrentCharacter.isCustom))
+            if (t == TNH_SupplyPoint.SupplyPanelType.All)
             {
-                panelTypes = [PanelType.AmmoReloader, PanelType.MagDuplicator, PanelType.Recycler];
-                numPanels = panelTypes.Count;
-
+                // For custom characters, spawn at least 3 panels from the possible panel types
                 if (LoadedTemplateManager.CurrentCharacter.isCustom)
-                    panelTypes.Shuffle();
-            }
-            else
-            {
-                panelTypes = [.. level.PossiblePanelTypes];
-                numPanels = Random.Range(level.MinPanels, level.MaxPanels + 1);
+                {
+                    minPanels = Mathf.Max(minPanels, 3, minPanels);
+                    maxPanels = Mathf.Max(maxPanels, minPanels, maxPanels);
+                }
+                // For vanilla/workshop characters, spawn all three vanilla panel types (if allowed)
+                else
+                {
+                    GameObject panel;
+                    int i = NumConstructors;
+
+                    if (__instance.SpawnPoints_Panels.Count > i && __instance.M.C.UsesAmmoReloader)
+                    {
+                        panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i++]);
+                        TNHFramework.SpawnedPanels.Add(panel);
+                    }
+
+                    if (__instance.SpawnPoints_Panels.Count > i && __instance.M.C.UsesMagDuplicator)
+                    {
+                        panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i++]);
+
+                        if (TNHFramework.AlwaysMagUpgrader.Value)
+                            panel.AddComponent(typeof(MagazinePanel));
+
+                        TNHFramework.SpawnedPanels.Add(panel);
+                    }
+
+                    if (__instance.SpawnPoints_Panels.Count > i && __instance.M.C.UsesGunRecycler)
+                    {
+                        panel = __instance.M.SpawnGunRecycler(__instance.SpawnPoints_Panels[i++], __instance.M.C.SosigLootTable != null);
+                        TNHFramework.SpawnedPanels.Add(panel);
+                    }
+
+                    return false;
+                }
             }
 
-            if (panelTypes.Count < 1 || numPanels < 1)
+            List<PanelType> panelTypes = [.. level.PossiblePanelTypes];
+            int numPanels = Random.Range(minPanels, maxPanels + 1);
+
+            if (!panelTypes.Any() || numPanels <= 0)
                 return false;
 
             numPanels = Mathf.Clamp(numPanels, 0, __instance.SpawnPoints_Panels.Count - NumConstructors);
@@ -164,13 +201,13 @@ namespace TNHFramework.Patches
 
                 TNHFrameworkLogger.Log("Panel type selected : " + panelType, TNHFrameworkLogger.LogType.TNH);
 
-                GameObject panel;
+                GameObject panel = null;
 
-                if (panelType == PanelType.AmmoReloader)
+                if (panelType == PanelType.AmmoReloader && __instance.M.C.UsesAmmoReloader)
                 {
                     panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i]);
                 }
-                else if (panelType == PanelType.MagDuplicator)
+                else if (panelType == PanelType.MagDuplicator && __instance.M.C.UsesMagDuplicator)
                 {
                     panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
 
@@ -182,9 +219,9 @@ namespace TNHFramework.Patches
                     panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagazinePanel));
                 }
-                else if (panelType == PanelType.Recycler)
+                else if (panelType == PanelType.Recycler && __instance.M.C.UsesGunRecycler)
                 {
-                    panel = __instance.M.SpawnGunRecycler(__instance.SpawnPoints_Panels[i]);
+                    panel = __instance.M.SpawnGunRecycler(__instance.SpawnPoints_Panels[i], __instance.M.C.SosigLootTable != null);
                 }
                 else if (panelType == PanelType.AmmoPurchase)
                 {
@@ -201,9 +238,25 @@ namespace TNHFramework.Patches
                     panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(FireRatePanel));
                 }
-                else
+
+                // If nothing was spawned because of restrictions, try to spawn a fallback
+                if (panel == null)
                 {
-                    panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i]);
+                    if (__instance.M.C.UsesGunRecycler)
+                    {
+                        panel = __instance.M.SpawnGunRecycler(__instance.SpawnPoints_Panels[i], __instance.M.C.SosigLootTable != null);
+                    }
+                    else if (__instance.M.C.UsesMagDuplicator)
+                    {
+                        panel = __instance.M.SpawnMagDuplicator(__instance.SpawnPoints_Panels[i]);
+
+                        if (TNHFramework.AlwaysMagUpgrader.Value)
+                            panel.AddComponent(typeof(MagazinePanel));
+                    }
+                    else if (__instance.M.C.UsesAmmoReloader)
+                    {
+                        panel = __instance.M.SpawnAmmoReloader(__instance.SpawnPoints_Panels[i]);
+                    }
                 }
 
                 // If we spawned a panel, add it to the global list
@@ -255,6 +308,7 @@ namespace TNHFramework.Patches
                 }
 
                 int tokensSpawned = 0;
+                bool useLoot = (__instance.M.C.SosigLootTable != null && __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance > 0f);
 
                 if (!__instance.M.UsesUberShatterableCrates)
                 {
@@ -262,17 +316,41 @@ namespace TNHFramework.Patches
                     {
                         if (tokensSpawned < minTokens)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
-                            tokensSpawned++;
+                            if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetUsesLoot(__instance.M);
+                            }
+                            else
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
+                                tokensSpawned++;
+                            }
                         }
                         else if (tokensSpawned < maxTokens && Random.value < level.BoxTokenChance)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
-                            tokensSpawned++;
+                            if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetUsesLoot(__instance.M);
+                            }
+                            else
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
+                                tokensSpawned++;
+                            }
                         }
-                        else if (Random.value < level.BoxHealthChance)
+                        else if (useLoot)
                         {
-                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(__instance.M);
+                            if (Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetUsesLoot(__instance.M);
+                            }
+                        }
+                        else
+                        {
+                            if (Random.value < level.BoxHealthChance)
+                            {
+                                boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(__instance.M);
+                            }
                         }
                     }
                 }
@@ -283,17 +361,17 @@ namespace TNHFramework.Patches
                         UberShatterable boxComp = ___m_spawnBoxes[k].GetComponent<UberShatterable>();
                         if (tokensSpawned < minTokens)
                         {
-                            SpawnBoxWithToken(__instance, boxComp);
+                            SpawnBoxWithToken(__instance, boxComp, useLoot);
                             tokensSpawned++;
                         }
                         else if (tokensSpawned < maxTokens && Random.value < level.BoxTokenChance)
                         {
-                            SpawnBoxWithToken(__instance, boxComp);
+                            SpawnBoxWithToken(__instance, boxComp, useLoot);
                             tokensSpawned++;
                         }
                         else if (Random.value < level.BoxHealthChance)
                         {
-                            SpawnBoxWithHealth(__instance, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp, useLoot);
                         }
                         else
                         {
@@ -315,7 +393,7 @@ namespace TNHFramework.Patches
                 __instance.SpawnPoints_Boxes.Shuffle<Transform>();
 
                 int boxPiles = Random.Range(min, max + 1);
-                if (boxPiles < 1)
+                if (boxPiles <= 0)
                     return false;
 
                 for (int i = 0; i < boxPiles; i++)
@@ -337,6 +415,7 @@ namespace TNHFramework.Patches
                 }
 
                 ___m_spawnBoxes.Shuffle();
+                bool useLoot = (__instance.M.C.SosigLootTable != null && __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance > 0f);
 
                 if (!__instance.M.UsesUberShatterableCrates)
                 {
@@ -346,28 +425,40 @@ namespace TNHFramework.Patches
                     if (SpawnToken && ___m_spawnBoxes.Count > spawnIndex)
                     {
                         boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingToken(__instance.M);
+                        if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            boxComp.SetUsesLoot(__instance.M);
+                        else
+                            boxComp.SetHoldingToken(__instance.M);
                         spawnIndex++;
                     }
 
                     if (spawnHealth1 && ___m_spawnBoxes.Count > spawnIndex)
                     {
                         boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(__instance.M);
+                        if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            boxComp.SetUsesLoot(__instance.M);
+                        else
+                            boxComp.SetHoldingHealth(__instance.M);
                         spawnIndex++;
                     }
 
                     if (spawnHealth2 && ___m_spawnBoxes.Count > spawnIndex)
                     {
                         boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(__instance.M);
+                        if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            boxComp.SetUsesLoot(__instance.M);
+                        else
+                            boxComp.SetHoldingHealth(__instance.M);
                         spawnIndex++;
                     }
 
                     if (spawnHealth3 && ___m_spawnBoxes.Count > spawnIndex)
                     {
                         boxComp = ___m_spawnBoxes[spawnIndex].GetComponent<TNH_ShatterableCrate>();
-                        boxComp.SetHoldingHealth(__instance.M);
+                        if (useLoot && Random.value <= __instance.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+                            boxComp.SetUsesLoot(__instance.M);
+                        else
+                            boxComp.SetHoldingHealth(__instance.M);
                         //spawnIndex++;
                     }
                 }
@@ -380,22 +471,22 @@ namespace TNHFramework.Patches
                         if (SpawnToken)
                         {
                             SpawnToken = false;
-                            SpawnBoxWithToken(__instance, boxComp);
+                            SpawnBoxWithToken(__instance, boxComp, useLoot);
                         }
                         else if (spawnHealth1)
                         {
                             spawnHealth1 = false;
-                            SpawnBoxWithHealth(__instance, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp, useLoot);
                         }
                         else if (spawnHealth2)
                         {
                             spawnHealth2 = false;
-                            SpawnBoxWithHealth(__instance, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp, useLoot);
                         }
                         else if (spawnHealth3)
                         {
                             spawnHealth3 = false;
-                            SpawnBoxWithHealth(__instance, boxComp);
+                            SpawnBoxWithHealth(__instance, boxComp, useLoot);
                         }
                         else
                         {
@@ -408,24 +499,40 @@ namespace TNHFramework.Patches
             return false;
         }
 
-        private static void SpawnBoxWithToken(TNH_SupplyPoint point, UberShatterable boxComp)
+        private static void SpawnBoxWithToken(TNH_SupplyPoint point, UberShatterable boxComp, bool useLoot)
         {
             boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
             boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
             boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
-            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
-            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
-            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+            
+            if (useLoot && Random.value <= point.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+            {
+                boxComp.SetUsesLoot();
+            }
+            else
+            {
+                boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Token);
+                boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+                boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+            }
         }
 
-        private static void SpawnBoxWithHealth(TNH_SupplyPoint point, UberShatterable boxComp)
+        private static void SpawnBoxWithHealth(TNH_SupplyPoint point, UberShatterable boxComp, bool useLoot)
         {
             boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_Crate_Full);
             boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
             boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.StrikeDir);
-            boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_HealthMinor);
-            boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
-            boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+
+            if (useLoot && Random.value <= point.M.C.SosigLootTable.LootGroup_Boxes.SpawnChance)
+            {
+                boxComp.SetUsesLoot();
+            }
+            else
+            {
+                boxComp.SpawnOnShatter.Add(point.M.ResourceLib.Prefab_HealthMinor);
+                boxComp.SpawnOnShatterPoints.Add(boxComp.transform);
+                boxComp.SpawnOnShatterRotTypes.Add(UberShatterable.SpawnOnShatterRotationType.Identity);
+            }
         }
 
         private static void SpawnBoxEmpty(TNH_SupplyPoint point, UberShatterable boxComp)
@@ -457,17 +564,13 @@ namespace TNHFramework.Patches
             {
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
 
-                SosigEnemyTemplate template;
-                if (point.T.OverrideGID == null)
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
-                else
-                    template = point.T.OverrideGID;
-
+                SosigEnemyTemplate template = point.T.OverrideGID ?? ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
                 Sosig enemy = point.M.SpawnEnemy(template, transform.position, transform.rotation, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 //point.m_activeSosigs.Add(enemy);
                 var activeSosigs = (List<Sosig>)fiActiveSosigs.GetValue(point);
                 activeSosigs.Add(enemy);
+                point.M.RegisterSupplyGuard(enemy);
 
                 yield return new WaitForSeconds(0.1f);
             }
@@ -477,11 +580,11 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "ConfigureAtBeginning")]
         [HarmonyPrefix]
-        public static bool SpawnStartingEquipment(TNH_SupplyPoint __instance, ref GameObject ___m_gameBounds, ref System.Random ___m_assortedRand, ref List<GameObject> ___m_trackedObjects, int seed)
+        public static bool ConfigureAtBeginning_Replacement(TNH_SupplyPoint __instance, ref GameObject ___m_gameBounds, ref System.Random ___m_assortedRand, ref List<GameObject> ___m_trackedObjects, int seed)
         {
             if (__instance.M.GameMode == TNHSetting_GameMode.Rampart)
             {
-                ___m_gameBounds = UnityEngine.Object.Instantiate<GameObject>(__instance.M.ResourceLib.Prefab_WarpBounds, __instance.Bounds.transform.position, __instance.Bounds.transform.rotation);
+                ___m_gameBounds = Object.Instantiate<GameObject>(__instance.M.ResourceLib.Prefab_WarpBounds, __instance.Bounds.transform.position, __instance.Bounds.transform.rotation);
                 ___m_gameBounds.transform.position = __instance.Bounds.transform.position;
                 ___m_gameBounds.transform.rotation = __instance.Bounds.transform.rotation;
                 ___m_gameBounds.transform.localScale = __instance.Bounds.transform.localScale + Vector3.one * 0.1f;
@@ -500,21 +603,25 @@ namespace TNHFramework.Patches
 
             for (int i = 0; i < __instance.SpawnPoint_Tables.Count; i++)
             {
-                GameObject item = Object.Instantiate(__instance.M.Prefab_MetalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
+                GameObject originalTable = __instance.OverrideTable ?? __instance.M.Prefab_MetalTable;
+                GameObject item = Object.Instantiate(originalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
                 ___m_trackedObjects.Add(item);
             }
 
+            // TODO: Split this into a coroutine
+
             CustomCharacter character = LoadedTemplateManager.CurrentCharacter;
 
-            if (character.PrimaryWeapon != null)
+            if (character.HasPrimaryWeapon && character.PrimaryWeapon != null)
             {
                 EquipmentGroup selectedGroup = character.PrimaryWeapon.PrimaryGroup ?? character.PrimaryWeapon.BackupGroup;
 
                 if (selectedGroup != null)
                 {
+                    TNHFrameworkLogger.Log("Spawning Primary Weapon", TNHFrameworkLogger.LogType.TNH);
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
 
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetRandomObject()];
                     if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
                     {
                         IM.CompatMags.Add(selectedItem.MagazineType, selectedItem.CompatibleMagazines);
@@ -526,15 +633,16 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (character.SecondaryWeapon != null)
+            if (character.HasSecondaryWeapon && character.SecondaryWeapon != null)
             {
+                TNHFrameworkLogger.Log("Spawning Secondary Weapon", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.SecondaryWeapon.PrimaryGroup ?? character.SecondaryWeapon.BackupGroup;
 
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
 
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetRandomObject()];
                     if (!IM.CompatMags.TryGetValue(selectedItem.MagazineType, out _) && selectedItem.MagazineType != FireArmMagazineType.mNone)
                     {
                         IM.CompatMags.Add(selectedItem.MagazineType, selectedItem.CompatibleMagazines);
@@ -546,8 +654,9 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (character.TertiaryWeapon != null)
+            if (character.HasTertiaryWeapon && character.TertiaryWeapon != null)
             {
+                TNHFrameworkLogger.Log("Spawning Tertiary Weapon", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.TertiaryWeapon.PrimaryGroup ?? character.TertiaryWeapon.BackupGroup;
 
                 if (selectedGroup != null)
@@ -559,8 +668,9 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (character.PrimaryItem != null)
+            if (character.HasPrimaryItem && character.PrimaryItem != null)
             {
+                TNHFrameworkLogger.Log("Spawning Primary Item", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.PrimaryItem.PrimaryGroup ?? character.PrimaryItem.BackupGroup;
 
                 if (selectedGroup != null)
@@ -572,8 +682,9 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (character.SecondaryItem != null)
+            if (character.HasSecondaryItem && character.SecondaryItem != null)
             {
+                TNHFrameworkLogger.Log("Spawning Secondary Item", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.SecondaryItem.PrimaryGroup ?? character.SecondaryItem.BackupGroup;
 
                 if (selectedGroup != null)
@@ -587,8 +698,9 @@ namespace TNHFramework.Patches
                 }
             }
 
-            if (character.TertiaryItem != null)
+            if (character.HasTertiaryItem && character.TertiaryItem != null)
             {
+                TNHFrameworkLogger.Log("Spawning Tertiary Item", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.TertiaryItem.PrimaryGroup ?? character.TertiaryItem.BackupGroup;
 
                 if (selectedGroup != null)
@@ -604,6 +716,7 @@ namespace TNHFramework.Patches
 
             if (character.Shield != null)
             {
+                TNHFrameworkLogger.Log("Spawning Shield", TNHFrameworkLogger.LogType.TNH);
                 EquipmentGroup selectedGroup = character.Shield.PrimaryGroup ?? character.Shield.BackupGroup;
 
                 if (selectedGroup != null)
@@ -619,6 +732,251 @@ namespace TNHFramework.Patches
                 __instance.M.AddTokens(999999, false);
 
             return false;
+        }
+
+        public static IEnumerator SpawnStartingEquipment(TNH_SupplyPoint point, CustomCharacter c)
+        {
+            Dictionary<LoadoutEntry, FVRObject> spawnedLoadoutObj = [];
+
+            if (c.PrimaryWeapon != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.PrimaryWeapon, point.SpawnPoint_CaseLarge, point.M.Prefab_WeaponCaseLarge);
+
+            if (c.SecondaryWeapon != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.SecondaryWeapon, point.SpawnPoint_CaseSmall, point.M.Prefab_WeaponCaseSmall);
+
+            if (c.TertiaryWeapon != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.TertiaryWeapon, point.SpawnPoint_Melee, null);
+
+            if (c.PrimaryItem != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.PrimaryItem, point.SpawnPoints_SmallItem[0], null);
+
+            if (c.SecondaryItem != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.SecondaryItem, point.SpawnPoints_SmallItem[1], null);
+
+            if (c.TertiaryItem != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.TertiaryItem, point.SpawnPoints_SmallItem[2], null);
+
+            if (c.Shield != null)
+                yield return SpawnLoadoutEntry(point, spawnedLoadoutObj, c, c.Shield, point.SpawnPoint_Shield, null);
+
+            yield break;
+        }
+
+        public static IEnumerator SpawnLoadoutEntry(TNH_SupplyPoint point, Dictionary<LoadoutEntry, FVRObject> entrySpawns, CustomCharacter c, LoadoutEntry entry, Transform spawnTrans, GameObject casePrefab)
+        {
+            if (entry == null)
+                yield break;
+
+            if (entry == c.SecondaryWeapon && c.SecondaryWeaponCopiesPrimary)
+            {
+                FVRObject objToSpawn = entrySpawns[c.PrimaryWeapon];
+                EquipmentGroup group = c.PrimaryWeapon.PrimaryGroup ?? c.PrimaryWeapon.BackupGroup;
+
+                if (objToSpawn != null)
+                {
+                    if (casePrefab != null)
+                    {
+                        SpawnLoadoutCase(point, group, c.PrimaryWeapon.AmmoObjectOverride, objToSpawn, null, spawnTrans, casePrefab);
+                    }
+                    else
+                    {
+                        AnvilCallback<GameObject> loadReq = objToSpawn.GetGameObjectAsync();
+                        yield return loadReq;
+
+                        GameObject spawnedObj = Object.Instantiate<GameObject>(loadReq.Result, spawnTrans.position, spawnTrans.rotation);
+                        point.M.AddObjectToTrackedList(spawnedObj);
+
+                        if (objToSpawn.UsesRoundTypeFlag)
+                            yield return SpawnAmmoForObject(point, c, group, null, objToSpawn, spawnTrans.position + spawnTrans.right * 0.15f);
+                    }
+                }
+            }
+            else
+            {
+                EquipmentGroup selectedGroup = c.PrimaryWeapon.PrimaryGroup ?? c.PrimaryWeapon.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    ObjectTable table = new();
+                    table.Initialize(selectedGroup.GetObjectTableDef());
+
+                    FVRObject objToSpawn = null;
+                    VaultFile vaultFile = null;
+                    SavedGunSerializable vaultFileLegacy = null;
+
+                    // Vault files cannot be spawned from a case
+                    if (casePrefab != null || !table.UsesVaultFiles())
+                    {
+                        string item = selectedGroup.GetRandomObject();
+                        TNHFrameworkLogger.Log("Item selected: " + item, TNHFrameworkLogger.LogType.TNH);
+
+                        if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(item))
+                        {
+                            TNHFrameworkLogger.Log("Item is a vaulted gun", TNHFrameworkLogger.LogType.TNH);
+                            vaultFile = LoadedTemplateManager.LoadedVaultFiles[item];
+                            objToSpawn = IM.OD[vaultFile.Objects[0].Elements[0].ObjectID];
+                        }
+                        else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(item))
+                        {
+                            TNHFrameworkLogger.Log("Item is a legacy vaulted gun", TNHFrameworkLogger.LogType.TNH);
+                            vaultFileLegacy = LoadedTemplateManager.LoadedLegacyVaultFiles[item];
+                            objToSpawn = vaultFileLegacy.GetGunObject();
+                        }
+                        else
+                        {
+                            TNHFrameworkLogger.Log("Item is a normal object", TNHFrameworkLogger.LogType.TNH);
+                            objToSpawn = IM.OD[item];
+                        }
+                    }
+
+                    entrySpawns[entry] = objToSpawn;
+
+                    if (casePrefab != null)
+                    {
+                        SpawnLoadoutCase(point, selectedGroup, c.PrimaryWeapon.AmmoObjectOverride, objToSpawn, null, spawnTrans, casePrefab);
+                    }
+                    else if (table.UsesVaultFiles())
+                    {
+                        VaultFile vf = table.GetRandomVaultFile();
+                        List<FVRPhysicalObject> spawnedObjs = null;
+                        bool success;
+
+                        if (table.FileUsage == ObjectTableDef.VaultFileUsage.WholeFile)
+                        {
+                            success = VaultSystem.SpawnVaultFile(vf, spawnTrans, true, false, false, out string errorMessage, Vector3.up * 0.4f, delegate (List<FVRPhysicalObject> vfo)
+                            {
+                                spawnedObjs = vfo;
+                            }, false, -1);
+                        }
+                        else
+                        {
+                            if (table.FileUsage != ObjectTableDef.VaultFileUsage.SingleObject)
+                                throw new System.InvalidOperationException();
+
+                            success = VaultSystem.SpawnVaultFile(vf, spawnTrans, true, false, false, out string errorMessage, Vector3.up * 0.4f, delegate (List<FVRPhysicalObject> vfo)
+                            {
+                                spawnedObjs = vfo;
+                            }, false, 0);
+                        }
+
+                        if (!success)
+                        {
+                            TNHFrameworkLogger.Log("Failed to spawn vault file? What?", TNHFrameworkLogger.LogType.TNH);
+                            yield break;
+                        }
+
+                        while (spawnedObjs == null)
+                        {
+                            yield return null;
+                        }
+
+                        if (!spawnedObjs.Any() || spawnedObjs[0] == null)
+                            yield break;
+
+                        FVRObject spawnedObj = spawnedObjs[0].ObjectWrapper;
+
+                        if (spawnedObj != null && spawnedObj.UsesRoundTypeFlag && !spawnedObjs.Any() && table.FileUsage == ObjectTableDef.VaultFileUsage.SingleObject)
+                            yield return SpawnAmmoForObject(point, c, selectedGroup, table, spawnedObj, spawnTrans.position + spawnTrans.right * 0.15f);
+                    }
+                    else if (vaultFile != null)
+                    {
+                        VaultSystem.ReturnObjectListDelegate del = new((objs) => TNHFrameworkUtils.TrackVaultObjects(point.M, objs));
+                        TNHFrameworkLogger.Log("Spawning vault gun", TNHFrameworkLogger.LogType.TNH);
+                        VaultSystem.SpawnVaultFile(vaultFile, spawnTrans, true, false, false, out _, Vector3.zero, del, false);
+                    }
+                    // If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
+                    else if (vaultFileLegacy != null)
+                    {
+                        TNHFrameworkLogger.Log("Spawning legacy vaulted gun", TNHFrameworkLogger.LogType.TNH);
+                        AnvilManager.Run(TNHFrameworkUtils.SpawnLegacyVaultFile(vaultFileLegacy, spawnTrans.position, spawnTrans.rotation, point.M));
+                        // SpawnFirearm adds the objects to the tracked objects list
+                    }
+                    else
+                    {
+                        TNHFrameworkLogger.Log("Spawning normal item", TNHFrameworkLogger.LogType.TNH);
+                        AnvilCallback<GameObject> loadReq = objToSpawn.GetGameObjectAsync();
+                        yield return loadReq;
+
+                        if (objToSpawn.GetGameObject() != null)
+                        {
+                            GameObject spawnedObj = Object.Instantiate(objToSpawn.GetGameObject(), spawnTrans.position, spawnTrans.rotation);
+                            point.M.AddObjectToTrackedList(spawnedObj);
+
+                            if (TNHFramework.FixLegacyModulGuns.Value)
+                                TNHFrameworkUtils.FixPremadeFirearm(spawnedObj, false);
+
+                            TNHFrameworkLogger.Log("Normal item spawned", TNHFrameworkLogger.LogType.TNH);
+
+                            if (objToSpawn.UsesRoundTypeFlag)
+                                yield return SpawnAmmoForObject(point, c, selectedGroup, null, objToSpawn, spawnTrans.position + spawnTrans.right * 0.15f);
+                        }
+                    }
+                }
+            }
+
+            yield break;
+        }
+
+        // AmmoObjectOverride ONLY applies to Primary and Secondary weapons (which always spawn in a case).
+        // Vault files cannot be spawned from cases
+        public static void SpawnLoadoutCase(TNH_SupplyPoint point, EquipmentGroup group, FVRObject objAmmoOverride, FVRObject obj, ObjectTableDef tableDef, Transform spawnTrans, GameObject casePrefab)
+        {
+            int minAmmo = -1;
+            int maxAmmo = -1;
+
+            if (tableDef != null)
+            {
+                minAmmo = tableDef.MinAmmoCapacity;
+                maxAmmo = tableDef.MaxAmmoCapacity;
+            }
+
+            GameObject gameObject = point.M.SpawnWeaponCase(casePrefab, spawnTrans.position, spawnTrans.forward, obj, group.NumMagsSpawned, group.NumRoundsSpawned, minAmmo, maxAmmo, objAmmoOverride);
+            //point.m_trackedObjects.Add(gameObject);
+            var trackedObjects = (List<GameObject>)fiTrackedObjects.GetValue(point);
+            trackedObjects.Add(gameObject);
+            gameObject.GetComponent<TNH_WeaponCrate>().M = point.M;
+        }
+
+        public static IEnumerator SpawnAmmoForObject(TNH_SupplyPoint point, CustomCharacter charDef, EquipmentGroup group, ObjectTable table, FVRObject o, Vector3 spawnPosition)
+        {
+            FVRObject ammoObj = point.M.GetSeededRandomAmmoObject(o, table.MinCapacity, table.MaxCapacity);
+
+            if (ammoObj == null)
+                yield break;
+
+            AnvilCallback<GameObject> loadReq = ammoObj.GetGameObjectAsync();
+            yield return loadReq;
+
+            GameObject ammoObjPrefab = loadReq.Result;
+
+            if (ammoObj.Category == FVRObject.ObjectCategory.Cartridge && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && ammoObj.TagFirearmRoundPower != FVRObject.OTagFirearmRoundPower.Ordnance)
+            {
+                GameObject ammoBox = AM.GetAmmoBox(ammoObj.RoundType);
+                FVRFireArmRound component = ammoObjPrefab.GetComponent<FVRFireArmRound>();
+                FireArmRoundClass rc = (!(component != null)) ? AM.SRoundDisplayDataDic[ammoObj.RoundType].Classes[0].Class : component.RoundClass;
+
+                GameObject gameObject = Object.Instantiate<GameObject>(ammoBox, spawnPosition, Quaternion.identity);
+                CartridgeBox component2 = gameObject.GetComponent<CartridgeBox>();
+                component2.ConfigureShapeForRoundType(component.RoundType, rc);
+
+                if (point.M != null)
+                    point.M.AddObjectToTrackedList(gameObject);
+            }
+            else
+            {
+                Vector3 vector = spawnPosition;
+                int num = (ammoObj.Category != FVRObject.ObjectCategory.Cartridge) ? group.NumMagsSpawned : group.NumRoundsSpawned;
+
+                for (int i = 0; i < num; i++)
+                {
+                    GameObject g = Object.Instantiate<GameObject>(ammoObjPrefab, vector, Quaternion.identity);
+                    point.M.AddObjectToTrackedList(g);
+                    vector += Vector3.up * 0.15f;
+                }
+            }
+
+            yield break;
         }
     }
 }

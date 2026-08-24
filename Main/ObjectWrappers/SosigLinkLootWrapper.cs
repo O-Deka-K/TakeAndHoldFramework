@@ -1,7 +1,6 @@
 ﻿using BepInEx;
 using FistVR;
 using System.Collections.Generic;
-using System.Linq;
 using TNHFramework.ObjectTemplates;
 using TNHFramework.Utilities;
 using UnityEngine;
@@ -25,6 +24,7 @@ namespace TNHFramework
 
             List<EquipmentGroup> selectedGroups = group.GetSpawnedEquipmentGroups();
             string selectedItem = null;
+            VaultFile vaultFile = null;
             int spawnedItems = 0;
 
             foreach (EquipmentGroup selectedGroup in selectedGroups)
@@ -39,30 +39,33 @@ namespace TNHFramework
                         else
                             selectedItem = mag.ItemID;
                     }
+                    else if (selectedGroup.UsesVaultFiles())
+                    {
+                        vaultFile = selectedGroup.GetRandomVaultFile();
+                    }
                     else
                     {
-                        var list = selectedGroup.GetObjects();
-
-                        if (!list.Any())
-                            TNHFrameworkLogger.Log("Spawning nothing since group was empty", TNHFrameworkLogger.LogType.TNH);
-                        else
-                            selectedItem = list.GetRandom();
+                        selectedItem = selectedGroup.GetRandomObject();
                     }
 
                     // If list is empty, then there's nothing to spawn
-                    if (selectedItem.IsNullOrWhiteSpace())
+                    if (selectedItem.IsNullOrWhiteSpace() && vaultFile == null)
                         continue;
 
-                    if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
+                    if (vaultFile != null || LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
                     {
-                        TNHFrameworkLogger.Log($"Spawning vault file {selectedItem}", TNHFrameworkLogger.LogType.TNH);
+                        vaultFile ??= LoadedTemplateManager.LoadedVaultFiles[selectedItem];
+
+                        TNHFrameworkLogger.Log($"Spawning vault file {selectedItem ?? vaultFile.FileName}", TNHFrameworkLogger.LogType.TNH);
 
                         GameObject newObject = new("SosigDropMarker");
                         newObject.transform.position = transform.position + (Vector3.up * 0.1f * (spawnedItems + 1));
                         newObject.transform.rotation = Quaternion.identity;
                         newObject.transform.localScale = transform.localScale;
-                        VaultSystem.SpawnVaultFile(LoadedTemplateManager.LoadedVaultFiles[selectedItem], newObject.transform, true, false, false, out _, Vector3.zero);
-                        Destroy(newObject, 10f);
+
+                        VaultSystem.ReturnObjectListDelegate del = new((objs) => TNHFrameworkUtils.TrackVaultObjects(M, objs));
+                        VaultSystem.SpawnVaultFile(vaultFile, newObject.transform, true, false, false, out _, Vector3.zero, del);
+                        M.AddObjectToTrackedList(newObject);
                     }
                     else if (LoadedTemplateManager.LoadedLegacyVaultFiles.ContainsKey(selectedItem) && LoadedTemplateManager.LoadedLegacyVaultFiles[selectedItem] != null)
                     {

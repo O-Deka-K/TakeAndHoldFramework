@@ -10,7 +10,7 @@ namespace TNHFramework.Patches
         // The actual request happens in UpdateHighScoreCallbacks(), which is overridden below.
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "RequestHighScoreChart")]
         [HarmonyPrefix]
-        public static bool RequestHighScoreChart_Disable(TNH_ScoreDisplay __instance, ref bool ___m_doRequestScoresTop, ref bool ___m_doRequestScoresPlayer)
+        public static bool RequestHighScoreChart_Disable(TNH_ScoreDisplay __instance)
         {
             __instance.ClearGlobalHighScoreDisplay();
             return false;
@@ -20,7 +20,7 @@ namespace TNHFramework.Patches
         [HarmonyPrefix]
         public static void UpdateHighScoreCallbacks_Disable(ref bool ___m_doRequestScoresTop, ref bool ___m_doRequestScoresPlayer)
         {
-            // Custom TNH scoreboard is permanently offline, and official scoreboard doesn't support custom characters
+            // Custom TNHTweaker scoreboard is permanently offline
             // Local scores still work
             ___m_doRequestScoresTop = false;
             ___m_doRequestScoresPlayer = false;
@@ -32,6 +32,7 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
+            __instance.ClearGlobalHighScoreDisplay();
             GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
 
             ___m_hasCurrentScore = true;

@@ -17,16 +17,15 @@ namespace TNHFramework.Patches
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
-        public static bool DelayedInit_InitTNH(TNH_Manager __instance, bool ___m_hasInit)
+        public static bool DelayedInit_AddReturnToLobby(bool ___m_hasInit)
         {
-            if (!___m_hasInit)
-            {
-            }
-
             // Set Return to Lobby item in wrist menu
             GM.CurrentSceneSettings.OverridesGoBackToMainMenu = true;
             GM.CurrentSceneSettings.OverrideReturnToSceneDisplayText = "Return To Lobby";
             GM.CurrentSceneSettings.OverrideReturnToSceneName = "TakeAndHold_Lobby_2";
+
+            if (___m_hasInit)
+                TNHFramework.LoadConfigValues();
 
             return true;
         }
@@ -44,7 +43,7 @@ namespace TNHFramework.Patches
         public static bool SetPhase_Take_Replacement(TNH_Manager __instance, ref List<int> ___m_activeSupplyPointIndicies, ref TNH_Progression.Level ___m_curLevel,
             ref int ___m_lastHoldIndex, ref int ___m_curHoldIndex, ref TNH_HoldPoint ___m_curHoldPoint, TNH_PointSequence ___m_curPointSequence, int ___m_level)
         {
-            TNHFrameworkLogger.Log($"Beginning TAKE PHASE -- Level {___m_level}", TNHFrameworkLogger.LogType.TNH);
+            TNHFrameworkLogger.Log($"Beginning TAKE PHASE -- Level {___m_level + 1}", TNHFrameworkLogger.LogType.TNH);
 
             Level level = LoadedTemplateManager.CurrentLevel;
 
@@ -137,9 +136,14 @@ namespace TNHFramework.Patches
                 // Generate all of the supply points for this level
                 List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
                 supplyPointsIndexes.Shuffle<int>();
+                TNH_SupplyPoint.SupplyPanelType panelType = TNH_SupplyPoint.SupplyPanelType.AmmoReloader;
 
                 int numSupplyPoints = 1;
-                if (__instance.GameMode != TNHSetting_GameMode.Rampart)
+                if (__instance.GameMode == TNHSetting_GameMode.Rampart)
+                {
+                    panelType = TNH_SupplyPoint.SupplyPanelType.All;
+                }
+                else
                 {
                     numSupplyPoints = Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
                     numSupplyPoints = Mathf.Clamp(numSupplyPoints, 0, supplyPointsIndexes.Count);
@@ -153,8 +157,7 @@ namespace TNHFramework.Patches
                     TNHFrameworkLogger.Log($"Configuring supply point : {i}", TNHFrameworkLogger.LogType.TNH);
 
                     TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
-                    supplyPoint.Configure(level.SupplyChallenge.GetTakeChallenge(), spawnSosigs, spawnDefenses, spawnConstructor, TNH_SupplyPoint.SupplyPanelType.AmmoReloader, 1, 2, spawnToken);
-                    //SupplyPatches.ConfigureSupplyPoint(supplyPoint, level, spawnSosigs, spawnDefenses, spawnConstructor, 1, 2, spawnToken);
+                    supplyPoint.Configure(level.SupplyChallenge.GetTakeChallenge(), spawnSosigs, spawnDefenses, spawnConstructor, panelType, 1, 2, spawnToken);
                     spawnToken = false;
                     TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                     supplyPoint.SetContact(contact);
@@ -274,7 +277,7 @@ namespace TNHFramework.Patches
         // but we should do this during the Take phase too. It won't delete existing any objects.
         [HarmonyPatch(typeof(TNH_Manager), "Update_Take")]
         [HarmonyPostfix]
-        public static void TakeCleanup(TNH_Manager __instance, ref HashSet<FVRPhysicalObject> ___m_knownObjsHash, ref List<FVRPhysicalObject> ___m_knownObjs,
+        public static void Update_Take_Cleanup(TNH_Manager __instance, ref HashSet<FVRPhysicalObject> ___m_knownObjsHash, ref List<FVRPhysicalObject> ___m_knownObjs,
             ref int ___knownObjectCheckIndex)
         {
             if (!___m_knownObjs.Any())
@@ -466,6 +469,7 @@ namespace TNHFramework.Patches
                 sosig.SetDominantGuardDirection(Random.onUnitSphere);
             }
             sosig.SetGuardInvestigateDistanceThreshold(25f);
+            sosig.EnemyTemplate = t;
 
             // Handle sosig dropping custom loot
             if (customTemplate.DroppedObjectPool != null)
@@ -480,13 +484,21 @@ namespace TNHFramework.Patches
                     component.M = __instance;
                     component.character = character;
                     component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
-                    component.group = new(customTemplate.DroppedObjectPool);
-                    component.group.DelayedInit(character.GlobalObjectBlacklist, false);
+                    component.group = customTemplate.DroppedObjectPool;
+                    component.group.DelayedInit(character.GetCharacter().UgcId, character.GlobalObjectBlacklist, false);
                 }
             }
 
             __result = sosig;
             return false;
+        }
+
+        // Exit if the object is null
+        [HarmonyPatch(typeof(TNH_Manager), "AddObjectToTrackedList")]
+        [HarmonyPrefix]
+        public static bool AddObjectToTrackedList_NullCheck(GameObject g)
+        {
+            return (g != null);
         }
     }
 }

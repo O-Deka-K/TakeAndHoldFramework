@@ -52,7 +52,7 @@ namespace TNHFramework
 
             try
             {
-                ObjectTemplates.V1.CustomCharacter character = null;
+                CustomCharacter character = null;
                 Sprite thumbnail = null;
 
                 foreach (IFileHandle file in dir.GetFiles())
@@ -65,7 +65,7 @@ namespace TNHFramework
                             NullValueHandling = NullValueHandling.Ignore
                         };
                         
-                        character = JsonConvert.DeserializeObject<ObjectTemplates.V1.CustomCharacter>(charString, settings);
+                        character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
                     }
                     else if (file.Path.EndsWith("thumb.png"))
                     {
@@ -91,7 +91,7 @@ namespace TNHFramework
                 {
                     for (int i = 0; i < character.EquipmentPools.Count; i++)
                     {
-                        ObjectTemplates.V1.EquipmentPool pool = character.EquipmentPools[i];
+                        EquipmentPool pool = character.EquipmentPools[i];
 
                         if (iconFile.Path.Split('/').Last() == pool.IconName)
                         {
@@ -100,7 +100,7 @@ namespace TNHFramework
                     }
                 }
 
-                LoadedTemplateManager.AddCharacterTemplate(new ObjectTemplates.CustomCharacter(character), thumbnail);
+                LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
             }
             catch (Exception e)
             {

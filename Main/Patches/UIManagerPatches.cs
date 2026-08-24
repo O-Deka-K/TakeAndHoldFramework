@@ -3,7 +3,7 @@ using FistVR.Ugc;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Reflection; 
 using TNHFramework.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,12 +12,16 @@ namespace TNHFramework.Patches
 {
     static class UIManagerPatches
     {
-        private static readonly MethodInfo miPlayButtonSound = typeof(TNH_UIManager).GetMethod("PlayButtonSound", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly MethodInfo miSetCharacterCategoryFromCharacter = typeof(TNH_UIManager).GetMethod("SetCharacterCategoryFromCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miInitCharacterCategories = typeof(TNH_UIManager).GetMethod("InitCharacterCategories", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miConfigureButtonStateFromOptions = typeof(TNH_UIManager).GetMethod("ConfigureButtonStateFromOptions", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly MethodInfo miAddItemToTree = typeof(UgcManager).GetMethod("AddItemToTree", BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo miSetCharacterCategoryFromCharacter = typeof(TNH_UIManager).GetMethod("SetCharacterCategoryFromCharacter", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        private static int PageCat = 0;
-        private static int PageChar = 0;
+        private static Image SelectedCharacter_Image;
+        private static Vector3 TitlePositionLeft = new(-138, 456, 0);
+        private static Vector3 TitlePositionCenter = new(-1, 456, 0);
+        private static Vector3 DescriptionPositionLeft = new(-138, 306, 0);
+        private static Vector3 DescriptionPositionCenter = new(-1, 306, 0);
         private static string LastPlayedChar;
 
         // Nice try Anton.
@@ -38,7 +42,8 @@ namespace TNHFramework.Patches
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
             Text itemsText = CreateItemsText(__instance);
-            ExpandCharacterUI(__instance);
+            SelectedCharacter_Image = CreateCharacterImage(__instance);
+            LastPlayedChar = GM.TNHOptions.LastPlayedCharUniversalID;
 
             // Perform first time setup of all files
             if (!TNHMenuInitializer.TNHInitialized)
@@ -47,7 +52,7 @@ namespace TNHFramework.Patches
 
                 if (!TNHMenuInitializer.MagazineCacheFailed)
                 {
-                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHFramework.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, __instance.Categories, __instance.CharDatabase, __instance, TNHFramework.BuildCharacterFiles.Value));
+                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(TNHFramework.OutputFilePath, magazineCacheText, itemsText, sceneHotDog, __instance.CharDatabase, __instance, TNHFramework.BuildCharacterFiles.Value));
                 }
                 // If the magazine cache has previously failed, we shouldn't let the player continue
                 else
@@ -68,13 +73,20 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Initialize TNH UI", TNHFrameworkLogger.LogType.General);
 
-            __instance.LBL_CategoryName[0].text = "Loading... Please Wait";
-            __instance.LBL_CategoryName[0].gameObject.SetActive(true);
+            __instance.SelectedCharacter_Title.text = "";
+            __instance.SelectedCharacter_Description.text = "Loading... Please Wait";
 
-            for (int i = 1; i < __instance.LBL_CategoryName.Count; i++)
+            // Anton pls fix. Typo "Encyption"
+            Text blitzText = __instance.GO_ModeDescriptions[1].GetComponent<Text>();
+            blitzText.text = blitzText.text.Replace("Encyption", "Encryption");
+
+            for (int i = 0; i < __instance.LBL_CategoryName.Count; i++)
                 __instance.LBL_CategoryName[i].gameObject.SetActive(false);
 
-            RefreshTNHUI(__instance, __instance.Categories);
+            for (int i = 0; i < __instance.LBL_CharacterName.Count; i++)
+                __instance.LBL_CharacterName[i].gameObject.SetActive(false);
+
+            RefreshTNHUI(__instance);
         }
 
         /// <summary>
@@ -108,93 +120,51 @@ namespace TNHFramework.Patches
             return itemsText;
         }
 
-        /// <summary>
-        /// Adds more space for characters to be displayed in the TNH menu
-        /// </summary>
-        /// <param name="instance"></param>
-        private static void ExpandCharacterUI(TNH_UIManager instance)
+        // Reinstate the character image to the right of the description.
+        // Workshop characters get a holo, but vanilla and custom characters get nothing?
+        private static Image CreateCharacterImage(TNH_UIManager manager)
         {
-            LastPlayedChar = GM.TNHOptions.LastPlayedCharUniversalID;
+            Image charImage = Object.Instantiate(manager.IM_LevelImage.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Image>();
+            charImage.SetNativeSize();
+            charImage.transform.localPosition = new Vector3(322, 355, 0);
+            charImage.transform.localScale = new Vector3(0.4734316f, 0.4734318f, 0.4734318f);
+            charImage.rectTransform.sizeDelta = new Vector2(512f, 512f);
+            charImage.preserveAspect = false;
+            charImage.gameObject.SetActive(false);
 
-            List<FVRPointableButton> buttonListChar = [.. instance.OBS_Character.ButtonsInSet];
-            List<FVRPointableButton> buttonListCat = [.. instance.OBS_CharCategory.ButtonsInSet];
-
-            // Add 3 more category slots and character slots
-            for (int i = 0; i < 3; i++)
-            {
-                Text newLabelChar = Object.Instantiate(instance.LBL_CharacterName[1].gameObject, instance.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
-
-                instance.LBL_CharacterName.Add(newLabelChar);
-                buttonListChar.Add(newLabelChar.gameObject.GetComponent<FVRPointableButton>());
-                
-                Text newLabelCat = Object.Instantiate(instance.LBL_CategoryName[1].gameObject, instance.LBL_CategoryName[1].transform.parent).GetComponent<Text>();
-
-                instance.LBL_CategoryName.Add(newLabelCat);
-                buttonListCat.Add(newLabelCat.gameObject.GetComponent<FVRPointableButton>());
-            }
-
-            instance.OBS_Character.ButtonsInSet = [.. buttonListChar];
-            instance.OBS_CharCategory.ButtonsInSet = [.. buttonListCat];
-
-            // Adjust buttons to be tighter together
-            float posXChar = instance.LBL_CharacterName[0].transform.localPosition.x;
-            float posYChar = instance.LBL_CharacterName[0].transform.localPosition.y;
-
-            for (int i = 0; i < instance.LBL_CharacterName.Count; i++)
-            {
-                instance.LBL_CharacterName[i].gameObject.SetActive(false);
-
-                Button buttonChar = instance.LBL_CharacterName[i].gameObject.GetComponent<Button>();
-                buttonChar.onClick = new Button.ButtonClickedEvent();
-
-                int index = i;  // Loop optimization fix - do NOT delete
-                buttonChar.onClick.AddListener(() => { instance.OBS_Character.SetSelectedButton(index); });
-                buttonChar.onClick.AddListener(() => { instance.SetSelectedCharacter(index); });
-
-                instance.LBL_CharacterName[i].transform.localPosition = new Vector3(posXChar, posYChar, 0);
-                posYChar -= 45f;
-            }
-
-            float posXCat = instance.LBL_CategoryName[0].transform.localPosition.x;
-            float posYCat = instance.LBL_CategoryName[0].transform.localPosition.y;
-
-            for (int j = 0; j < instance.LBL_CategoryName.Count; j++)
-            {
-                Button buttonCat = instance.LBL_CategoryName[j].gameObject.GetComponent<Button>();
-                buttonCat.onClick = new Button.ButtonClickedEvent();
-
-                int index2 = j;  // Loop optimization fix - do NOT delete
-                buttonCat.onClick.AddListener(() => { instance.OBS_CharCategory.SetSelectedButton(index2); });
-                buttonCat.onClick.AddListener(() => { instance.SetSelectedCategory(index2); });
-
-                instance.LBL_CategoryName[j].transform.localPosition = new Vector3(posXCat, posYCat, 0);
-                posYCat -= 45f;
-            }
+            return charImage;
         }
 
-        public static void RefreshTNHUI(TNH_UIManager instance, List<TNH_UIManager.CharacterCategory> Categories)
+        public static void RefreshTNHUI(TNH_UIManager instance)
         {
             if (!TNHMenuInitializer.TNHInitialized)
                 return;
 
             TNHFrameworkLogger.Log("Refreshing TNH UI", TNHFrameworkLogger.LogType.General);
 
-            instance.LBL_CategoryName[0].text = "<<Previous<<";
-            instance.LBL_CategoryName[0].gameObject.SetActive(true);
+            //instance.InitCharacterCategories();
+            miInitCharacterCategories.Invoke(instance, []);
+            miConfigureButtonStateFromOptions.Invoke(instance, []);
+        }
 
-            instance.LBL_CategoryName[11].text = ">>Next>>";
-            instance.LBL_CategoryName[11].gameObject.SetActive(true);
+        // Anton pls fix. Save current level
+        [HarmonyPatch(typeof(TNH_UIManager), "UpdateLevelSelectUi")]
+        [HarmonyPostfix]
+        public static void UpdateLevelSelectUi_SaveLevel(TNH_UIManager __instance)
+        {
+            GM.TNHOptions.SavedLevelID = __instance.CurrentLevel.LevelID;
+            GM.TNHOptions.SaveToFile();
+        }
 
-            instance.LBL_CharacterName[0].text = "<<Previous<<";
-            instance.LBL_CharacterName[0].gameObject.SetActive(true);
+        [HarmonyPatch(typeof(TNH_UIManager), "InitCharacterCategories")]
+        [HarmonyPrefix]
+        public static bool InitCharacterCategories_Replacement(TNH_UIManager __instance)
+        {
+            __instance.Categories.Clear();
 
-            instance.LBL_CharacterName[11].text = ">>Next>>";
-            instance.LBL_CharacterName[11].gameObject.SetActive(true);
-
-            // Load all characters into the UI
-
+            // Add the default categories first
             Dictionary<string, int> catDic = [];
-            foreach (string category in instance.CharDatabase.DefaultGroupNames)
+            foreach (string category in __instance.CharDatabase.DefaultGroupNames)
             {
                 catDic.Add(category, -1);
             }
@@ -203,16 +173,16 @@ namespace TNHFramework.Patches
             {
                 ObjectTemplates.CategoryInfo catData = character.Value.Custom.CategoryData;
 
-                if (catData.Name != "" && !catDic.ContainsKey(catData.Name))
-                    catDic.Add(catData.Name, Mathf.Max(0, catData.Priority));
+                if (!string.IsNullOrEmpty(catData.Name) && !catDic.ContainsKey(catData.Name))
+                    catDic.Add(catData.Name, 0);
             }
 
             foreach (string cat in catDic.OrderBy(o => o.Value).Select(o => o.Key))
             {
                 // Add new category if it doesn't exist yet
-                if (!Categories.Any(o => o.CategoryName == cat))
+                if (!__instance.Categories.Any(o => o.CategoryName == cat))
                 {
-                    Categories.Add(new TNH_UIManager.CharacterCategory()
+                    __instance.Categories.Add(new TNH_UIManager.CharacterCategory()
                     {
                         CategoryName = cat,
                         Characters = []
@@ -226,13 +196,13 @@ namespace TNHFramework.Patches
 
             foreach (KeyValuePair<string, CharacterTemplate> character in LoadedTemplateManager.LoadedCharacterDict)
             {
-                int cat = Categories.FindIndex(o => o.CategoryName == character.Value.Custom.CategoryData.Name);
+                int cat = __instance.Categories.FindIndex(o => o.CategoryName == character.Value.Custom.CategoryData.Name);
 
                 if (cat == -1)
                     continue;
 
                 // Add character to category
-                if (!Categories[cat].Characters.Contains(character.Value.Def))
+                if (!__instance.Categories[cat].Characters.Contains(character.Value.Def))
                 {
                     if (character.Value.Custom.isCustom)
                     {
@@ -240,21 +210,22 @@ namespace TNHFramework.Patches
                             sortedDic[cat].Add(character.Value);
                         else
                             sortedDic.Add(cat, [character.Value]);
+
+                        // Add missing characters into UgcManager
+                        ItemTreeNode<TNH_CharacterDef> node = UgcManager.GetRootNode<TNH_CharacterDef>();
+
+                        if (!ugcIds.Contains(character.Value.Def.UgcId))
+                        {
+                            ugcIds.Add(character.Value.Def.UgcId);
+
+                            //UgcManager.AddItemToTree<TNH_CharacterDef>(character.Value.Def, node);
+                            MethodInfo miAddItemToTreeTNHChar = miAddItemToTree.MakeGenericMethod(typeof(TNH_CharacterDef));
+                            miAddItemToTreeTNHChar.Invoke(null, [character.Value.Def, node]);
+                        }
                     }
                     else
                     {
-                        Categories[cat].Characters.Add(character.Value.Def);
-                    }
-
-                    ItemTreeNode<TNH_CharacterDef> node = UgcManager.GetRootNode<TNH_CharacterDef>();
-
-                    if (!ugcIds.Contains(character.Value.Def.UgcId))
-                    {
-                        ugcIds.Add(character.Value.Def.UgcId);
-
-                        //UgcManager.AddItemToTree<TNH_CharacterDef>(character.Value.Def, node);
-                        MethodInfo miAddItemToTreeTNHChar = miAddItemToTree.MakeGenericMethod(typeof(TNH_CharacterDef));
-                        miAddItemToTreeTNHChar.Invoke(null, [character.Value.Def, node]);
+                        __instance.Categories[cat].Characters.Add(character.Value.Def);
                     }
                 }
             }
@@ -262,7 +233,7 @@ namespace TNHFramework.Patches
             // Sort the custom characters before adding them
             foreach (KeyValuePair<int, List<CharacterTemplate>> character in sortedDic)
             {
-                Categories[character.Key].Characters.AddRange([.. character.Value.OrderBy(o => o.Def.DisplayName).Select(o => o.Def)]);
+                __instance.Categories[character.Key].Characters.AddRange([.. character.Value.OrderBy(o => o.Def.DisplayName).Select(o => o.Def)]);
             }
 
             // Refresh categories and characters
@@ -271,189 +242,107 @@ namespace TNHFramework.Patches
 
             if (charDef != null)
             {
-                instance.SetCharacter(charDef);
                 //instance.SetCharacterCategoryFromCharacter(charDef);
-                miSetCharacterCategoryFromCharacter.Invoke(instance, [charDef]);
+                miSetCharacterCategoryFromCharacter.Invoke(__instance, [charDef]);
             }
+
+            return false;
         }
 
         [HarmonyPatch(typeof(TNH_UIManager), "SetCharacterCategoryFromCharacter")]
-        [HarmonyPrefix]
-        public static bool SetCharacterCategoryFromCharacter_UIPatch(TNH_UIManager __instance, ref int ___m_selectedCategory, ref int ___m_selectedCharacter, TNH_CharacterDef character)
+        [HarmonyPostfix]
+        public static void SetCharacterCategoryFromCharacter_UpdateChar(TNH_UIManager __instance, int ___m_selectedCategory, int ___m_selectedCharacter)
         {
-            if (!TNHMenuInitializer.TNHInitialized)
-                return false;
+            UpdateCurrentCharacter(__instance, ___m_selectedCategory, ___m_selectedCharacter);
+        }
 
-            for (int i = 0; i < __instance.Categories.Count; i++)
+        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCharacterIndex")]
+        [HarmonyPostfix]
+        public static void SetSelectedCharacterIndex_UpdateChar(TNH_UIManager __instance, int ___m_selectedCategory, int ___m_selectedCharacter)
+        {
+            UpdateCurrentCharacter(__instance, ___m_selectedCategory, ___m_selectedCharacter);
+        }
+
+        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategoryIndex")]
+        [HarmonyPostfix]
+        public static void SetSelectedCategoryIndex_UpdateChar(TNH_UIManager __instance, int ___m_selectedCategory, int ___m_selectedCharacter)
+        {
+            UpdateCurrentCharacter(__instance, ___m_selectedCategory, ___m_selectedCharacter);
+        }
+
+        public static void UpdateCurrentCharacter(TNH_UIManager manager, int selectedCategory, int selectedCharacter)
+        {
+            if (manager.Categories.Count > selectedCategory && manager.Categories[selectedCategory].Characters.Count > selectedCharacter)
             {
-                for (int j = 0; j < __instance.Categories[i].Characters.Count; j++)
+                TNH_CharacterDef charDef = manager.Categories[selectedCategory].Characters[selectedCharacter];
+
+                if (TNHMenuInitializer.TNHInitialized && LoadedTemplateManager.LoadedCharacterDict.ContainsKey(charDef.UgcId))
                 {
-                    if (character == __instance.Categories[i].Characters[j])
+                    LoadedTemplateManager.CurrentCharacter = LoadedTemplateManager.LoadedCharacterDict[charDef.UgcId].Custom;
+
+                    if (charDef.Picture != null)
                     {
-                        ___m_selectedCategory = i;
-                        ___m_selectedCharacter = j;
+                        SelectedCharacter_Image.sprite = charDef.Picture;
+                        SelectedCharacter_Image.gameObject.SetActive(true);
 
-                        PageCat = i / 10;
-                        PageChar = j / 10;
+                        manager.SelectedCharacter_Title.transform.localPosition = TitlePositionLeft;
+                        manager.SelectedCharacter_Description.transform.localPosition = DescriptionPositionLeft;
+                    }
+                    else
+                    {
+                        SelectedCharacter_Image.gameObject.SetActive(false);
 
-                        DisplayCategories(__instance);
-                        DisplayCharacters(__instance, ___m_selectedCategory);
-
-                        __instance.SetSelectedCategory((i % 10) + 1);
-                        __instance.OBS_CharCategory.SetSelectedButton((i % 10) + 1);
-
-                        __instance.SetSelectedCharacter((j % 10) + 1);
-                        __instance.OBS_Character.SetSelectedButton((j % 10) + 1);
-
-                        break;
+                        manager.SelectedCharacter_Title.transform.localPosition = TitlePositionCenter;
+                        manager.SelectedCharacter_Description.transform.localPosition = DescriptionPositionCenter;
                     }
                 }
             }
-
-            return false;
         }
 
-        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategory")]
+        // This goes up by a full page instead of one at a time
+        [HarmonyPatch(typeof(TNH_UIManager), "PreviousCategoryButton")]
         [HarmonyPrefix]
-        public static bool SetSelectedCategory_UIPatch(TNH_UIManager __instance, ref int ___m_selectedCategory, int cat)
+        public static void PreviousCategoryButton_SkipPage(TNH_UIManager __instance, ref int ____charCategoryListOffset)
         {
-            if (!TNHMenuInitializer.TNHInitialized)
-                return false;
-
-            //TNHFrameworkLogger.Log("SetSelectedCategory: Category number " + cat + ", page " + PageCat + ", max is " + __instance.Categories.Count, TNHFrameworkLogger.LogType.TNH);
-            int prevCat = ___m_selectedCategory;
-
-            if (cat == 0)
-            {
-                if (PageCat > 0)
-                {
-                    PageCat--;
-                    cat = 1;
-                }
-                else
-                {
-                    cat = prevCat % 10 + 1;
-                }
-
-                __instance.OBS_CharCategory.SetSelectedButton(cat);
-            }
-            else if (cat == 11)
-            {
-                if (PageCat < (__instance.Categories.Count - 1) / 10)
-                {
-                    PageCat++;
-                    cat = 1;
-                }
-                else
-                {
-                    cat = prevCat % 10 + 1;
-                }
-
-                __instance.OBS_CharCategory.SetSelectedButton(cat);
-            }
-
-            //__instance.PlayButtonSound(0);
-            miPlayButtonSound.Invoke(__instance, [0]);
-            DisplayCategories(__instance);
-
-            ___m_selectedCategory = cat - 1 + PageCat * 10;
-
-            if (___m_selectedCategory != prevCat)
-            {
-                PageChar = 0;
-                __instance.SetSelectedCharacter(1);
-                __instance.OBS_Character.SetSelectedButton(1);
-            }
-
-            return false;
+            ____charCategoryListOffset -= __instance.LBL_CategoryName.Count;
+            ____charCategoryListOffset = Mathf.Clamp(____charCategoryListOffset, 0, __instance.Categories.Count - __instance.LBL_CategoryName.Count) + 1;
         }
 
-        public static void DisplayCategories(TNH_UIManager instance)
-        {
-            // Adjust category labels according to PageCat
-            for (int i = 0; i < instance.LBL_CategoryName.Count - 2; i++)
-            {
-                if (i + PageCat * 10 < instance.Categories.Count)
-                {
-                    instance.LBL_CategoryName[i + 1].gameObject.SetActive(true);
-                    instance.LBL_CategoryName[i + 1].text = (i + 1 + PageCat * 10).ToString() + ". " + instance.Categories[i + PageCat * 10].CategoryName;
-                }
-                else
-                {
-                    instance.LBL_CategoryName[i + 1].gameObject.SetActive(false);
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCharacter")]
+        // This goes down by a full page instead of one at a time
+        [HarmonyPatch(typeof(TNH_UIManager), "NextCategoryButton")]
         [HarmonyPrefix]
-        public static bool SetSelectedCharacter_UIPatch(TNH_UIManager __instance, int ___m_selectedCategory, ref int ___m_selectedCharacter, int i)
+        public static void NextCategoryButton_SkipPage(TNH_UIManager __instance, ref int ____charCategoryListOffset)
         {
-            if (!TNHMenuInitializer.TNHInitialized)
-                return false;
-
-            //TNHFrameworkLogger.Log("SetSelectedCharacter: Character number " + i + ", page " + PageChar + ", max is " + __instance.Categories[___m_selectedCategory].Characters.Count, TNHFrameworkLogger.LogType.TNH);
-
-            if (i == 0)
-            {
-                if (PageChar > 0)
-                {
-                    PageChar--;
-                    i = 1;
-                }
-                else
-                {
-                    i = ___m_selectedCharacter % 10 + 1;
-                }
-
-                __instance.OBS_Character.SetSelectedButton(i);
-            }
-            else if (i == 11)
-            {
-                if (PageChar < (__instance.Categories[___m_selectedCategory].Characters.Count - 1) / 10)
-                {
-                    PageChar++;
-                    i = 1;
-                }
-                else
-                {
-                    i = ___m_selectedCharacter % 10 + 1;
-                }
-
-                __instance.OBS_Character.SetSelectedButton(i);
-            }
-
-            //__instance.PlayButtonSound(1);
-            miPlayButtonSound.Invoke(__instance, [1]);
-            DisplayCharacters(__instance, ___m_selectedCategory);
-
-            ___m_selectedCharacter = i - 1 + PageChar * 10;
-
-            TNH_CharacterDef charDef = __instance.Categories[___m_selectedCategory].Characters[___m_selectedCharacter];
-            if (LoadedTemplateManager.LoadedCharacterDict.ContainsKey(charDef.UgcId))
-                LoadedTemplateManager.CurrentCharacter = LoadedTemplateManager.LoadedCharacterDict[charDef.UgcId].Custom;
-
-            __instance.SetCharacter(charDef);
-
-            return false;
+            ____charCategoryListOffset += __instance.LBL_CategoryName.Count;
+            ____charCategoryListOffset = Mathf.Clamp(____charCategoryListOffset, 0, __instance.Categories.Count - __instance.LBL_CategoryName.Count) - 1;
         }
 
-        public static void DisplayCharacters(TNH_UIManager instance, int selectedCategory)
+        // This goes up by a full page instead of one at a time
+        [HarmonyPatch(typeof(TNH_UIManager), "PreviousCharacterButton")]
+        [HarmonyPrefix]
+        public static void PreviousCharacterButton_SkipPage(TNH_UIManager __instance, int ___m_selectedCategory, ref int ____charListOffset)
         {
-            // Adjust character labels according to PageChar
-            for (int i = 0; i < instance.LBL_CharacterName.Count - 2; i++)
-            {
-                if (i + PageChar * 10 < instance.Categories[selectedCategory].Characters.Count)
-                {
-                    instance.LBL_CharacterName[i + 1].gameObject.SetActive(true);
-                    TNH_CharacterDef def = instance.Categories[selectedCategory].Characters[i + PageChar * 10];
-                    instance.LBL_CharacterName[i + 1].text = (i + 1 + PageChar * 10).ToString() + ". " + def.DisplayName;
-                }
-                else
-                {
-                    instance.LBL_CharacterName[i + 1].gameObject.SetActive(false);
-                }
-            }
+            ____charListOffset -= __instance.LBL_CharacterName.Count;
+            ____charListOffset = Mathf.Clamp(____charListOffset, 0, __instance.Categories[___m_selectedCategory].Characters.Count - __instance.LBL_CharacterName.Count) + 1;
+        }
+
+        // This goes down by a full page instead of one at a time
+        [HarmonyPatch(typeof(TNH_UIManager), "NextCharacterButton")]
+        [HarmonyPrefix]
+        public static void NextCharacterButton_SkipPage(TNH_UIManager __instance, int ___m_selectedCategory, ref int ____charListOffset)
+        {
+            ____charListOffset += __instance.LBL_CharacterName.Count;
+            ____charListOffset = Mathf.Clamp(____charListOffset, 0, __instance.Categories[___m_selectedCategory].Characters.Count - __instance.LBL_CharacterName.Count) - 1;
+        }
+
+        [HarmonyPatch(typeof(TNH_LevelLoader), "ValidateCharacter")]
+        [HarmonyPostfix]
+        public static void ValidateCharacter_Skip(ref bool __result)
+        {
+            // Allow error messages to print, but make custom characters always pass validation
+            // We don't need YOUR validation
+            if (LoadedTemplateManager.CurrentCharacter.isCustom)
+                __result = true;
         }
     }
 }

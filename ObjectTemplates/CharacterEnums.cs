@@ -51,7 +51,8 @@ namespace TNHFramework.ObjectTemplates
         MF,
         Holiday,
         TNH,
-        NonCombat
+        NonCombat,
+        Sulfur
     }
 
     [JsonConverter(typeof(TolerantEnumConverter))]
@@ -127,7 +128,76 @@ namespace TNHFramework.ObjectTemplates
         Russian,
         Muzzle,
         Stock,
-        Bespoke
+        Bespoke,
+        MLokRail,
+        RMR
+    }
+
+    [JsonConverter(typeof(TolerantEnumConverter))]
+    public enum TagFirearmCountryOfOrigin
+    {
+        None,
+        Fictional,
+        UnitedStatesOfAmerica = 10,
+        MuricanRemnants,
+        Canada,
+        BritishEmpire = 20,
+        UnitedKingdom,
+        CommonwealthOfAustralia,
+        KingdomOfFrance = 30,
+        FrenchSecondRepublic,
+        SecondFrenchEmpire,
+        FrenchThirdRepublic,
+        VichyFrance,
+        FrenchFourthRepublic,
+        FrenchRepublic,
+        GermanEmpire = 40,
+        WeimarRepublic,
+        GermanReich,
+        WestGermany,
+        GermanDemocraticRepublic,
+        FederalRepublicOfGermany,
+        TsardomOfRussia = 50,
+        RussianEmpire,
+        UnionOfSovietSocialistRepublics,
+        RussianFederation,
+        KingdomOfBelgium = 60,
+        KingdomOfItaly = 70,
+        ItalianRepublic,
+        SwedishEmpire = 90,
+        UnitedKingdomsOfSwedenAndNorway,
+        KingdomOfSweden,
+        KingdomOfNorway = 100,
+        KingdomOfFinland = 110,
+        RepublicOfFinland,
+        Czechoslovakia = 120,
+        CzechRepublic,
+        Ukraine = 130,
+        SwissConfederation = 140,
+        FirstSpanishRepublic = 150,
+        SecondSpanishRepublic,
+        SpanishState,
+        KingdomOfSpain,
+        AustrianEmpire = 160,
+        AustroHungarianEmpire,
+        RepublicOfAustria,
+        FirstHungarianRepublic = 170,
+        HungarianRepublic,
+        KingdomOfHungary,
+        HungarianPeoplesRepublic,
+        RepublicOfCroatia = 190,
+        RepublicOfKorea = 200,
+        DemocraticRepublicOfVietnam = 210,
+        StateOfIsrael = 220,
+        FederativeRepublicOfBrazil = 230,
+        EmpireOfJapan = 240,
+        Japan,
+        RepublicOfSouthAfrica = 250,
+        GovernmentOfTheRepublicOfPolandInExile = 262,
+        RepublicOfPoland,
+        PeoplesRepublicOfChina = 270,
+        FormerYugoslavicRepublicOfMacedonia = 280,
+        Yugoslavia
     }
 
     [JsonConverter(typeof(TolerantEnumConverter))]
@@ -148,7 +218,8 @@ namespace TNHFramework.ObjectTemplates
         Adapter,
         Bayonet,
         ProjectileWeapon,
-        Bipod
+        Bipod,
+        NightVision
     }
 
     [JsonConverter(typeof(TolerantEnumConverter))]

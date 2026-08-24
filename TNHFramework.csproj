@@ -146,13 +146,11 @@
     <Reference Include="Valve.Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>lib\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="YamlDotNet, Version=13.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
-      <HintPath>packages\YamlDotNet.13.7.1\lib\net35\YamlDotNet.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\MainMenuPatches.cs" />
     <Compile Include="Main\Patches\ConstructorPatches.cs" />
     <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\HighScorePatches.cs" />
@@ -167,7 +165,6 @@
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CharacterEnums.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
-    <Compile Include="ObjectTemplates\Old\CustomCharacterV1.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />
     <Compile Include="Utilities\Extensions.cs" />

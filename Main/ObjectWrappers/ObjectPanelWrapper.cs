@@ -114,15 +114,15 @@ namespace TNHFramework
 
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
-            button_0.onClick.AddListener(() => { DupeMagButton(); });
+            button_0.onClick.AddListener(DupeMagButton);
 
             Button button_1 = buttonTransform_1.gameObject.GetComponent<Button>();
             button_1.onClick = new Button.ButtonClickedEvent();
-            button_1.onClick.AddListener(() => { UpgradeMagButton(); });
+            button_1.onClick.AddListener(UpgradeMagButton);
 
             Button button_2 = buttonTransform_2.gameObject.GetComponent<Button>();
             button_2.onClick = new Button.ButtonClickedEvent();
-            button_2.onClick.AddListener(() => { PurchaseMagButton(); });
+            button_2.onClick.AddListener(PurchaseMagButton);
 
             priceText_0 = AddPriceText(iconTransform_0, new Vector3(-235, 155, 0));
             priceText_1 = AddPriceText(iconTransform_1, new Vector3(40, 155, 0));
@@ -276,7 +276,7 @@ namespace TNHFramework
                 // Create the scanning box effect
                 if (original.PlacementBoundsRenderer == null)
                 {
-                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    GameObject gameObject = Instantiate(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
                     original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
                 }
 
@@ -531,7 +531,7 @@ namespace TNHFramework
 
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
-            button_0.onClick.AddListener(() => { PurchaseAmmoButton(); });
+            button_0.onClick.AddListener(PurchaseAmmoButton);
 
             original.CapacityText.text = string.Empty;
         }
@@ -642,7 +642,7 @@ namespace TNHFramework
                 // Create the scanning box effect
                 if (original.PlacementBoundsRenderer == null)
                 {
-                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    GameObject gameObject = Instantiate(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
                     original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
                 }
 
@@ -797,7 +797,7 @@ namespace TNHFramework
 
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
-            button_0.onClick.AddListener(() => { AddFullAutoButton(); });
+            button_0.onClick.AddListener(AddFullAutoButton);
 
             original.CapacityText.text = string.Empty;
         }
@@ -1014,7 +1014,7 @@ namespace TNHFramework
                 // Create the scanning box effect
                 if (original.PlacementBoundsRenderer == null)
                 {
-                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    GameObject gameObject = Instantiate(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
                     original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
                 }
 
@@ -1208,11 +1208,11 @@ namespace TNHFramework
 
             Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
             button_0.onClick = new Button.ButtonClickedEvent();
-            button_0.onClick.AddListener(() => { DecreaseFireRateButton(); });
+            button_0.onClick.AddListener(DecreaseFireRateButton);
 
             Button button_1 = buttonTransform_1.gameObject.GetComponent<Button>();
             button_1.onClick = new Button.ButtonClickedEvent();
-            button_1.onClick.AddListener(() => { IncreaseFireRateButton(); });
+            button_1.onClick.AddListener(IncreaseFireRateButton);
 
             original.CapacityText.text = string.Empty;
         }
@@ -1347,7 +1347,7 @@ namespace TNHFramework
                 // Create the scanning box effect
                 if (original.PlacementBoundsRenderer == null)
                 {
-                    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
+                    GameObject gameObject = Instantiate(original.PlacementBoundsPrefab, objPosition, Quaternion.identity);
                     original.PlacementBoundsRenderer = gameObject.GetComponent<TG_Bounds>();
                 }
 

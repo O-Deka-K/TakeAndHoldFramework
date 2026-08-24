@@ -21,6 +21,15 @@ namespace TNHFramework.Patches
             // For Northest Dakota, there's a missing entry
             if (__instance.DicSafeHoldIndiciesForSupplyPoint.Any() && __instance.SupplyPoints.Count == 38 && __instance.HoldPoints.Count == 32)
             {
+#if (false)
+                // Print out the table
+                TNHFrameworkLogger.Log($"DicSafeHoldIndiciesForSupplyPoint for Northest Dakota:", TNHFrameworkLogger.LogType.TNH);
+                foreach (KeyValuePair<int, List<int>> entry in __instance.DicSafeHoldIndiciesForSupplyPoint)
+                {
+                    string list = string.Join(",", [.. entry.Value.Select(o => o.ToString())]);
+                    TNHFrameworkLogger.Log($"  {entry.Key}: [{list}]", TNHFrameworkLogger.LogType.TNH);
+                }
+#endif
 
                 if (!__instance.DicSafeHoldIndiciesForSupplyPoint.ContainsKey(32))
                     __instance.DicSafeHoldIndiciesForSupplyPoint.Add(32, [25, 26, 27, 29]);
@@ -85,14 +94,71 @@ namespace TNHFramework.Patches
             return false;
         }
 
-#if (false)  // Anton pls fix - Health bonus
-        [HarmonyPatch(typeof(TNH_HoldPoint), "BeginHoldChallenge")]
+        // Anton pls fix. There's a bug in TNH_Utilities.GenerateProcessedLootObject. This is a workaround that will cancel the spawn.
+        // I added a fix to IM.CompatMags in the internal mag patcher, so maybe this never triggers
+        [HarmonyPatch(typeof(TNH_Utilities), "GenerateProcessedLootObject")]
         [HarmonyPrefix]
-        public static void BeginHoldChallenge_SkipHold(TNH_HoldPoint __instance)
+        public static bool GenerateProcessedLootObject_MissingMagFix(ref GameObject __result, ref string ContentsID, Vector3 Pos, Quaternion Rot)
         {
-            int healthBonus = Mathf.RoundToInt(Mathf.Clamp(100f - __instance.M.PlayerTakenDamagePercentageThisPhase(), 0f, 100f));
-            __instance.M.IncrementScoringStat(TNH_Manager.ScoringEvent.TakePhaseHealthBonus, healthBonus - 1);
+            TNHFrameworkLogger.Log($"Spawning {ContentsID} as loot", TNHFrameworkLogger.LogType.TNH);
+
+            if (!IM.OD.ContainsKey(ContentsID))
+            {
+                TNHFrameworkLogger.Log($"  Error: Object Database does not contain {ContentsID}!", TNHFrameworkLogger.LogType.TNH);
+                return false;
+            }
+
+            GameObject gameObject = IM.OD[ContentsID].GetGameObject();
+
+            if (gameObject.GetComponent<FVRFireArm>() != null)
+            {
+                FVRFireArm firearm = gameObject.GetComponent<FVRFireArm>();
+
+                // Anton pls fix. Grapple gun doesn't spawn with mag (which is actually a speedloader)
+                if (ContentsID == "GrappleGun")
+                {
+                    // Spawn grapple gun
+                    GameObject goGrappleGun = Object.Instantiate(gameObject, Pos, Rot);
+                    GrappleGun grappleGun = goGrappleGun.GetComponent<GrappleGun>();
+
+                    // Spawn grapple gun speedloader. Gun has a special "proxy" mag that appears after it's loaded, so the speedloader object has to be destroyed
+                    GameObject goSpeedLoader = Object.Instantiate(IM.OD["MagazineGrappleGun"].GetGameObject(), grappleGun.MagMountPoint.position, grappleGun.MagMountPoint.rotation);
+                    grappleGun.LoadCylinder(goSpeedLoader.GetComponent<Speedloader>());
+                    Object.Destroy(goSpeedLoader);
+
+                    __result = goGrappleGun;
+                    return false;
+                }
+                else if (firearm.Magazine == null && firearm.MagazineType != FireArmMagazineType.mNone)
+                {
+                    // Check if IM.CompatMags contains the key at all
+                    if (!IM.CompatMags.ContainsKey(firearm.MagazineType) || !IM.CompatMags[firearm.MagazineType].Any())
+                    {
+                        TNHFrameworkLogger.Log($"  Error: {ContentsID} does not have any compatible magazines!", TNHFrameworkLogger.LogType.TNH);
+                        FVRObject dummyObj = IM.OD["Charcoal"];
+                        IM.CompatMags.Add(firearm.MagazineType, [dummyObj]);
+                        return true;
+                    }
+                }
+            }
+
+            return true;
         }
-#endif
+
+        // Anton pls fix. CompletePhase getting called twice when a boss is killed
+        [HarmonyPatch(typeof(TNH_HoldPoint), "CompletePhase")]
+        [HarmonyPrefix]
+        private static bool CompletePhase_BossFix(TNH_HoldPoint.HoldState ___m_state)
+        {
+            return (___m_state != TNH_HoldPoint.HoldState.Transition);
+        }
+
+        // Anton pls fix. Boss not dropping loot or getting scored
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SosigKillShouldScore")]
+        [HarmonyPostfix]
+        public static void SosigKillShouldScore_BossFix(ref bool __result)
+        {
+            __result = true;
+        }
     }
 }
