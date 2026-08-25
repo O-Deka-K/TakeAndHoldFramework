@@ -11,11 +11,11 @@ namespace TNHFramework.ObjectTemplates
 {
     public class CustomCharacter()
     {
-        public string DisplayName;
-        public string Description;
+        public string DisplayName = string.Empty;
+        public string Description = string.Empty;
 
         public CategoryInfo CategoryData = new();
-        public string TableID;
+        public string TableID = string.Empty;
 
         [JsonIgnore]
         public int CharacterGroup;
@@ -100,8 +100,12 @@ namespace TNHFramework.ObjectTemplates
             HasSecondaryItem = character.Has_Item_Secondary;
             HasTertiaryItem = character.Has_Item_Tertiary;
             HasShield = character.Has_Item_Shield;
-            ValidAmmoEras = [.. character.ValidAmmoEras.Select(o => (TagEra)o)];
-            ValidAmmoSets = [.. character.ValidAmmoSets.Select(o => (TagSet)o)];
+
+            if (character.ValidAmmoEras != null)
+                ValidAmmoEras = [.. character.ValidAmmoEras.Select(o => (TagEra)o)];
+            if (character.ValidAmmoSets != null)
+                ValidAmmoSets = [.. character.ValidAmmoSets.Select(o => (TagSet)o)];
+
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
             TertiaryWeapon = new LoadoutEntry(character.Weapon_Tertiary);
@@ -123,9 +127,14 @@ namespace TNHFramework.ObjectTemplates
 
             RequireSightTable = new EquipmentGroup(character.RequireSightTable);
 
-            EquipmentPools = [.. character.EquipmentPool.Entries.Select(o => new EquipmentPool(o))];
-            Levels = [.. character.Progressions[0].Levels.Select(o => new Level(o))];
-            LevelsEndless = [.. character.Progressions_Endless[0].Levels.Select(o => new Level(o))];
+            if (character.EquipmentPool != null)
+                EquipmentPools = [.. character.EquipmentPool.Entries.Select(o => new EquipmentPool(o))];
+
+            if (character.Progressions != null)
+                Levels = [.. character.Progressions[0].Levels.Select(o => new Level(o))];
+
+            if (character.Progressions_Endless != null)
+                LevelsEndless = [.. character.Progressions_Endless[0].Levels.Select(o => new Level(o))];
 
             ForceDisableOutfitFunctionality = false;
 
@@ -414,7 +423,7 @@ namespace TNHFramework.ObjectTemplates
 
     public class MagazineBlacklistEntry()
     {
-        public string FirearmID;
+        public string FirearmID = string.Empty;
         public List<string> MagazineBlacklist = [];
         public List<string> MagazineWhitelist = [];
         public List<string> ClipBlacklist = [];
@@ -496,7 +505,7 @@ namespace TNHFramework.ObjectTemplates
     public class EquipmentPool()
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type = EquipmentPoolDef.PoolEntry.PoolEntryType.Firearm;
-        public string IconName;
+        public string IconName = string.Empty;
         public int TokenCost;
         public int TokenCostLimited;
         public int MinLevelAppears;
@@ -511,19 +520,22 @@ namespace TNHFramework.ObjectTemplates
 
         public EquipmentPool(EquipmentPoolDef.PoolEntry pool) : this()
         {
-            Type = pool.Type;
-            IconName = (pool.TableDef.Icon != null) ? pool.TableDef.Icon.name : pool.TableDef.IconEnum.ToString();
-            TokenCost = pool.TokenCost;
-            TokenCostLimited = pool.TokenCost_Limited;
-            MinLevelAppears = pool.MinLevelAppears;
-            MaxLevelAppears = pool.MaxLevelAppears;
-            PrimaryGroup = new EquipmentGroup(pool.TableDef)
+            if (pool != null)
             {
-                Rarity = pool.Rarity
-            };
-            SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
-            SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
-            BackupGroup = new EquipmentGroup();
+                Type = pool.Type;
+                IconName = (pool.TableDef.Icon != null) ? pool.TableDef.Icon.name : pool.TableDef.IconEnum.ToString();
+                TokenCost = pool.TokenCost;
+                TokenCostLimited = pool.TokenCost_Limited;
+                MinLevelAppears = pool.MinLevelAppears;
+                MaxLevelAppears = pool.MaxLevelAppears;
+                PrimaryGroup = new EquipmentGroup(pool.TableDef)
+                {
+                    Rarity = pool.Rarity
+                };
+                SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
+                SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
+                BackupGroup = new EquipmentGroup();
+            }
 
             this.pool = pool;
         }
@@ -681,7 +693,7 @@ namespace TNHFramework.ObjectTemplates
         public List<EquipmentGroup> SubGroups = [];
 
         [JsonIgnore]
-        public string RequiredQuest;
+        public string RequiredQuest = string.Empty;
 
         [JsonIgnore]
         public bool UsesVaultFileListOverride;
@@ -709,72 +721,75 @@ namespace TNHFramework.ObjectTemplates
 
         public EquipmentGroup(ObjectTableDef objectTableDef) : this()
         {
-            Category = (ObjectCategory)objectTableDef.Category;
-            ItemsToSpawn = 1;
-            MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
-            MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
-            SpawnsAreTheSame = objectTableDef.SpawnsAreTheSame;
-            NumMagsSpawned = 3;
-            NumClipsSpawned = 3;
-            NumRoundsSpawned = 8;
-            BespokeAttachmentChance = 0.5f;
-            IsCompatibleMagazine = false;
-            AutoPopulateGroup = !objectTableDef.UseIDListOverride;
-            ObjBlacklist = (objectTableDef.ObjBlacklist == null) ? null : [.. objectTableDef.ObjBlacklist];
-            IDOverride = (objectTableDef.IDOverride == null) ? null : [.. objectTableDef.IDOverride];
-            IDOverrideBackup = [];
-
-            MinYear = -1;
-            MaxYear = -1;
-            Eras = [.. objectTableDef.Eras.Select(o => (TagEra)o)];
-            Sets = [.. objectTableDef.Sets.Select(o => (TagSet)o)];
-            Sizes = [.. objectTableDef.Sizes.Select(o => (TagFirearmSize)o)];
-            Actions = [.. objectTableDef.Actions.Select(o => (TagFirearmAction)o)];
-            Modes = [.. objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o)];
-            ExcludedModes = [.. objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o)];
-            FeedOptions = [.. objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o)];
-            MountsAvailable = [.. objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o)];
-            RoundPowers = [.. objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o)];
-            RoundTypes = [.. objectTableDef.RoundTypes];
-            Features = [.. objectTableDef.Features.Select(o => (TagAttachmentFeature)o)];
-            MeleeHandedness = [.. objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o)];
-            MeleeStyles = [.. objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o)];
-            MountTypes = [.. objectTableDef.MountTypes.Select(o => (TagFirearmMount)o)];
-            PowerupTypes = [.. objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o)];
-            ThrownTypes = [.. objectTableDef.ThrownTypes.Select(o => (TagThrownType)o)];
-            ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)];
-            Countries = [.. objectTableDef.Countries.Select(o => (TagFirearmCountryOfOrigin)o)];
-
-            Tags = new()
+            if (objectTableDef != null)
             {
-                MinYear = -1,
-                MaxYear = -1,
-                Eras = [.. objectTableDef.Eras.Select(o => (TagEra)o)],
-                Sets = [.. objectTableDef.Sets.Select(o => (TagSet)o)],
-                Sizes = [.. objectTableDef.Sizes.Select(o => (TagFirearmSize)o)],
-                Actions = [.. objectTableDef.Actions.Select(o => (TagFirearmAction)o)],
-                Modes = [.. objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o)],
-                ExcludedModes = [.. objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o)],
-                FeedOptions = [.. objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o)],
-                MountsAvailable = [.. objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o)],
-                RoundPowers = [.. objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o)],
-                RoundTypes = [.. objectTableDef.RoundTypes],
-                Features = [.. objectTableDef.Features.Select(o => (TagAttachmentFeature)o)],
-                MeleeHandedness = [.. objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o)],
-                MeleeStyles = [.. objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o)],
-                MountTypes = [.. objectTableDef.MountTypes.Select(o => (TagFirearmMount)o)],
-                PowerupTypes = [.. objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o)],
-                ThrownTypes = [.. objectTableDef.ThrownTypes.Select(o => (TagThrownType)o)],
-                ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o)],
-                Countries = [.. objectTableDef.Countries.Select(o => (TagFirearmCountryOfOrigin)o)]
-            };
+                Category = (ObjectCategory)objectTableDef.Category;
+                ItemsToSpawn = 1;
+                MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
+                MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
+                SpawnsAreTheSame = objectTableDef.SpawnsAreTheSame;
+                NumMagsSpawned = 3;
+                NumClipsSpawned = 3;
+                NumRoundsSpawned = 8;
+                BespokeAttachmentChance = 0.5f;
+                IsCompatibleMagazine = false;
+                AutoPopulateGroup = !objectTableDef.UseIDListOverride;
+                ObjBlacklist = (objectTableDef.ObjBlacklist == null) ? null : [.. objectTableDef.ObjBlacklist];
+                IDOverride = (objectTableDef.IDOverride == null) ? null : [.. objectTableDef.IDOverride];
+                IDOverrideBackup = [];
 
-            SubGroups = [];
+                MinYear = -1;
+                MaxYear = -1;
+                Eras = [.. objectTableDef.Eras?.Select(o => (TagEra)o)];
+                Sets = [.. objectTableDef.Sets?.Select(o => (TagSet)o)];
+                Sizes = [.. objectTableDef.Sizes?.Select(o => (TagFirearmSize)o)];
+                Actions = [.. objectTableDef.Actions?.Select(o => (TagFirearmAction)o)];
+                Modes = [.. objectTableDef.Modes?.Select(o => (TagFirearmFiringMode)o)];
+                ExcludedModes = [.. objectTableDef.ExcludeModes?.Select(o => (TagFirearmFiringMode)o)];
+                FeedOptions = [.. objectTableDef.Feedoptions?.Select(o => (TagFirearmFeedOption)o)];
+                MountsAvailable = [.. objectTableDef.MountsAvailable?.Select(o => (TagFirearmMount)o)];
+                RoundPowers = [.. objectTableDef.RoundPowers?.Select(o => (TagFirearmRoundPower)o)];
+                RoundTypes = (objectTableDef.RoundTypes == null) ? [] : [.. objectTableDef.RoundTypes];
+                Features = [.. objectTableDef.Features?.Select(o => (TagAttachmentFeature)o)];
+                MeleeHandedness = [.. objectTableDef.MeleeHandedness?.Select(o => (TagMeleeHandedness)o)];
+                MeleeStyles = [.. objectTableDef.MeleeStyles?.Select(o => (TagMeleeStyle)o)];
+                MountTypes = [.. objectTableDef.MountTypes?.Select(o => (TagFirearmMount)o)];
+                PowerupTypes = [.. objectTableDef.PowerupTypes?.Select(o => (TagPowerupType)o)];
+                ThrownTypes = [.. objectTableDef.ThrownTypes?.Select(o => (TagThrownType)o)];
+                ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes?.Select(o => (TagThrownDamageType)o)];
+                Countries = [.. objectTableDef.Countries?.Select(o => (TagFirearmCountryOfOrigin)o)];
 
-            UsesVaultFileListOverride = objectTableDef.UsesVaultFileListOverride;
-            UseFullPlayerVaultRandom = objectTableDef.UseFullPlayerVaultRandom;
-            OverrideVaultFileWrappers = [.. objectTableDef.OverrideVaultFileWrappers];
-            OverrideFileUsage = objectTableDef.OverrideFileUsage;
+                Tags = new()
+                {
+                    MinYear = -1,
+                    MaxYear = -1,
+                    Eras = [.. objectTableDef.Eras?.Select(o => (TagEra)o)],
+                    Sets = [.. objectTableDef.Sets?.Select(o => (TagSet)o)],
+                    Sizes = [.. objectTableDef.Sizes?.Select(o => (TagFirearmSize)o)],
+                    Actions = [.. objectTableDef.Actions?.Select(o => (TagFirearmAction)o)],
+                    Modes = [.. objectTableDef.Modes?.Select(o => (TagFirearmFiringMode)o)],
+                    ExcludedModes = [.. objectTableDef.ExcludeModes?.Select(o => (TagFirearmFiringMode)o)],
+                    FeedOptions = [.. objectTableDef.Feedoptions?.Select(o => (TagFirearmFeedOption)o)],
+                    MountsAvailable = [.. objectTableDef.MountsAvailable?.Select(o => (TagFirearmMount)o)],
+                    RoundPowers = [.. objectTableDef.RoundPowers?.Select(o => (TagFirearmRoundPower)o)],
+                    RoundTypes = (objectTableDef.RoundTypes == null) ? [] : [.. objectTableDef.RoundTypes],
+                    Features = [.. objectTableDef.Features?.Select(o => (TagAttachmentFeature)o)],
+                    MeleeHandedness = [.. objectTableDef.MeleeHandedness?.Select(o => (TagMeleeHandedness)o)],
+                    MeleeStyles = [.. objectTableDef.MeleeStyles?.Select(o => (TagMeleeStyle)o)],
+                    MountTypes = [.. objectTableDef.MountTypes?.Select(o => (TagFirearmMount)o)],
+                    PowerupTypes = [.. objectTableDef.PowerupTypes?.Select(o => (TagPowerupType)o)],
+                    ThrownTypes = [.. objectTableDef.ThrownTypes?.Select(o => (TagThrownType)o)],
+                    ThrownDamageTypes = [.. objectTableDef.ThrownDamageTypes?.Select(o => (TagThrownDamageType)o)],
+                    Countries = [.. objectTableDef.Countries?.Select(o => (TagFirearmCountryOfOrigin)o)]
+                };
+
+                SubGroups = [];
+
+                UsesVaultFileListOverride = objectTableDef.UsesVaultFileListOverride;
+                UseFullPlayerVaultRandom = objectTableDef.UseFullPlayerVaultRandom;
+                OverrideVaultFileWrappers = (objectTableDef.OverrideVaultFileWrappers == null) ? [] : [.. objectTableDef.OverrideVaultFileWrappers];
+                OverrideFileUsage = objectTableDef.OverrideFileUsage;
+            }
 
             this.objectTableDef = objectTableDef;
         }
@@ -1427,7 +1442,7 @@ namespace TNHFramework.ObjectTemplates
                 PrimaryGroup = new EquipmentGroup
                 {
                     Rarity = 1,
-                    IDOverride = [.. loadout.ListOverride.Select(o => o.ItemID)],
+                    IDOverride = [.. loadout.ListOverride?.Select(o => o.ItemID)],
                     ItemsToSpawn = 1,
                     MinAmmoCapacity = -1,
                     MaxAmmoCapacity = 9999,
@@ -1621,30 +1636,39 @@ namespace TNHFramework.ObjectTemplates
 
         public Level(TNH_Progression.Level level) : this()
         {
-            TakeChallenge = new TakeChallenge(level.TakeChallenge);
-            HoldPhases = [.. level.HoldChallenge.Phases.Select(o => new Phase(o))];
-            SupplyChallenge = new TakeChallenge(level.TakeChallenge);
-            Patrols = [.. level.PatrolChallenge.Patrols.Select(o => new Patrol(o))];
-            NumOverrideTokensForHold = level.NumOverrideTokensForHold;
+            if (level != null)
+            {
+                TakeChallenge = new TakeChallenge(level.TakeChallenge);
 
-            MinConstructors = 1;
-            MaxConstructors = 1;
-            MinPanels = 1;
-            MaxPanels = 1;
-            MinSupplyPoints = 2;
-            MaxSupplyPoints = 3;
-            MinBoxesSpawned = 2;
-            MaxBoxesSpawned = 4;
-            MinTokensPerSupply = 1;
-            MaxTokensPerSupply = 1;
-            BoxTokenChance = 0;
-            BoxHealthChance = 0.5f;
-            PossiblePanelTypes =
-            [
-                PanelType.AmmoReloader,
-                PanelType.MagDuplicator,
-                PanelType.Recycler,
-            ];
+                if (level.HoldChallenge?.Phases != null)
+                    HoldPhases = [.. level.HoldChallenge.Phases.Select(o => new Phase(o))];
+
+                SupplyChallenge = new TakeChallenge(level.TakeChallenge);
+
+                if (level.PatrolChallenge?.Patrols != null)
+                    Patrols = [.. level.PatrolChallenge.Patrols.Select(o => new Patrol(o))];
+
+                NumOverrideTokensForHold = level.NumOverrideTokensForHold;
+
+                MinConstructors = 1;
+                MaxConstructors = 1;
+                MinPanels = 1;
+                MaxPanels = 1;
+                MinSupplyPoints = 2;
+                MaxSupplyPoints = 3;
+                MinBoxesSpawned = 2;
+                MaxBoxesSpawned = 4;
+                MinTokensPerSupply = 1;
+                MaxTokensPerSupply = 1;
+                BoxTokenChance = 0;
+                BoxHealthChance = 0.5f;
+                PossiblePanelTypes =
+                [
+                    PanelType.AmmoReloader,
+                    PanelType.MagDuplicator,
+                    PanelType.Recycler,
+                ];
+            }
 
             this.level = level;
         }
@@ -1746,7 +1770,7 @@ namespace TNHFramework.ObjectTemplates
     {
         public TNH_TurretType TurretType;
         public int NumTurrets;
-        public string EnemyType;
+        public string EnemyType = "M_Swat_Guard";
         public int NumGuards;
         public int IFFUsed;
 
@@ -1758,12 +1782,15 @@ namespace TNHFramework.ObjectTemplates
 
         public TakeChallenge(TNH_TakeChallenge takeChallenge) : this()
         {
-            TurretType = takeChallenge.TurretType;
-            NumTurrets = takeChallenge.NumTurrets;
-            EnemyType = takeChallenge.GID.ToString();
-            NumGuards = takeChallenge.NumGuards;
-            IFFUsed = takeChallenge.IFFUsed;
-            OverrideGID = takeChallenge.OverrideGID;
+            if (takeChallenge != null)
+            {
+                TurretType = takeChallenge.TurretType;
+                NumTurrets = takeChallenge.NumTurrets;
+                EnemyType = takeChallenge.GID.ToString();
+                NumGuards = takeChallenge.NumGuards;
+                IFFUsed = takeChallenge.IFFUsed;
+                OverrideGID = takeChallenge.OverrideGID;
+            }
 
             this.takeChallenge = takeChallenge;
         }
@@ -1805,7 +1832,7 @@ namespace TNHFramework.ObjectTemplates
         public int MinTargetsLimited;
         public int MaxTargetsLimited;
         public List<string> EnemyType = [];
-        public string LeaderType;
+        public string LeaderType = "M_Swat_Guard";
         public int MinEnemies;
         public int MaxEnemies;
         public float SpawnCadence;
@@ -1816,7 +1843,7 @@ namespace TNHFramework.ObjectTemplates
         public bool IsLeaderBoss;
         public int IFFUsed;
         public float GrenadeChance;
-        public string GrenadeType;
+        public string GrenadeType = string.Empty;
         public bool SwarmPlayer;
 
         [JsonIgnore]
@@ -1830,28 +1857,32 @@ namespace TNHFramework.ObjectTemplates
 
         public Phase(TNH_HoldChallenge.Phase phase) : this()
         {
-            Encryptions = [phase.Encryption];
-            MinTargets = phase.MinTargets;
-            MaxTargets = phase.MaxTargets;
-            MinTargetsLimited = phase.MinTargets_Limited;
-            MaxTargetsLimited = phase.MaxTargets_Limited;
-            EnemyType = [phase.EType.ToString()];
-            LeaderType = phase.LType.ToString();
-            MinEnemies = phase.MinEnemies;
-            MaxEnemies = phase.MaxEnemies;
-            SpawnCadence = phase.SpawnCadence;
-            MaxEnemiesAlive = phase.MaxEnemiesAlive;
-            MaxDirections = phase.MaxDirections;
-            ScanTime = phase.ScanTime;
-            WarmupTime = phase.WarmUp;
-            IsLeaderBoss = phase.IsLeaderBoss;
-            IFFUsed = phase.IFFUsed;
-            GrenadeChance = 0;
-            GrenadeType = "Sosiggrenade_Flash";
-            SwarmPlayer = false;
+            if (phase != null)
+            {
+                Encryptions = [phase.Encryption];
+                MinTargets = phase.MinTargets;
+                MaxTargets = phase.MaxTargets;
+                MinTargetsLimited = phase.MinTargets_Limited;
+                MaxTargetsLimited = phase.MaxTargets_Limited;
+                EnemyType = [phase.EType.ToString()];
+                LeaderType = phase.LType.ToString();
+                MinEnemies = phase.MinEnemies;
+                MaxEnemies = phase.MaxEnemies;
+                SpawnCadence = phase.SpawnCadence;
+                MaxEnemiesAlive = phase.MaxEnemiesAlive;
+                MaxDirections = phase.MaxDirections;
+                ScanTime = phase.ScanTime;
+                WarmupTime = phase.WarmUp;
+                IsLeaderBoss = phase.IsLeaderBoss;
+                IFFUsed = phase.IFFUsed;
+                GrenadeChance = 0;
+                GrenadeType = "Sosiggrenade_Flash";
+                SwarmPlayer = false;
 
-            OverrideEType = phase.OverrideEType;
-            OverrideLType = phase.OverrideLType;
+                OverrideEType = phase.OverrideEType;
+                OverrideLType = phase.OverrideLType;
+            }
+
             this.phase = phase;
         }
 
@@ -1918,7 +1949,7 @@ namespace TNHFramework.ObjectTemplates
     public class Patrol()
     {
         public List<string> EnemyType = [];
-        public string LeaderType;
+        public string LeaderType = "M_Swat_Guard";
         public int PatrolSize;
         public int MaxPatrols;
         public int MaxPatrolsLimited;
@@ -1942,21 +1973,24 @@ namespace TNHFramework.ObjectTemplates
 
         public Patrol(TNH_PatrolChallenge.Patrol patrol) : this()
         {
-            OverrideEType = patrol.OverrideEType;
-            OverrideLType = patrol.OverrideLType;
-            EnemyType = [patrol.EType.ToString()];
-            LeaderType = patrol.LType.ToString();
-            PatrolSize = patrol.PatrolSize;
-            MaxPatrols = patrol.MaxPatrols;
-            MaxPatrolsLimited = patrol.MaxPatrols_LimitedAmmo;
-            PatrolCadence = patrol.TimeTilRegen;
-            PatrolCadenceLimited = patrol.TimeTilRegen_LimitedAmmo;
-            IFFUsed = patrol.IFFUsed;
-            SwarmPlayer = false;
-            AssualtSpeed = Sosig.SosigMoveSpeed.Walking;
-            DropChance = 0.65f;
-            DropsHealth = true;
-            IsBoss = false;
+            if (patrol != null)
+            {
+                OverrideEType = patrol.OverrideEType;
+                OverrideLType = patrol.OverrideLType;
+                EnemyType = [patrol.EType.ToString()];
+                LeaderType = patrol.LType.ToString();
+                PatrolSize = patrol.PatrolSize;
+                MaxPatrols = patrol.MaxPatrols;
+                MaxPatrolsLimited = patrol.MaxPatrols_LimitedAmmo;
+                PatrolCadence = patrol.TimeTilRegen;
+                PatrolCadenceLimited = patrol.TimeTilRegen_LimitedAmmo;
+                IFFUsed = patrol.IFFUsed;
+                SwarmPlayer = false;
+                AssualtSpeed = Sosig.SosigMoveSpeed.Walking;
+                DropChance = 0.65f;
+                DropsHealth = true;
+                IsBoss = false;
+            }
 
             this.patrol = patrol;
         }
@@ -2003,7 +2037,7 @@ namespace TNHFramework.ObjectTemplates
                 if (!EnemyType.Any())
                     EnemyType.Add("M_Swat_Guard");
 
-                if (!LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
+                if (LeaderType == null || !LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
                     LeaderType = EnemyType[0];
             }
         }

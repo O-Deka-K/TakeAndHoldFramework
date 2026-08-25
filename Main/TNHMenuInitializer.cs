@@ -344,27 +344,43 @@ namespace TNHFramework
         {
             foreach (TNH_CharacterDef character in characters)
             {
-                List<TNH_Progression> allProgressions = [.. character.Progressions, .. character.Progressions_Endless];
-                HashSet<SosigEnemyTemplate> sosigs = [];
+                List<TNH_Progression> allProgressions = [];
+
+                if (character.Progressions != null)
+                    allProgressions.AddRange(character.Progressions);
+
+                if (character.Progressions_Endless != null)
+                    allProgressions.AddRange(character.Progressions_Endless);
+
+                HashSet <SosigEnemyTemplate> sosigs = [];
 
                 foreach (TNH_Progression progression in allProgressions)
                 {
+                    if (progression.Levels == null)
+                        continue;
+
                     foreach (TNH_Progression.Level level in progression.Levels)
                     {
-                        if (level.TakeChallenge.OverrideGID != null)
+                        if (level.TakeChallenge?.OverrideGID != null)
                             sosigs.Add(level.TakeChallenge.OverrideGID);
 
-                        if (level.SupplyChallenge.OverrideGID != null)
+                        if (level.SupplyChallenge?.OverrideGID != null)
                             sosigs.Add(level.SupplyChallenge.OverrideGID);
 
-                        foreach (TNH_HoldChallenge.Phase phase in level.HoldChallenge.Phases)
+                        if (level.HoldChallenge?.Phases != null)
                         {
-                            if (phase.OverrideEType != null)
-                                sosigs.Add(phase.OverrideEType);
+                            foreach (TNH_HoldChallenge.Phase phase in level.HoldChallenge.Phases)
+                            {
+                                if (phase.OverrideEType != null)
+                                    sosigs.Add(phase.OverrideEType);
 
-                            if (phase.OverrideLType != null)
-                                sosigs.Add(phase.OverrideLType);
+                                if (phase.OverrideLType != null)
+                                    sosigs.Add(phase.OverrideLType);
+                            }
                         }
+
+                        if (level.PatrolChallenge?.Patrols == null)
+                            continue;
 
                         foreach (TNH_PatrolChallenge.Patrol patrol in level.PatrolChallenge.Patrols)
                         {
