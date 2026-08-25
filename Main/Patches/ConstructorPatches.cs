@@ -287,6 +287,7 @@ namespace TNHFramework.Patches
 
             if (table.UsesVaultFiles())
             {
+                TNHFrameworkLogger.Log("Item will be a vault file", TNHFrameworkLogger.LogType.TNH);
                 VaultFile vf = table.GetRandomVaultFile();
                 List<FVRPhysicalObject> spawnedObjs = null;
                 bool success;
@@ -322,8 +323,11 @@ namespace TNHFramework.Patches
 
                 if (spawnedObjs.Any() && table.FileUsage == ObjectTableDef.VaultFileUsage.SingleObject)
                 {
+                    TNHFrameworkLogger.Log("Spawning ammo for vault file", TNHFrameworkLogger.LogType.TNH);
                     //yield return constructor.SpawnAmmoForObject(table, spawnedObjs[0].ObjectWrapper);
-                    yield return (IEnumerator)miSpawnAmmoForObject.Invoke(constructor, [table, spawnedObjs[0].ObjectWrapper]);
+
+                    // Yielding the result from Invoke() doesn't seem to work, so start another coroutine instead
+                    AnvilManager.Run((IEnumerator)miSpawnAmmoForObject.Invoke(constructor, [table, spawnedObjs[0].ObjectWrapper]));
                 }
             }
             else if (table.NumSpawns == 1 && (pool.SpawnsInLargeCase || pool.SpawnsInSmallCase))
