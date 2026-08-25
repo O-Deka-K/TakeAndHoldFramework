@@ -193,3 +193,9 @@
 - Fixed "Encryptions neutralized" announcement playing twice in some cases.
 - Fixed typo "Encyption" in description for Blitz mode.
 - Removed support for YAML. No characters on Thunderstore currently use it.
+
+## [0.120.1] - 2026-08-24
+
+- Fixed crash due to Steam Workshop characters with null values.
+- Fixed vault guns not spawning with ammo at constructor panel.
+- Fixed description in manifest.
