@@ -76,3 +76,4 @@ https://github.com/O-Deka-K/TakeAndHoldFramework
 - **Ethiom101** - Text editor, general nuisance, corruptor of builds.
 - **DevynDaMonster** - Creator of the original Take & Hold Tweaker.
 - **Alexine** - Tester and idea machine.
+- The **H3VR Community** for reporting bugs on Discord and Reddit.
