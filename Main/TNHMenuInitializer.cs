@@ -521,14 +521,14 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.Log("Creating default sosig template files", TNHFrameworkLogger.LogType.File);
 
-                path += "/DefaultSosigTemplates";
+                path = Path.Combine(path, "DefaultSosigTemplates");
 
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
 
                 foreach (SosigEnemyTemplate template in sosigs)
                 {
-                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+                    string jsonPath = Path.Combine(path, CleanFilename(template.SosigEnemyID + ".json"));
 
                     if (File.Exists(jsonPath))
                         File.Delete(jsonPath);
@@ -555,14 +555,14 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.Log("Creating custom sosig template files", TNHFrameworkLogger.LogType.File);
 
-                path += "/CustomSosigTemplates";
+                path = Path.Combine(path, "CustomSosigTemplates");
 
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
 
                 foreach (SosigTemplate template in sosigs)
                 {
-                    string jsonPath = path + "/" + CleanFilename(template.SosigEnemyID + ".json");
+                    string jsonPath = Path.Combine(path, CleanFilename(template.SosigEnemyID + ".json"));
 
                     if (File.Exists(jsonPath))
                         File.Delete(jsonPath);
@@ -588,7 +588,7 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.Log("Creating " + (isCustom ? "custom" : "default") + " character template files", TNHFrameworkLogger.LogType.File);
 
-                path += isCustom ? "/CustomCharacters" : "/DefaultCharacters";
+                path = Path.Combine(path, isCustom ? "CustomCharacters" : "DefaultCharacters");
 
                 if (!Directory.Exists(path))
                 {
@@ -597,7 +597,7 @@ namespace TNHFramework
 
                 foreach (CustomCharacter charDef in characters)
                 {
-                    string jsonPath = path + "/" + CleanFilename(charDef.DisplayName + ".json");
+                    string jsonPath = Path.Combine(path, CleanFilename(charDef.DisplayName + ".json"));
 
                     if (File.Exists(jsonPath))
                         File.Delete(jsonPath);
@@ -621,19 +621,20 @@ namespace TNHFramework
         {
             try
             {
-                if (File.Exists(path + "/IconIDs.txt"))
-                {
-                    File.Delete(path + "/IconIDs.txt");
-                }
+                string filePath = Path.Combine(path, "IconIDs.txt");
+
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
 
                 // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/IconIDs.txt"))
+                using (StreamWriter sw = File.CreateText(filePath))
                 {
                     sw.WriteLine("#Available Icons for equipment pools");
                     foreach (string icon in icons)
                     {
                         sw.WriteLine(icon);
                     }
+
                     sw.Close();
                 }
             }
@@ -647,15 +648,15 @@ namespace TNHFramework
         {
             try
             {
-                if (File.Exists(path + "/ObjectIDs.csv"))
-                {
-                    File.Delete(path + "/ObjectIDs.csv");
-                }
+                string csvPath = Path.Combine(path, "ObjectIDs.csv");
+
+                if (File.Exists(csvPath))
+                    File.Delete(csvPath);
 
                 // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
+                using (StreamWriter sw = File.CreateText(csvPath))
                 {
-                    sw.WriteLine("DisplayName,ObjectID,Mod Content,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    sw.WriteLine("DisplayName,ObjectID,Mod Content,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Round Type,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
 
                     foreach (FVRObject obj in IM.OD.Values)
                     {
@@ -674,6 +675,7 @@ namespace TNHFramework
                             string.Join("+", [.. obj.TagFirearmMounts.Select(o => o.ToString())]) + "," +
                             obj.TagAttachmentMount + "," +
                             obj.TagFirearmRoundPower + "," +
+                            obj.RoundType + "," +
                             obj.TagFirearmSize + "," +
                             obj.TagMeleeHandedness + "," +
                             obj.TagMeleeStyle + "," +
@@ -681,6 +683,7 @@ namespace TNHFramework
                             obj.TagThrownDamageType + "," +
                             obj.TagThrownType);
                     }
+
                     sw.Close();
                 }
             }
@@ -694,13 +697,13 @@ namespace TNHFramework
         {
             try
             {
-                if (File.Exists(path + "/SosigIDs.txt"))
-                {
-                    File.Delete(path + "/SosigIDs.txt");
-                }
+                string filePath = Path.Combine(path, "SosigIDs.txt");
+
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
 
                 // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/SosigIDs.txt"))
+                using (StreamWriter sw = File.CreateText(filePath))
                 {
                     sw.WriteLine("#Available Sosig IDs for spawning");
 
@@ -711,6 +714,7 @@ namespace TNHFramework
                     {
                         sw.WriteLine(ID);
                     }
+
                     sw.Close();
                 }
             }
@@ -726,7 +730,7 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.Log("Creating JSON vault files", TNHFrameworkLogger.LogType.File);
 
-                path += "/VaultFiles";
+                path = Path.Combine(path, "VaultFiles");
 
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
@@ -754,7 +758,7 @@ namespace TNHFramework
 
                 foreach (SavedGunSerializable savedGun in savedGuns)
                 {
-                    string jsonPath = path + "/" + CleanFilename(savedGun.FileName + ".json");
+                    string jsonPath = Path.Combine(path, CleanFilename(savedGun.FileName + ".json"));
 
                     if (File.Exists(jsonPath))
                         File.Delete(jsonPath);
@@ -778,7 +782,7 @@ namespace TNHFramework
         {
             try
             {
-                path += "/GeneratedEquipmentPools";
+                path = Path.Combine(path, "GeneratedEquipmentPools");
 
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
@@ -786,52 +790,38 @@ namespace TNHFramework
                 var characters = LoadedTemplateManager.LoadedCharacterDict.Select(o => o.Value.Custom);
                 foreach (CustomCharacter character in characters)
                 {
-                    string txtPath = path + "/" + CleanFilename(character.DisplayName + ".txt");
+                    string txtPath = Path.Combine(path, CleanFilename(character.DisplayName + ".txt"));
 
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(txtPath))
                     {
                         sw.WriteLine("Primary Starting Weapon");
                         if (character.PrimaryWeapon != null)
-                        {
                             sw.WriteLine(character.PrimaryWeapon.ToString());
-                        }
 
                         sw.WriteLine("\n\nSecondary Starting Weapon");
                         if (character.SecondaryWeapon != null)
-                        {
                             sw.WriteLine(character.SecondaryWeapon.ToString());
-                        }
 
                         sw.WriteLine("\n\nTertiary Starting Weapon");
                         if (character.TertiaryWeapon != null)
-                        {
                             sw.WriteLine(character.TertiaryWeapon.ToString());
-                        }
 
                         sw.WriteLine("\n\nPrimary Starting Item");
                         if (character.PrimaryItem != null)
-                        {
                             sw.WriteLine(character.PrimaryItem.ToString());
-                        }
 
                         sw.WriteLine("\n\nSecondary Starting Item");
                         if (character.SecondaryItem != null)
-                        {
                             sw.WriteLine(character.SecondaryItem.ToString());
-                        }
 
                         sw.WriteLine("\n\nTertiary Starting Item");
                         if (character.TertiaryItem != null)
-                        {
                             sw.WriteLine(character.TertiaryItem.ToString());
-                        }
 
                         sw.WriteLine("\n\nStarting Shield");
                         if (character.Shield != null)
-                        {
                             sw.WriteLine(character.Shield.ToString());
-                        }
 
                         foreach (EquipmentPool pool in character.EquipmentPools)
                         {
@@ -854,7 +844,7 @@ namespace TNHFramework
             {
                 TNHFrameworkLogger.Log("Creating populated character template file", TNHFrameworkLogger.LogType.File);
 
-                path += "/PopulatedCharacterTemplate.json";
+                path = Path.Combine(path, "PopulatedCharacterTemplate.json");
 
                 if (!File.Exists(path))
                     File.Delete(path);
