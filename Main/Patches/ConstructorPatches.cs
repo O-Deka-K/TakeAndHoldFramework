@@ -580,6 +580,11 @@ namespace TNHFramework.Patches
             ___m_weaponCases.Add(caseObj);
 
             FVRObject ammoObj = ammoObjOverride ?? __instance.GetSeededRandomAmmoObject(weapon, minAmmo, maxAmmo);
+
+            // Anton pls fix. There's no such thing as round type "none", so it returns a22_LR instead. Check if it matches the weapon.
+            if (ammoObj.RoundType == FireArmRoundType.a22_LR && weapon.Category != FVRObject.ObjectCategory.Firearm)
+                ammoObj = null;
+
             int numClipSpeedLoaderRound = 0;
 
             // Clamp number of ammo objects spawned
