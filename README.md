@@ -4,15 +4,13 @@ A successor to DevynDaMonster's [TNHTweaker](https://thunderstore.io/c/h3vr/p/de
 
 ## NEW
 
-- You can disable each type of construct (like the floating mines) in Institution separately. Check the TNHFramework options. Details on the [Wiki](https://thunderstore.io/c/h3vr/p/ISD/TNHFramework/wiki/).
+- New TNHFramework Options menu board on the left side of the TNH lobby! It has a selection of gameplay options from the mod panel. Check the mod panel for more.
 
-- I've added ODekaK-MagazinePatcher as a dependency because not enough people know that it fixes the "0% Caching Items" bug.
-  - It will automatically replace devyndamonster-MagazinePatcher. You don't have to do anything in r2modman.
-  - If you want, you can disable MagazinePatcher in r2modman and it will use the TNHFramework internal mag patcher. It's not as thorough, but it eats less RAM while caching and it's fast.
+- You can make Regenerative, Cascading and Orthogonal encryptions easier in Spawnlocking mode. Check the TNHFramework options. Details on the [Wiki](https://thunderstore.io/c/h3vr/p/ISD/TNHFramework/wiki/).
 
 ## H3VR Build Version
 
-This is for H3VR build 120p2, which is currently on Main branch (as of Jul 2026). It will NOT work on any other branch, as there are many incompatible changes.
+This is for H3VR build 120p2 and up, which is currently on Main branch (as of Jul 2026). It will NOT work on any other branch, as there are many incompatible changes.
 
 ## What is this?
 
@@ -36,6 +34,7 @@ Long version:
 - Disables TNHTweaker automatically. Just leave it installed and let it be!
 - Optional replacement for Magazine Patcher. No longer will you have crashes due to using too much RAM while loading.
 - Full Institution support, with options to disable each type of construct separately.
+- Options to make some of the encryptions easier in Spawnlocking mode.
 - Global blacklist for any type of item.
 - TNHTweaker bugfixes.
 - Vanilla game bugfixes.
@@ -46,9 +45,11 @@ Please see the CHANGELOG for the full list of changes from TNHTweaker.
 
 ## Options
 
-There are two ways to access the TNHFramework options:
+There are three ways to access the TNHFramework options:
+
 1. In r2modman, go to Config editor > h3vr.tnhframework.cfg > Edit Config.
 2. In game, spawn the mod panel using your wrist menu. Go to Plugins > TNHFramework.
+3. In game, go to the TNH lobby and look to the left. Some gameplay options can be toggled there.
 
 ## Wiki
 
