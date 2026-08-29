@@ -661,10 +661,7 @@ namespace TNHFramework.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Melee.position, __instance.SpawnPoint_Melee.rotation, o =>
-                    {
-                        __instance.M.AddObjectToTrackedList(o);
-                    }));
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Melee.position, __instance.SpawnPoint_Melee.rotation, __instance.M.AddObjectToTrackedList));
                 }
             }
 
@@ -675,10 +672,7 @@ namespace TNHFramework.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation, o =>
-                    {
-                        __instance.M.AddObjectToTrackedList(o);
-                    }));
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation, __instance.M.AddObjectToTrackedList));
                 }
             }
 
@@ -691,10 +685,7 @@ namespace TNHFramework.Patches
                 {
                     Transform spawnPoint = __instance.SpawnPoints_SmallItem.Count >= 2 ? __instance.SpawnPoints_SmallItem[1] : __instance.SpawnPoints_SmallItem[0];
 
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, o =>
-                    {
-                        __instance.M.AddObjectToTrackedList(o);
-                    }));
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, __instance.M.AddObjectToTrackedList));
                 }
             }
 
@@ -707,10 +698,7 @@ namespace TNHFramework.Patches
                 {
                     Transform spawnPoint = __instance.SpawnPoints_SmallItem.Count >= 3 ? __instance.SpawnPoints_SmallItem[2] : __instance.SpawnPoints_SmallItem[__instance.SpawnPoints_SmallItem.Count - 1];
 
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, o =>
-                    {
-                        __instance.M.AddObjectToTrackedList(o);
-                    }));
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, spawnPoint.position, spawnPoint.rotation, __instance.M.AddObjectToTrackedList));
                 }
             }
 
@@ -721,14 +709,11 @@ namespace TNHFramework.Patches
 
                 if (selectedGroup != null)
                 {
-                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Shield.position, __instance.SpawnPoint_Shield.rotation, o =>
-                    {
-                        __instance.M.AddObjectToTrackedList(o);
-                    }));
+                    AnvilManager.Run(TNHFrameworkUtils.InstantiateFromEquipmentGroup(selectedGroup, __instance.SpawnPoint_Shield.position, __instance.SpawnPoint_Shield.rotation, __instance.M.AddObjectToTrackedList));
                 }
             }
 
-            if (TNHFramework.UnlimitedTokens.Value)
+            if (TNHFramework.SavedConfig.UnlimitedTokens)
                 __instance.M.AddTokens(999999, false);
 
             return false;

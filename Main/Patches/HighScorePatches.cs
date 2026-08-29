@@ -32,6 +32,9 @@ namespace TNHFramework.Patches
         {
             TNHFrameworkLogger.Log("Preventing vanilla score submission", TNHFrameworkLogger.LogType.TNH);
 
+            if (TNHFramework.SavedConfig.DisableScoring)
+                return false;
+
             __instance.ClearGlobalHighScoreDisplay();
             GM.Omni.OmniFlags.AddScore(___m_curSequenceID, score);
 

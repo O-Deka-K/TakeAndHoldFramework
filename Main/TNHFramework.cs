@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace TNHFramework
 {
-    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.120.0")]
+    [BepInPlugin("h3vr.tnhframework", "TNH Framework", "0.120.2")]
     [BepInDependency(StratumRoot.GUID, StratumRoot.Version)]
     public class TNHFramework : StratumPlugin
     {
@@ -38,15 +38,16 @@ namespace TNHFramework
         public static ConfigEntry<bool> EnableDebugText;
         public static ConfigEntry<bool> EnableScoring;
 
-        private static ConfigEntry<bool> simpleRegenerative;
-        private static ConfigEntry<bool> simpleCascading;
-        private static ConfigEntry<bool> simpleOrthogonal;
+        public static ConfigEntry<bool> SimpleRegenerative;
+        public static ConfigEntry<bool> SimpleCascading;
+        public static ConfigEntry<bool> SimpleOrthogonal;
 
-        private static ConfigEntry<bool> enableBlister;
-        private static ConfigEntry<bool> enableFloater;
-        private static ConfigEntry<bool> enableIris;
-        private static ConfigEntry<bool> enableSentinel;
+        public static ConfigEntry<bool> EnableBlister;
+        public static ConfigEntry<bool> EnableFloater;
+        public static ConfigEntry<bool> EnableIris;
+        public static ConfigEntry<bool> EnableSentinel;
 
+        public static ConfigValues SavedConfig = new();
         public static string OutputFilePath;
 
         // Bodged Magazine Patcher replacement stuff
@@ -64,13 +65,38 @@ namespace TNHFramework
         public static List<GameObject> SpawnedPanels = [];
         public static Dictionary<EquipmentPoolDef.PoolEntry.PoolEntryType, List<EquipmentPoolDef.PoolEntry>> SpawnedPoolsDictionary = [];
 
-        public static bool SimpleRegenerative;
-        public static bool SimpleCascading;
-        public static bool SimpleOrthogonal;
-        public static bool EnableBlister;
-        public static bool EnableFloater;
-        public static bool EnableIris;
-        public static bool EnableSentinel;
+        // Since the mod panel can be accessed during a match, we don't want people to change options in the middle of a match.
+        // This class retains the values at the start of the match. Call Load() when the match starts.
+        public class ConfigValues
+        {
+            public bool SimpleRegenerative;
+            public bool SimpleCascading;
+            public bool SimpleOrthogonal;
+            public bool EnableBlister;
+            public bool EnableFloater;
+            public bool EnableIris;
+            public bool EnableSentinel;
+            public bool UnlimitedTokens;
+            public bool DisableScoring;
+
+            public void Load()
+            {
+                SimpleRegenerative = TNHFramework.SimpleRegenerative.Value;
+                SimpleCascading = TNHFramework.SimpleCascading.Value;
+                SimpleOrthogonal = TNHFramework.SimpleOrthogonal.Value;
+
+                EnableBlister = TNHFramework.EnableBlister.Value;
+                EnableFloater = TNHFramework.EnableFloater.Value;
+                EnableIris = TNHFramework.EnableIris.Value;
+                EnableSentinel = TNHFramework.EnableSentinel.Value;
+
+                // While the above settings do make gameplay easier, only unlimited tokens disables scoring
+                UnlimitedTokens = TNHFramework.UnlimitedTokens.Value;
+
+                if (UnlimitedTokens)
+                    DisableScoring = true;
+            }
+        };
 
         public void Awake()
         {
@@ -265,43 +291,31 @@ namespace TNHFramework
             EnableDebugText = Config.Bind("Debug", "EnableDebugText", false,
                 "If true, some text will appear in TNH maps showing additional info");
 
-            simpleRegenerative = Config.Bind("Encryptions", "SimpleRegenerative", false,
+            SimpleRegenerative = Config.Bind("Encryptions", "SimpleRegenerative", false,
                 "If true, Regenerative encryption is easier when in Spawnlocking mode (3x3 instead of 5x5).");
 
-            simpleCascading = Config.Bind("Encryptions", "SimpleCascading", false,
+            SimpleCascading = Config.Bind("Encryptions", "SimpleCascading", false,
                 "If true, Cascading encryption is easier when in Spawnlocking mode (splits into 3 blocks instead of 6)");
 
-            simpleOrthogonal = Config.Bind("Encryptions", "SimpleOrthogonal", false,
+            SimpleOrthogonal = Config.Bind("Encryptions", "SimpleOrthogonal", false,
                 "If true, Orthogonal encryption is easier when in Spawnlocking mode (1 target per face instead of 3)");
 
-            enableBlister = Config.Bind("Institution Constructs", "EnableBlister", true,
+            EnableBlister = Config.Bind("Institution Constructs", "EnableBlister", true,
                 "If true, enable Blister constructs. Lasers that scan in an arc and trigger an alert when tripped.");
 
-            enableFloater = Config.Bind("Institution Constructs", "EnableFloater", true,
+            EnableFloater = Config.Bind("Institution Constructs", "EnableFloater", true,
                 "If true, enable Floater constructs. Floating proximity mines that follow you.");
 
-            enableIris = Config.Bind("Institution Constructs", "EnableIris", true,
-                "If true, enable Iris constructs. Floating constructs that fire a destructive laser.");
+            EnableIris = Config.Bind("Institution Constructs", "EnableIris", true,
+                "If true, enable Iris constructs. Floating rings that fire a destructive laser.");
 
-            enableSentinel = Config.Bind("Institution Constructs", "EnableSentinel", true,
-                "If true, enable Sentinel constructs. Large floating monoliths than scan using lasers and trigger an alert.");
+            EnableSentinel = Config.Bind("Institution Constructs", "EnableSentinel", true,
+                "If true, enable Sentinel constructs. Large floating monoliths that scan using lasers and trigger an alert.");
 
             TNHFrameworkLogger.AllowLogging = allowLog.Value;
             TNHFrameworkLogger.LogCharacter = printCharacters.Value;
             TNHFrameworkLogger.LogTNH = logTNH.Value;
             TNHFrameworkLogger.LogFile = logFileReads.Value;
-        }
-
-        public static void LoadConfigValues()
-        {
-            SimpleRegenerative = simpleRegenerative.Value;
-            SimpleCascading = simpleCascading.Value;
-            SimpleOrthogonal = simpleOrthogonal.Value;
-
-            EnableBlister = enableBlister.Value;
-            EnableFloater = enableFloater.Value;
-            EnableIris = enableIris.Value;
-            EnableSentinel = enableSentinel.Value;
         }
 
         /// <summary>

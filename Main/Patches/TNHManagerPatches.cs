@@ -24,8 +24,10 @@ namespace TNHFramework.Patches
             GM.CurrentSceneSettings.OverrideReturnToSceneDisplayText = "Return To Lobby";
             GM.CurrentSceneSettings.OverrideReturnToSceneName = "TakeAndHold_Lobby_2";
 
-            if (___m_hasInit)
-                TNHFramework.LoadConfigValues();
+            if (!___m_hasInit)
+            {
+                TNHFramework.SavedConfig.Load();
+            }
 
             return true;
         }

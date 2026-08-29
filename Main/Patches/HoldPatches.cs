@@ -22,10 +22,10 @@ namespace TNHFramework.Patches
         {
             foreach (Construct_Volume construct in __instance.M.ConstructSpawners)
             {
-                if ((!TNHFramework.EnableBlister && construct is Construct_Blister_Volume)
-                    || (!TNHFramework.EnableFloater && construct is Construct_Floater_Volume)
-                    || (!TNHFramework.EnableIris && construct is Construct_Iris_Volume)
-                    || (!TNHFramework.EnableSentinel && construct is Construct_Sentinel_Path))
+                if ((!TNHFramework.SavedConfig.EnableBlister && construct is Construct_Blister_Volume)
+                    || (!TNHFramework.SavedConfig.EnableFloater && construct is Construct_Floater_Volume)
+                    || (!TNHFramework.SavedConfig.EnableIris && construct is Construct_Iris_Volume)
+                    || (!TNHFramework.SavedConfig.EnableSentinel && construct is Construct_Sentinel_Path))
                 {
                     __instance.ExcludeConstructVolumes.Add(construct);
                 }
@@ -366,9 +366,9 @@ namespace TNHFramework.Patches
 
                     foreach (TNH_EncryptionType encryption in currentPhase.Encryptions)
                     {
-                        if ((encryption == TNH_EncryptionType.Regenerative && TNHFramework.SimpleRegenerative)
-                            || (encryption == TNH_EncryptionType.Cascading && TNHFramework.SimpleCascading)
-                            || (encryption == TNH_EncryptionType.Orthagonal && TNHFramework.SimpleOrthogonal))
+                        if ((encryption == TNH_EncryptionType.Regenerative && TNHFramework.SavedConfig.SimpleRegenerative)
+                            || (encryption == TNH_EncryptionType.Cascading && TNHFramework.SavedConfig.SimpleCascading)
+                            || (encryption == TNH_EncryptionType.Orthagonal && TNHFramework.SavedConfig.SimpleOrthogonal))
                         {
                             TNHFrameworkLogger.Log($"Spawning simple {encryption} encryption", TNHFrameworkLogger.LogType.TNH);
                             encryptions.Add(__instance.M.GetEncryptionPrefabSimple(encryption));
