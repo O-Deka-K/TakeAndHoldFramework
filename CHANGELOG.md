@@ -199,3 +199,8 @@
 - Fixed crash due to Steam Workshop characters with null values.
 - Fixed vault guns not spawning with ammo at constructor panel.
 - Fixed description in manifest.
+
+## [0.120.2] - 2026-08-29
+
+- Added TNHFramework Options menu board in TNH lobby.
+- Fixed spawning .22 LR ammo in cases when inappropriate for item (vanilla bug).
