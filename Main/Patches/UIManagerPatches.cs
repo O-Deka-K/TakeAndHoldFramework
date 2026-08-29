@@ -3,9 +3,10 @@ using FistVR.Ugc;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection; 
+using System.Reflection;
 using TNHFramework.Utilities;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace TNHFramework.Patches
@@ -23,6 +24,21 @@ namespace TNHFramework.Patches
         private static Vector3 DescriptionPositionLeft = new(-138, 306, 0);
         private static Vector3 DescriptionPositionCenter = new(-1, 306, 0);
         private static string LastPlayedChar;
+
+        public static GameObject OptionsPanel;
+        public static Text OptionName;
+        public static Text OptionDescription;
+        public static OptionsPanel_ButtonSet OBS_UpgradeMags;
+        public static OptionsPanel_ButtonSet OBS_InjectBackpacks;
+        public static OptionsPanel_ButtonSet OBS_UnlimitedTokens;
+        public static OptionsPanel_ButtonSet OBS_DropVibrate;
+        public static OptionsPanel_ButtonSet OBS_EncrRegenerative;
+        public static OptionsPanel_ButtonSet OBS_EncrCascading;
+        public static OptionsPanel_ButtonSet OBS_EncrOrthogonal;
+        public static OptionsPanel_ButtonSet OBS_ConstructBlister;
+        public static OptionsPanel_ButtonSet OBS_ConstructFloater;
+        public static OptionsPanel_ButtonSet OBS_ConstructIris;
+        public static OptionsPanel_ButtonSet OBS_ConstructSentinel;
 
         // Nice try Anton.
         // Just kidding. It could be useful for disabling TNH for older, incompatible versions of TNHFramework. Or it might just crash.
@@ -42,6 +58,7 @@ namespace TNHFramework.Patches
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
             Text itemsText = CreateItemsText(__instance);
+            OptionsPanel = CreateOptionsPanel(__instance);
             SelectedCharacter_Image = CreateCharacterImage(__instance);
             LastPlayedChar = GM.TNHOptions.LastPlayedCharUniversalID;
 
@@ -133,6 +150,254 @@ namespace TNHFramework.Patches
             charImage.gameObject.SetActive(false);
 
             return charImage;
+        }
+
+        private static GameObject CreateOptionsPanel(TNH_UIManager manager)
+        {
+            GameObject panelGO = Object.Instantiate(manager.OBS_GameMode.transform.parent.gameObject, manager.OBS_GameMode.transform.parent.parent);
+            panelGO.name = "TNHF_OptionsPanel";
+            Transform panel = panelGO.transform;
+            panel.position = new Vector3(-2.4396f, 1.046f, 6.331f);  //-2.442f
+            panel.eulerAngles = new Vector3(0, 270, 0);
+
+            // Delete everything we don't need, and get references to the Text objects we do need
+            foreach (Transform child in panel)
+            {
+                if (child.name.StartsWith("Option_") || child.name == "Top (2)")
+                {
+                    Object.Destroy(child.gameObject);
+                }
+                else if (child.name == "GameModeDescriptions")
+                {
+                    foreach (Transform grandchild in child)
+                    {
+                        if (grandchild.name == "ModeName")
+                        {
+                            OptionName = grandchild.GetComponent<Text>();
+                            OptionName.text = "Options";
+                            OptionName.rectTransform.sizeDelta = new Vector2(1000, 40);
+                        }
+                        else if (grandchild.name == "ModeDescription")
+                        {
+                            OptionDescription = grandchild.GetComponent<Text>();
+                            OptionDescription.text = "Click on an option for a description.";
+                        }
+                        else
+                        {
+                            Object.Destroy(grandchild.gameObject);
+                        }
+                    }
+                }
+            }
+
+            // Create the backboard
+            GameObject backboard = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            backboard.name = "TNHF_Backboard";
+            backboard.transform.position = new Vector3(panel.transform.position.x - 0.055f, panel.transform.position.y - 0.025f, panel.transform.position.z);
+            backboard.transform.rotation = panel.transform.rotation;
+            backboard.transform.localScale = new Vector3(2, 2.05f, 0.09f);
+            backboard.GetComponent<Renderer>().material.color = Color.black;
+
+            // Set the heading
+            Transform top = panel.Find("Top (1)");
+            Text topText = top.GetComponent<Text>();
+            topText.text = "TNHFramework Options";
+            topText.transform.localPosition = new Vector3(0, 500, 0);
+
+            // Make new headings
+            OBS_UpgradeMags = new();
+            GameObject upgradeMagsGO = AddText(panel, top, -350, 350, "Always Mag Upgrader:", TextAnchor.LowerRight);
+            GameObject upgradeMagsEnabledGO = AddButton(manager, panel, -100, 350, "Enabled", OBS_UpgradeMags, () => SetAlwaysMagUpgrader(true));
+            GameObject upgradeMagsDisabledGO = AddButton(manager, panel, 100, 350, "Disabled", OBS_UpgradeMags, () => SetAlwaysMagUpgrader(false));
+            OBS_UpgradeMags.SetSelectedButton(TNHFramework.AlwaysMagUpgrader.Value ? 0 : 1);
+
+            OBS_InjectBackpacks = new();
+            GameObject injectBackpacksGO = AddText(panel, top, -350, 300, "Inject Mod Backpacks:", TextAnchor.LowerRight);
+            GameObject injectBackpacksEnabledGO = AddButton(manager, panel, -100, 300, "Enabled", OBS_InjectBackpacks, () => SetInjectModBackpacks(true));
+            GameObject injectBackpacksDisabledGO = AddButton(manager, panel, 100, 300, "Disabled", OBS_InjectBackpacks, () => SetInjectModBackpacks(false));
+            OBS_InjectBackpacks.SetSelectedButton(TNHFramework.InjectModBackpacks.Value ? 0 : 1);
+
+            OBS_DropVibrate = new();
+            GameObject dropVibrateGO = AddText(panel, top, -350, 250, "Vibrate on Loot Drop:", TextAnchor.LowerRight);
+            GameObject dropVibrateEnabledGO = AddButton(manager, panel, -100, 250, "Enabled", OBS_DropVibrate, () => SetVibrateOnLootDrop(true));
+            GameObject dropVibrateDisabledGO = AddButton(manager, panel, 100, 250, "Disabled", OBS_DropVibrate, () => SetVibrateOnLootDrop(false));
+            OBS_DropVibrate.SetSelectedButton(TNHFramework.SosigItemDropVibrate.Value ? 0 : 1);
+
+            OBS_UnlimitedTokens = new();
+            GameObject unlimitedTokensGO = AddText(panel, top, -350, 200, "Unlimited Tokens:", TextAnchor.LowerRight);
+            GameObject unlimitedTokensEnabledGO = AddButton(manager, panel, -100, 200, "Enabled", OBS_UnlimitedTokens, () => SetUnlimitedTokens(true));
+            GameObject unlimitedTokensDisabledGO = AddButton(manager, panel, 100, 200, "Disabled", OBS_UnlimitedTokens, () => SetUnlimitedTokens(false));
+            OBS_UnlimitedTokens.SetSelectedButton(TNHFramework.UnlimitedTokens.Value ? 0 : 1);
+
+            GameObject encryptionsHeadingGO = AddText(panel, top, 0, 50, "Encryptions (Spawnlocking Mode)", TextAnchor.LowerCenter);
+
+            OBS_EncrRegenerative = new();
+            GameObject encrRegenerativeGO = AddText(panel, top, -350, 0, "Regenerative:", TextAnchor.LowerRight);
+            GameObject encrRegenerativeNormalGO = AddButton(manager, panel, -100, 0, "Normal", OBS_EncrRegenerative, () => SetSimpleRegenerative(false));
+            GameObject encrRegenerativeSimpleGO = AddButton(manager, panel, 100, 0, "Simple", OBS_EncrRegenerative, () => SetSimpleRegenerative(true));
+            OBS_EncrRegenerative.SetSelectedButton(TNHFramework.SimpleRegenerative.Value ? 1 : 0);
+
+            OBS_EncrCascading = new();
+            GameObject encrCascadingGO = AddText(panel, top, -350, -50, "Cascading:", TextAnchor.LowerRight);
+            GameObject encrCascadingNormalGO = AddButton(manager, panel, -100, -50, "Normal", OBS_EncrCascading, () => SetSimpleCascading(false));
+            GameObject encrCascadingSimpleGO = AddButton(manager, panel, 100, -50, "Simple", OBS_EncrCascading, () => SetSimpleCascading(true));
+            OBS_EncrCascading.SetSelectedButton(TNHFramework.SimpleCascading.Value ? 1 : 0);
+
+            OBS_EncrOrthogonal = new();
+            GameObject encrOrthogonalGO = AddText(panel, top, -350, -100, "Orthogonal:", TextAnchor.LowerRight);
+            GameObject encrOrthogonalNormalGO = AddButton(manager, panel, -100, -100, "Normal", OBS_EncrOrthogonal, () => SetSimpleOrthogonal(false));
+            GameObject encrOrthogonalSimpleGO = AddButton(manager, panel, 100, -100, "Simple", OBS_EncrOrthogonal, () => SetSimpleOrthogonal(true));
+            OBS_EncrOrthogonal.SetSelectedButton(TNHFramework.SimpleOrthogonal.Value ? 1 : 0);
+
+            GameObject constructsHeadingGO = AddText(panel, top, 0, -200, "Institution Constructs", TextAnchor.LowerCenter);
+
+            OBS_ConstructBlister = new();
+            GameObject constructsBlisterGO = AddText(panel, top, -350, -250, "Blister:", TextAnchor.LowerRight);
+            GameObject constructsBlisterEnabledGO = AddButton(manager, panel, -100, -250, "Enabled", OBS_ConstructBlister, () => SetEnableBlister(true));
+            GameObject constructsBlisterDisabledGO = AddButton(manager, panel, 100, -250, "Disabled", OBS_ConstructBlister, () => SetEnableBlister(false));
+            OBS_ConstructBlister.SetSelectedButton(TNHFramework.EnableBlister.Value ? 0 : 1);
+
+            OBS_ConstructFloater = new();
+            GameObject constructsFloaterGO = AddText(panel, top, -350, -300, "Floater:", TextAnchor.LowerRight);
+            GameObject constructsFloaterEnabledGO = AddButton(manager, panel, -100, -300, "Enabled", OBS_ConstructFloater, () => SetEnableFloater(true));
+            GameObject constructsFloaterDisabledGO = AddButton(manager, panel, 100, -300, "Disabled", OBS_ConstructFloater, () => SetEnableFloater(false));
+            OBS_ConstructFloater.SetSelectedButton(TNHFramework.EnableFloater.Value ? 0 : 1);
+
+            OBS_ConstructIris = new();
+            GameObject constructsIrisGO = AddText(panel, top, -350, -350, "Iris:", TextAnchor.LowerRight);
+            GameObject constructsIrisEnabledGO = AddButton(manager, panel, -100, -350, "Enabled", OBS_ConstructIris, () => SetEnableIris(true));
+            GameObject constructsIrisDisabledGO = AddButton(manager, panel, 100, -350, "Disabled", OBS_ConstructIris, () => SetEnableIris(false));
+            OBS_ConstructIris.SetSelectedButton(TNHFramework.EnableIris.Value ? 0 : 1);
+
+            OBS_ConstructSentinel = new();
+            GameObject constructsSentinelGO = AddText(panel, top, -350, -400, "Sentinel:", TextAnchor.LowerRight);
+            GameObject constructsSentinelEnabledGO = AddButton(manager, panel, -100, -400, "Enabled", OBS_ConstructSentinel, () => SetEnableSentinel(true));
+            GameObject constructsSentinelDisabledGO = AddButton(manager, panel, 100, -400, "Disabled", OBS_ConstructSentinel, () => SetEnableSentinel(false));
+            OBS_ConstructSentinel.SetSelectedButton(TNHFramework.EnableSentinel.Value ? 0 : 1);
+
+            return panelGO;
+        }
+
+        // Make a copy of the source Text object, set its text, and position it
+        private static GameObject AddText(Transform parent, Transform source, int x, int y, string text, TextAnchor alignment = TextAnchor.LowerLeft)
+        {
+            GameObject headingGO = Object.Instantiate(source.gameObject, parent);
+            headingGO.transform.localPosition = new Vector3(x, y, 0);
+
+            Text heading = headingGO.GetComponent<Text>();
+            heading.text = text;
+
+            if (alignment == TextAnchor.LowerRight)
+                heading.rectTransform.sizeDelta = new Vector2(350, 40);
+            else if (alignment == TextAnchor.LowerLeft)
+                heading.rectTransform.sizeDelta = new Vector2(90, 40);
+
+            heading.alignment = alignment;
+
+            return headingGO;
+        }
+
+        private static GameObject AddButton(TNH_UIManager manager, Transform parent, int x, int y, string text, OptionsPanel_ButtonSet obs, UnityAction call)
+        {
+            GameObject buttonGO = AddText(parent, manager.LBL_CharacterName[0].transform, x, y, text);
+
+            obs.UsesPointableButtons = true;
+            obs.SelectedColor = manager.OBS_Character.SelectedColor;
+            obs.UnSelectedColor = manager.OBS_Character.UnSelectedColor;
+            obs.HighlightedColor = manager.OBS_Character.HighlightedColor;
+            obs.ButtonsInSet ??= [];
+            int index = obs.ButtonsInSet.Length;
+
+            // Set the listener events for the button
+            Button button = buttonGO.GetComponent<Button>();
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(() => { obs.SetSelectedButton(index); });
+            button.onClick.AddListener(call);
+
+            // Resize the collider for the pointable button
+            BoxCollider collider = button.GetComponent<BoxCollider>();
+            collider.size = new Vector3(90, 40, 0);
+
+            obs.ButtonsInSet = [.. obs.ButtonsInSet, buttonGO.GetComponent<FVRPointableButton>()];
+
+            return buttonGO;
+        }
+
+        private static void SetAlwaysMagUpgrader(bool enabled)
+        {
+            OptionName.text = "Always Mag Upgrader";
+            OptionDescription.text = "All Mag Duplicators become Mag Upgraders. In addition to duplication, they allow you to buy a new mag for your gun. (Default: Enabled)";
+            TNHFramework.AlwaysMagUpgrader.Value = enabled;
+        }
+
+        private static void SetInjectModBackpacks(bool enabled)
+        {
+            OptionName.text = "Inject Mod Backpacks";
+            OptionDescription.text = "Add mod backpacks to any pools that only contain the vanilla backpack. Does not add to starting equipment. (Default: Enabled)";
+            TNHFramework.InjectModBackpacks.Value = enabled;
+        }
+
+        private static void SetVibrateOnLootDrop(bool enabled)
+        {
+            OptionName.text = "Vibrate on Loot Drop";
+            OptionDescription.text = "Vibrate the controllers when a Sosig spawns an item on death. Doesn't apply to health drops. (Default: Enabled)";
+            TNHFramework.SosigItemDropVibrate.Value = enabled;
+        }
+
+        private static void SetUnlimitedTokens(bool enabled)
+        {
+            OptionName.text = "Unlimited Tokens";
+            OptionDescription.text = "Spawn with 999999 tokens. (Default: Disabled)";
+            TNHFramework.UnlimitedTokens.Value = enabled;
+        }
+
+        private static void SetSimpleRegenerative(bool enabled)
+        {
+            OptionName.text = "Simple Regenerative";
+            OptionDescription.text = "Make Regenerative encryption easier in Spawnlocking mode.\nIt is 3x3 instead of 5x5. (Default: Normal)";
+            TNHFramework.SimpleRegenerative.Value = enabled;
+        }
+
+        private static void SetSimpleCascading(bool enabled)
+        {
+            OptionName.text = "Simple Cascading";
+            OptionDescription.text = "Make Cascading encryption easier in Spawnlocking mode.\nIt splits into 3 blocks instead of 6. (Default: Normal)";
+            TNHFramework.SimpleCascading.Value = enabled;
+        }
+
+        private static void SetSimpleOrthogonal(bool enabled)
+        {
+            OptionName.text = "Simple Orthogonal";
+            OptionDescription.text = "Make Orthogonal encryption easier in Spawnlocking mode.\nIt has 1 target per face instead of 3. (Default: Normal)";
+            TNHFramework.SimpleOrthogonal.Value = enabled;
+        }
+
+        private static void SetEnableBlister(bool enabled)
+        {
+            OptionName.text = "Institution Construct: Blister";
+            OptionDescription.text = "Allows you to disable the Blister construct on Institution.\nRed lasers that scan and trigger alerts. (Default: Enabled)";
+            TNHFramework.EnableBlister.Value = enabled;
+        }
+
+        private static void SetEnableFloater(bool enabled)
+        {
+            OptionName.text = "Institution Construct: Floater";
+            OptionDescription.text = "Allows you to disable the Floater construct on Institution.\nFloating mines that follow you. (Default: Enabled)";
+            TNHFramework.EnableFloater.Value = enabled;
+        }
+
+        private static void SetEnableIris(bool enabled)
+        {
+            OptionName.text = "Institution Construct: Iris";
+            OptionDescription.text = "Allows you to disable the Iris construct on Institution.\nFloating rings that fire a beam. (Default: Enabled)";
+            TNHFramework.EnableIris.Value = enabled;
+        }
+
+        private static void SetEnableSentinel(bool enabled)
+        {
+            OptionName.text = "Institution Construct: Sentinel";
+            OptionDescription.text = "Allows you to disable the Sentinel construct on Institution.\nLarge monoliths that scan and trigger alerts. (Default: Enabled)";
+            TNHFramework.EnableSentinel.Value = enabled;
         }
 
         public static void RefreshTNHUI(TNH_UIManager instance)
