@@ -154,6 +154,11 @@ namespace TNHFramework.Patches
 
         private static GameObject CreateOptionsPanel(TNH_UIManager manager)
         {
+            // Move the character holo over so we have space
+            // Original position is (-2.415, 0.0, 6.6)
+            Transform holo = manager.CharacterDisplay.transform;
+            holo.position = new Vector3(-1.8f, 0f, 6.95f);
+
             GameObject panelGO = Object.Instantiate(manager.OBS_GameMode.transform.parent.gameObject, manager.OBS_GameMode.transform.parent.parent);
             panelGO.name = "TNHF_OptionsPanel";
             Transform panel = panelGO.transform;
