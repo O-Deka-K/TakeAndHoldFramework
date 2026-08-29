@@ -144,21 +144,5 @@ namespace TNHFramework.Patches
 
             return true;
         }
-
-        // Anton pls fix. CompletePhase getting called twice when a boss is killed
-        [HarmonyPatch(typeof(TNH_HoldPoint), "CompletePhase")]
-        [HarmonyPrefix]
-        private static bool CompletePhase_BossFix(TNH_HoldPoint.HoldState ___m_state)
-        {
-            return (___m_state != TNH_HoldPoint.HoldState.Transition);
-        }
-
-        // Anton pls fix. Boss not dropping loot or getting scored
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SosigKillShouldScore")]
-        [HarmonyPostfix]
-        public static void SosigKillShouldScore_BossFix(ref bool __result)
-        {
-            __result = true;
-        }
     }
 }
