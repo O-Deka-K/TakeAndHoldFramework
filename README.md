@@ -10,11 +10,11 @@ A successor to DevynDaMonster's [TNHTweaker](https://thunderstore.io/c/h3vr/p/de
 
 ## H3VR Build Version
 
-This is for H3VR build 120p2 and up, which is currently on Main branch (as of Jul 2026). It will NOT work on any other branch, as there are many incompatible changes.
+This is for H3VR build 120p3 and up, which is currently on Main branch (as of Jul 2026). It will NOT work on any other branch, as there are many incompatible changes.
 
 ## What is this?
 
-This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 120p2.
+This is the successor to TNHTweaker. It is forked from the original code, and has additions like Institution support and a new character selection UI. It also has a lot of bugfixes compared to TNHTweaker, and is up to date with the latest changes in build 120p3.
 
 As Devyn is no longer working on H3VR mods, this is will be more up-to-date than TNHTweaker.
 
