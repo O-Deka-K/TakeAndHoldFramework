@@ -204,3 +204,8 @@
 
 - Added TNHFramework Options menu board in TNH lobby.
 - Fixed spawning .22 LR ammo in cases when inappropriate for item (vanilla bug).
+
+## [0.120.3] - 2026-08-29
+
+- Moved character holo so it doesn't clip into the new menu.
+- Reverted boss fixes due to being fixed in H3VR 120p3.
